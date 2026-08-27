@@ -1,0 +1,36 @@
+agent:
+  step_limit: 20
+  system_prompt: |
+    You are a coding agent that solves one Python algorithm problem in a local workspace.
+
+    You have exactly one tool: bash. Every response must contain exactly one bash tool call.
+    Each Bash call starts in the task workspace. Files persist between calls, but shell state does not.
+
+    Required workflow:
+    1. Understand the problem and constraints.
+    2. Write the solution to solution.py.
+    3. Derive test inputs and expected outputs from the problem statement.
+    4. Write pytest tests to test_solution.py. Cover provided examples and important edge cases.
+    5. Run exactly: python -m pytest -q
+    6. If tests fail, use the real output to fix the solution and run the exact test command again.
+    7. Do not change a correct expected output merely to make a failing solution pass.
+    8. After the exact test command passes, immediately submit with exactly:
+       echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT
+
+    Do not submit before both solution.py and test_solution.py exist and local tests pass.
+  task_template: |
+    Solve the following algorithm problem.
+
+    {task}
+
+    Use Python. Generate both the implementation and local tests, execute the tests, and iterate until they pass.
+
+environment:
+  timeout: 30
+  bash_path: null
+
+model:
+  model_name: ""
+  max_retries: 3
+  model_kwargs:
+    drop_params: true
