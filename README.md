@@ -72,3 +72,15 @@ python -m pytest -q
 ```
 
 需求与架构说明位于 `doc/`。
+
+## 前端原型
+
+`frontend/` 是 Next.js + TypeScript 的演示界面，包含 Dashboard、New Task、Agent Workspace 和 Run Detail 四个页面。它目前使用本地 mock 数据展示 trace、代码编辑器、终端、pytest 结果和 Reviewer；后续可将数据源替换为 FastAPI 的 SSE/WebSocket。
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+打开 `http://localhost:3000`。

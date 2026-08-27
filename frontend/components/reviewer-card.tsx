@@ -1,0 +1,6 @@
+import { AlertTriangle, Check, ScanSearch } from "lucide-react";
+import { reviewerScores } from "@/lib/data";
+
+export function ReviewerCard({ detailed = false }: { detailed?: boolean }) {
+  return <section className="reviewer-card"><div className="panel-header"><div style={{ display: "flex", alignItems: "center", gap: 7 }}><ScanSearch style={{ width: 14, color: "var(--purple)" }} /><span className="panel-title">Reviewer</span></div><span className="badge purple">Independent</span></div><div className="reviewer-score"><div><strong>9.4</strong><small> / 10</small></div><span className="badge green"><Check /> Local tests passed</span></div><div className="reviewer-grid">{reviewerScores.map((score) => <div className="reviewer-row" key={score.label}><span>{score.label}</span><div className="reviewer-track"><span style={{ width: `${score.value * 10}%` }} /></div><b>{score.value}</b></div>)}</div><div className="reviewer-notes"><div className="review-note"><Check /> <span>Correct sliding-window invariant and linear-time scan.</span></div><div className="review-note"><Check /> <span>Handles empty input, duplicates, and unicode characters.</span></div><div className="review-note warn"><AlertTriangle /> <span>{detailed ? "Stress tests for the upper constraint could be expanded." : "Hidden online judge tests are not guaranteed."}</span></div></div></section>;
+}

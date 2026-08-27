@@ -6,6 +6,10 @@ __pycache__/
 venv/
 .env
 
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
 workspace/*
 !workspace/.gitkeep
 trajectories/*
