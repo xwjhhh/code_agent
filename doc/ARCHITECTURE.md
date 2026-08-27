@@ -27,7 +27,7 @@ DefaultAgent.run(task)
 LitellmModel.query(messages)
     |
     v
-大模型返回 Bash tool call
+大模型逐步生成题解或测试相关的 Bash tool call
     |
     v
 actions.py 解析 command
@@ -59,10 +59,16 @@ stdout / returncode / exception
 整个系统最重要的数据闭环是：
 
 ```text
-Messages -> Model -> Action -> Environment -> Observation -> Messages
+Task + Messages
+    -> Model 生成题解/测试动作
+    -> Action
+    -> Environment 写入文件或执行测试
+    -> Observation
+    -> Messages
+    -> Model 继续下一轮
 ```
 
-模型只负责决定下一步做什么，程序负责真实执行和判断本地测试是否成功。
+模型不仅决定下一步做什么，还要根据题目生成题解代码和测试用例。测试用例中包含具体的输入以及对应的期望输出，并由模型通过 Bash 写入测试文件。程序负责真实执行这些测试，并根据测试命令的返回码和输出判断本地验证是否成功。
 
 ## 3. 项目目录
 
@@ -159,7 +165,30 @@ Model 返回给 Agent 的消息：
 
 `extra` 是程序内部字段，下一轮请求模型前需要移除；`tool_calls` 是模型 API 所需的原始消息字段，必须保留在对话历史中。
 
-### 4.4 Observation Message
+### 4.4 测试用例
+
+测试用例由模型根据题目、约束和边界情况生成。第一版不把测试用例拆成独立的工具调用，而是要求模型通过 Bash 将测试代码写入：
+
+```text
+workspace/<task_id>/test_solution.py
+```
+
+测试文件中的每个测试应明确给出：
+
+```text
+输入 -> 期望输出
+```
+
+例如：
+
+```python
+assert longest_substring("abcabcbb") == 3
+assert longest_substring("") == 0
+```
+
+Environment 执行 `python -m pytest -q` 时使用这些输入和期望输出验证题解。测试输出和返回码会作为 Observation 反馈给 Agent；测试失败时优先修改题解并重新测试。只有本地测试返回成功后，才允许进入 Reviewer 阶段。测试脚本本身如有语法或导入问题可以修复，但不能为了规避失败而随意修改期望输出。
+
+### 4.5 Observation Message
 
 命令结果反馈给模型时，需要和原工具调用 ID 对应：
 
@@ -244,6 +273,8 @@ bash(command: string)
 5. 调用 `actions.py` 解析 tool call；
 6. 返回带有 `extra.actions` 的统一 assistant message；
 7. 把 Environment Output 转换成 observation message。
+
+模型在这个过程中承担两类工作：首先根据题目生成 `solution.py` 和包含输入、期望输出的 `test_solution.py`；然后根据 Environment 返回的测试结果决定是继续修改、重新测试，还是提交完成。
 
 输入：
 
@@ -366,9 +397,9 @@ python -m pytest -q
 
 1. 分析题目；
 2. 创建题解代码；
-3. 根据题目生成样例和边界测试；
+3. 根据题目生成包含输入和期望输出的样例、边界测试；
 4. 实际运行测试；
-5. 测试失败后根据输出继续修改；
+5. 测试失败后根据输出继续修改题解；
 6. 测试通过后立即提交完成请求。
 
 ### 5.8 `src/code_agent/reviewer.py`
@@ -461,7 +492,7 @@ Review: trajectories/<task_id>/review.json
 
 ## 6. 本地测试与完成条件
 
-第一版由编程 Agent 根据题目自动生成 `test_solution.py`，测试内容至少覆盖题目样例和模型识别出的边界情况。Environment 使用真实的 `pytest` 命令执行测试。
+第一版由编程 Agent 要求模型根据题目自动生成 `test_solution.py`。测试文件需要写出具体的测试输入和期望输出，至少覆盖题目样例和模型识别出的边界情况。Environment 使用真实的 `pytest` 命令执行测试。
 
 系统不能仅凭模型说“已经完成”就返回成功。成功需要满足：
 
@@ -489,7 +520,7 @@ echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT
 3. Model 调用大模型，模型请求用 Bash 创建 `solution.py`。
 4. Environment 通过 Git Bash 执行命令并返回写入结果。
 5. Agent 把结果作为 observation 加入 `messages`。
-6. 模型根据题目创建 `test_solution.py`。
+6. 模型根据题目生成测试输入和期望输出，并创建 `test_solution.py`。
 7. 模型执行 `python -m pytest -q`。
 8. 如果测试失败，Environment 将断言错误反馈给 Agent，模型继续修改代码。
 9. 模型再次运行测试，Environment 返回 `returncode == 0`。
