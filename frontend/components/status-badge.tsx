@@ -2,10 +2,10 @@ import { CircleCheck, CircleX, LoaderCircle, ScanSearch } from "lucide-react";
 import type { RunStatus } from "@/lib/data";
 
 const config = {
-  passed: { label: "Passed", className: "green", icon: CircleCheck },
-  failed: { label: "Failed", className: "red", icon: CircleX },
-  running: { label: "Running", className: "yellow", icon: LoaderCircle },
-  reviewing: { label: "Reviewing", className: "purple", icon: ScanSearch },
+  passed: { label: "通过", className: "green", icon: CircleCheck },
+  failed: { label: "失败", className: "red", icon: CircleX },
+  running: { label: "运行中", className: "yellow", icon: LoaderCircle },
+  reviewing: { label: "评审中", className: "purple", icon: ScanSearch },
 };
 
 export function StatusBadge({ status }: { status: RunStatus }) {

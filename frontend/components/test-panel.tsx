@@ -1,15 +1,13 @@
-"use client";
-
-import { Check, CircleAlert, RotateCw } from "lucide-react";
-import { useState } from "react";
+import { Check, CircleAlert, Clock3 } from "lucide-react";
 import type { RunStatus } from "@/lib/data";
-import { testCases } from "@/lib/data";
+import type { TestCase } from "@/lib/api";
 
-export function TestPanel({ compact = false, status = "passed" as RunStatus }: { compact?: boolean; status?: RunStatus }) {
-  const [rerunning, setRerunning] = useState(false);
-  const [lastRun, setLastRun] = useState("0.03s");
-  const rerun = () => { setRerunning(true); window.setTimeout(() => { setRerunning(false); setLastRun("0.04s"); }, 650); };
-  const passed = status !== "failed";
-  const cases = passed ? testCases : testCases.slice(0, 4).map((item, index) => index === 2 ? { ...item, status: "failed" } : item);
-  return <section className="test-panel"><div className="panel-header"><span className="panel-title">Test results</span><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span className="table-cell mono">pytest -q</span><button className="icon-button" type="button" title="Run tests again" onClick={rerun} disabled={rerunning}><RotateCw className={rerunning ? "spin" : ""} /></button></div></div><div className="test-summary"><div className={`test-score ${passed ? "" : "error"}`} style={{ color: passed ? "var(--green)" : "var(--red)" }}>{passed ? "8" : "3"}<small> / {passed ? "8" : "4"}</small></div><div className="test-progress"><div className="test-progress-label"><span>{rerunning ? "Running local tests..." : passed ? "All generated cases passed" : "One case needs attention"}</span><span style={{ fontFamily: "var(--mono)" }}>{lastRun}</span></div><div className="test-progress-track"><span style={{ width: `${passed ? 100 : 75}%`, background: passed ? "var(--green)" : "var(--red)" }} /></div></div></div><div className="test-list">{cases.map((item) => <div className={`test-item ${item.status === "failed" ? "failed" : ""}`} key={item.name}>{item.status === "failed" ? <CircleAlert /> : <Check />}<span>{item.name}</span><span style={{ marginLeft: "auto", color: "var(--dim)", fontFamily: "var(--mono)" }}>{item.expected}</span></div>)}</div>{!compact && !passed && <div className="callout" style={{ margin: "0 16px 16px", borderColor: "var(--red)", background: "var(--red-soft)", color: "#efabab" }}>Input "abba" returned 3, expected 2. The failing observation is available in the Agent trace.</div>}</section>;
+export function TestPanel({ compact = false, status = "running", cases = [], output = "", source = "manual" }: { compact?: boolean; status?: RunStatus; cases?: TestCase[]; output?: string; source?: "manual" | "generated" }) {
+  const passedMatch = output.match(/(\d+) passed/);
+  const failedMatch = output.match(/(\d+) failed/);
+  const passedCount = status === "passed" ? cases.length : Number(passedMatch?.[1] ?? 0);
+  const failedCount = Number(failedMatch?.[1] ?? (status === "failed" ? 1 : 0));
+  const total = cases.length;
+  const progress = total ? Math.round((passedCount / total) * 100) : 0;
+  return <section className="test-panel"><div className="panel-header"><span className="panel-title">测试结果</span><div style={{ display: "flex", alignItems: "center", gap: 8 }}><span className={`badge ${source === "generated" ? "purple" : "blue"}`}>{source === "generated" ? "AI 生成" : "人工输入"}</span><span className="table-cell mono">test_cases.json</span></div></div><div className="test-summary"><div className="test-score" style={{ color: status === "failed" ? "var(--red)" : status === "passed" ? "var(--green)" : "var(--yellow)" }}>{passedCount}<small> / {total}</small></div><div className="test-progress"><div className="test-progress-label"><span>{status === "running" ? "等待或正在执行本地测试" : status === "passed" ? "权威输入输出用例全部通过" : `${failedCount} 个测试失败`}</span><span style={{ fontFamily: "var(--mono)" }}>{progress}%</span></div><div className="test-progress-track"><span style={{ width: `${progress}%`, background: status === "failed" ? "var(--red)" : status === "passed" ? "var(--green)" : "var(--yellow)" }} /></div></div></div><div className="test-list">{cases.length ? cases.map((item, index) => { const failed = status === "failed" && output.includes(item.name); return <div className={`test-item ${failed ? "failed" : ""}`} key={`${item.name}-${index}`}>{failed ? <CircleAlert /> : status === "passed" ? <Check /> : <Clock3 />}<span>{item.name || `用例 ${index + 1}`}</span><span style={{ marginLeft: "auto", color: "var(--dim)", fontFamily: "var(--mono)", maxWidth: "45%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.input} → {item.expected_output}</span></div>; }) : <div className="test-item"><Clock3 /><span>测试用例准备中</span></div>}</div>{!compact && status === "failed" && <div className="callout" style={{ margin: "0 16px 16px", borderColor: "var(--red)", background: "var(--red-soft)", color: "#efabab", whiteSpace: "pre-wrap" }}>{output || "测试执行失败，详细信息请查看智能体轨迹。"}</div>}</section>;
 }

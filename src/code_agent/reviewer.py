@@ -18,8 +18,10 @@ class Reviewer:
 
         solution_path = Path(agent_result["solution_path"])
         test_path = Path(agent_result["test_path"])
+        test_cases_path = Path(agent_result["test_cases_path"])
         solution = solution_path.read_text(encoding="utf-8")
         tests = test_path.read_text(encoding="utf-8")
+        test_cases = test_cases_path.read_text(encoding="utf-8")
         prompt = f"""Review this algorithm solution independently.
 
 Problem:
@@ -33,6 +35,11 @@ Solution:
 Locally generated tests:
 ```python
 {tests}
+```
+
+Authoritative input/output cases:
+```json
+{test_cases}
 ```
 
 Local test output:

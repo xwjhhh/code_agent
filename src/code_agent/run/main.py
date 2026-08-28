@@ -18,6 +18,7 @@ from code_agent.exceptions import ModelError
 from code_agent.models import LitellmModel
 from code_agent.reviewer import Reviewer
 from code_agent.storage import RunStorage
+from code_agent.test_cases import generate_test_cases, save_test_files, task_with_test_file
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -44,12 +45,15 @@ def main(argv: list[str] | None = None) -> int:
         max_retries=config["model"].get("max_retries", 3),
     )
     try:
+        test_cases = generate_test_cases(model, task)
+        save_test_files(workspace, task, test_cases, "generated")
         environment = LocalEnvironment(
             cwd=workspace,
             timeout=args.timeout or config["environment"].get("timeout", 30),
             bash_path=args.bash_path or config["environment"].get("bash_path"),
+            protected_files=["test_cases.json", "test_solution.py"],
         )
-    except FileNotFoundError as error:
+    except (FileNotFoundError, ModelError, OSError, ValueError) as error:
         raise SystemExit(str(error)) from error
     agent = DefaultAgent(
         model=model,
@@ -62,7 +66,8 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"Run: {run_id}")
     print(f"Workspace: {workspace}")
-    result = agent.run(task)
+    agent_task = task_with_test_file(task, len(test_cases))
+    result = agent.run(agent_task)
     review = None
     if result["status"] == "success" and result["verified"]:
         try:
@@ -114,6 +119,7 @@ def print_result(result: dict[str, Any], review: dict[str, Any] | None, storage:
     print(f"Local verification: {'PASS' if result['verified'] else 'NOT PASSED'}")
     print(f"Solution: {result['solution_path']}")
     print(f"Tests: {result['test_path']}")
+    print(f"Test cases: {result['test_cases_path']}")
     print(f"Trajectory: {storage.trajectory_path}")
     if review:
         print(f"Review: {storage.review_path}")

@@ -4,13 +4,14 @@ import json
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from code_agent import Environment, Model, __version__
 from code_agent.exceptions import FormatError, LimitsExceeded, ModelError
 
 TEST_COMMAND = "python -m pytest -q"
 SUBMISSION_COMMAND = "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"
+TEST_CASES_FILE = "test_cases.json"
 PASSED_TEST_PATTERN = re.compile(r"\b[1-9]\d* passed\b")
 
 
@@ -31,6 +32,7 @@ class DefaultAgent:
         task_template: str,
         step_limit: int = 20,
         output_path: str | Path | None = None,
+        event_callback: Callable[[str, dict[str, Any]], None] | None = None,
     ):
         self.config = AgentConfig(
             system_prompt=system_prompt,
@@ -46,9 +48,11 @@ class DefaultAgent:
         self.verified = False
         self.last_test_output = ""
         self.exit_status = "running"
+        self.event_callback = event_callback
 
     def run(self, task: str) -> dict[str, Any]:
         self._reset(task)
+        self._emit("agent_started", task=task)
         try:
             while self.exit_status == "running":
                 self.step()
@@ -56,8 +60,10 @@ class DefaultAgent:
             self._finish_from_flow(error, "max_steps")
         except ModelError as error:
             self.exit_status = "model_error"
+            self._emit("model_error", error=str(error))
             self.add_messages({"role": "exit", "content": str(error), "extra": {"exit_status": self.exit_status}})
         finally:
+            self._emit("agent_finished", status=self.exit_status, verified=self.verified)
             self.save()
         return self.result()
 
@@ -69,13 +75,16 @@ class DefaultAgent:
         if self.n_calls >= self.config.step_limit:
             raise LimitsExceeded()
         self.n_calls += 1
+        self._emit("model_thinking", step=self.n_calls)
         try:
             message = self.model.query(self.messages)
         except FormatError as error:
             self.add_messages(*error.messages)
             self.steps.append({"step": self.n_calls, "format_error": error.messages})
+            self._emit("model_error", step=self.n_calls, error=error.messages[0].get("content", ""))
             return {"role": "assistant", "content": "", "extra": {"actions": []}}
         self.add_messages(message)
+        self._emit("model_response", step=self.n_calls, content=message.get("content", ""), action_count=len(message.get("extra", {}).get("actions", [])))
         return message
 
     def execute_actions(self, message: dict[str, Any]) -> list[dict[str, Any]]:
@@ -89,8 +98,16 @@ class DefaultAgent:
             command = action["command"]
             if self.verified and command.strip() != SUBMISSION_COMMAND:
                 self.verified = False
+            self._emit("command_started", step=self.n_calls, command=command)
+            if command.strip() == TEST_COMMAND:
+                self._emit("test_started", step=self.n_calls, command=command)
             output = self.env.execute(action)
             outputs.append(output)
+            self._emit("command_finished", step=self.n_calls, command=command, output=output.get("output", ""), returncode=output.get("returncode", -1), exception_info=output.get("exception_info", ""))
+            if "solution.py" in command or "test_solution.py" in command:
+                changed = [name for name in ("solution.py", "test_solution.py") if name in command]
+                for filename in changed:
+                    self._emit("file_changed", step=self.n_calls, filename=filename)
             submitted = submitted or output.get("extra", {}).get("submitted", False)
             if command.strip() == TEST_COMMAND:
                 self.verified = (
@@ -99,6 +116,7 @@ class DefaultAgent:
                     and self._required_files_exist()
                 )
                 self.last_test_output = output["output"]
+                self._emit("test_passed" if self.verified else "test_failed", step=self.n_calls, output=output["output"], returncode=output["returncode"])
             self.steps.append({"step": self.n_calls, "action": action, "observation": output})
 
         observations = self.model.format_observation_messages(message, outputs)
@@ -113,6 +131,7 @@ class DefaultAgent:
     ) -> list[dict[str, Any]]:
         if self.verified:
             self.exit_status = "success"
+            self._emit("agent_submitted", step=self.n_calls)
             exit_message = {
                 "role": "exit",
                 "content": "Task completed after local tests passed.",
@@ -124,13 +143,22 @@ class DefaultAgent:
             role="user",
             content=(
                 "Submission rejected: local verification has not passed. "
-                "Create solution.py and test_solution.py, then run exactly "
+                "Create solution.py, preserve test_cases.json and test_solution.py, then run exactly "
                 "'python -m pytest -q' successfully before submitting."
             ),
             extra={"error_type": "UnverifiedSubmission"},
         )
         self.steps.append({"step": self.n_calls, "rejected_submission": True})
         return self.add_messages(rejection)
+
+    def _emit(self, event_type: str, **data: Any) -> None:
+        if self.event_callback is None:
+            return
+        try:
+            self.event_callback(event_type, {"step": self.n_calls, **data})
+        except Exception:
+            # Observability must never break the coding loop.
+            pass
 
     def _reset(self, task: str) -> None:
         self.messages = []
@@ -158,7 +186,7 @@ class DefaultAgent:
     def _required_files_exist(self) -> bool:
         environment = self.env.serialize().get("environment", {})
         workspace = Path(environment.get("cwd", "."))
-        return (workspace / "solution.py").is_file() and (workspace / "test_solution.py").is_file()
+        return all((workspace / name).is_file() for name in ("solution.py", "test_solution.py", TEST_CASES_FILE))
 
     def result(self) -> dict[str, Any]:
         environment = self.env.serialize().get("environment", {})
@@ -170,6 +198,7 @@ class DefaultAgent:
             "workspace": str(workspace),
             "solution_path": str(workspace / "solution.py"),
             "test_path": str(workspace / "test_solution.py"),
+            "test_cases_path": str(workspace / TEST_CASES_FILE),
             "last_test_output": self.last_test_output,
             "messages": self.messages,
             "steps": self.steps,

@@ -16,6 +16,7 @@ class LocalEnvironmentConfig:
     timeout: int = 30
     bash_path: str | None = None
     env: dict[str, str] = field(default_factory=dict)
+    protected_files: list[str] = field(default_factory=list)
 
 
 class LocalEnvironment:
@@ -25,11 +26,17 @@ class LocalEnvironment:
         timeout: int = 30,
         bash_path: str | None = None,
         env: dict[str, str] | None = None,
+        protected_files: list[str] | None = None,
     ):
         workspace = Path(cwd).resolve()
         workspace.mkdir(parents=True, exist_ok=True)
-        self.config = LocalEnvironmentConfig(workspace, timeout, bash_path, env or {})
+        self.config = LocalEnvironmentConfig(workspace, timeout, bash_path, env or {}, protected_files or [])
         self.bash_path = resolve_bash_path(bash_path)
+        self._protected_contents = {
+            name: (workspace / name).read_bytes()
+            for name in self.config.protected_files
+            if (workspace / name).is_file()
+        }
 
     def execute(self, action: dict[str, Any]) -> dict[str, Any]:
         command = action.get("command", "")
@@ -49,7 +56,14 @@ class LocalEnvironment:
             combined_output = completed.stdout
             if completed.stderr:
                 combined_output += ("\n" if combined_output else "") + completed.stderr
-            output = {"output": combined_output, "returncode": completed.returncode, "exception_info": ""}
+            changed = self._restore_protected_files()
+            returncode = completed.returncode
+            exception_info = ""
+            if changed:
+                returncode = -1
+                exception_info = f"Protected test files cannot be modified: {', '.join(changed)}"
+                combined_output += ("\n" if combined_output else "") + exception_info
+            output = {"output": combined_output, "returncode": returncode, "exception_info": exception_info}
             if command.strip() == SUBMISSION_COMMAND and completed.returncode == 0:
                 output["extra"] = {"submitted": True}
             return output
@@ -74,6 +88,16 @@ class LocalEnvironment:
         config["env"] = sorted(config["env"])
         return {"environment": config, "environment_type": type(self).__name__}
 
+    def _restore_protected_files(self) -> list[str]:
+        changed = []
+        for name, expected in self._protected_contents.items():
+            path = self.config.cwd / name
+            current = path.read_bytes() if path.is_file() else None
+            if current != expected:
+                path.write_bytes(expected)
+                changed.append(name)
+        return changed
+
 
 def resolve_bash_path(configured_path: str | None = None) -> str:
     candidates = [
@@ -82,6 +106,8 @@ def resolve_bash_path(configured_path: str | None = None) -> str:
         r"C:\Program Files\Git\bin\bash.exe",
         r"C:\Program Files\Git\usr\bin\bash.exe",
         r"C:\Program Files (x86)\Git\bin\bash.exe",
+        r"D:\software\Git\bin\bash.exe",
+        r"D:\software\Git\usr\bin\bash.exe",
         str(Path(os.getenv("LOCALAPPDATA", "")) / "Programs" / "Git" / "bin" / "bash.exe")
         if os.getenv("LOCALAPPDATA")
         else None,

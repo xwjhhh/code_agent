@@ -15,13 +15,16 @@ class FakeReviewModel:
 def test_reviewer_reads_verified_files(tmp_path: Path):
     solution = tmp_path / "solution.py"
     tests = tmp_path / "test_solution.py"
+    cases = tmp_path / "test_cases.json"
     solution.write_text("def solve(): return 1", encoding="utf-8")
     tests.write_text("def test_solve(): assert solve() == 1", encoding="utf-8")
+    cases.write_text('{"cases": [{"input": "x", "expected_output": "1"}]}', encoding="utf-8")
     result = {
         "status": "success",
         "verified": True,
         "solution_path": str(solution),
         "test_path": str(tests),
+        "test_cases_path": str(cases),
         "last_test_output": "1 passed",
     }
 

@@ -59,18 +59,27 @@ class LitellmModel:
         return message
 
     def query_text(self, messages: list[dict[str, Any]], **kwargs: Any) -> str:
-        """Run a normal model call without tools, used by the reviewer."""
+        """Run a normal model call without tools for tests and review."""
         try:
             import litellm
         except ImportError as error:
             raise ModelError("LiteLLM is not installed. Run 'pip install -e .' first.") from error
 
-        response = litellm.completion(
-            model=self.config.model_name,
-            messages=messages,
-            **(self.config.model_kwargs | kwargs),
-        )
-        return response.choices[0].message.content or ""
+        last_error: Exception | None = None
+        for attempt in range(self.config.max_retries):
+            try:
+                response = litellm.completion(
+                    model=self.config.model_name,
+                    messages=messages,
+                    **(self.config.model_kwargs | kwargs),
+                )
+            except Exception as error:
+                last_error = error
+                if attempt + 1 < self.config.max_retries:
+                    time.sleep(2**attempt)
+            else:
+                return response.choices[0].message.content or ""
+        raise ModelError(f"Model request failed after {self.config.max_retries} attempts: {last_error}") from last_error
 
     def format_message(self, **kwargs: Any) -> dict[str, Any]:
         return dict(kwargs)

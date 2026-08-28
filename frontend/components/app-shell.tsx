@@ -2,15 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, ChevronRight, Clock3, FileCode2, LayoutDashboard, Plus, Settings2, TerminalSquare } from "lucide-react";
+import { Activity, ChevronRight, Clock3, LayoutDashboard, Plus, TerminalSquare } from "lucide-react";
+import { useEffect, useState } from "react";
+import { checkApi } from "@/lib/api";
 
-const nav = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/task/new", label: "New task", icon: Plus },
-];
-
-export function AppShell({ children, breadcrumb = "Dashboard" }: { children: React.ReactNode; breadcrumb?: string }) {
+export function AppShell({ children, breadcrumb = "控制台" }: { children: React.ReactNode; breadcrumb?: string }) {
   const pathname = usePathname();
+  const [connected, setConnected] = useState(false);
+  const runMatch = pathname.match(/^\/(?:run|history)\/([^/]+)/);
+  const currentRunId = runMatch?.[1];
+
+  useEffect(() => {
+    let active = true;
+    void checkApi().then((result) => {
+      if (active) setConnected(result);
+    });
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -18,28 +29,30 @@ export function AppShell({ children, breadcrumb = "Dashboard" }: { children: Rea
           <span className="brand-mark">&gt;_</span>
           <span className="brand-copy"><span className="brand-name">Code Agent</span><span className="brand-sub">local runtime / v0.1</span></span>
         </Link>
-        <div className="nav-label">Workspace</div>
+        <div className="nav-label">工作区</div>
         <nav className="nav-list">
-          {nav.map((item) => {
-            const Icon = item.icon;
-            const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-            return <Link href={item.href} className={`nav-item ${active ? "active" : ""}`} key={item.href}><Icon /><span>{item.label}</span>{item.href === "/task/new" && <span className="nav-count">N</span>}</Link>;
-          })}
-          <Link href="/history/run_01HZX2" className={`nav-item ${pathname.startsWith("/history") ? "active" : ""}`}><Clock3 /><span>History</span><span className="nav-count">12</span></Link>
+          <Link href="/" className={"nav-item " + (pathname === "/" ? "active" : "")}><LayoutDashboard /><span>控制台</span></Link>
+          <Link href="/task/new" className={"nav-item " + (pathname.startsWith("/task/new") ? "active" : "")}><Plus /><span>新建任务</span></Link>
+          <Link href="/" className={"nav-item " + (pathname.startsWith("/history") ? "active" : "")}><Clock3 /><span>历史运行</span></Link>
         </nav>
-        <div className="nav-label" style={{ marginTop: 25 }}>Runtime</div>
+        <div className="nav-label" style={{ marginTop: 25 }}>运行时</div>
         <nav className="nav-list">
-          <Link href="/run/run_01HZX2" className={`nav-item ${pathname.startsWith("/run") ? "active" : ""}`}><TerminalSquare /><span>Active run</span><span className="nav-count">1</span></Link>
-          <button className="nav-item" type="button"><Settings2 /><span>Settings</span></button>
+          <Link href={currentRunId ? "/run/" + currentRunId : "/task/new"} className={"nav-item " + (pathname.startsWith("/run") ? "active" : "")}><TerminalSquare /><span>{currentRunId ? "当前运行" : "启动任务"}</span></Link>
         </nav>
         <div className="sidebar-spacer" />
-        <div className="runtime-card"><div className="runtime-row"><span className="status-dot" /> Local runtime online</div><div className="runtime-meta">Git Bash / Python 3.11.9</div></div>
-        <div className="profile"><div className="avatar">XW</div><div><div className="profile-name">xwjhhh</div><div className="profile-role">Developer</div></div><ChevronRight style={{ marginLeft: "auto", width: 13, color: "var(--dim)" }} /></div>
+        <div className="runtime-card">
+          <div className="runtime-row"><span className={"status-dot " + (connected ? "" : "red")} /> FastAPI {connected ? "在线" : "未连接"}</div>
+          <div className="runtime-meta">Git Bash / Python</div>
+        </div>
+        <div className="profile"><div className="avatar">XW</div><div><div className="profile-name">xwjhhh</div><div className="profile-role">开发者</div></div><ChevronRight style={{ marginLeft: "auto", width: 13, color: "var(--dim)" }} /></div>
       </aside>
       <div className="main-area">
         <header className="topbar">
           <div className="breadcrumb"><span>Code Agent</span><ChevronRight /><strong>{breadcrumb}</strong></div>
-          <div className="top-actions"><div className="connection"><span className="status-dot" /> API connected</div><button className="icon-button" type="button" title="Activity log"><Activity /></button></div>
+          <div className="top-actions">
+            <div className="connection"><span className={"status-dot " + (connected ? "" : "red")} /> 接口{connected ? "已连接" : "未连接"}</div>
+            <Link className="icon-button" href="/" title="运行活动"><Activity /></Link>
+          </div>
         </header>
         {children}
       </div>

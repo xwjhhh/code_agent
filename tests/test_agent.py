@@ -55,6 +55,7 @@ def action(command: str, call_id: str) -> dict:
 def test_agent_requires_test_pass_before_submission(tmp_path: Path):
     (tmp_path / "solution.py").write_text("def answer(): return 1", encoding="utf-8")
     (tmp_path / "test_solution.py").write_text("def test_answer(): assert True", encoding="utf-8")
+    (tmp_path / "test_cases.json").write_text('{"cases": []}', encoding="utf-8")
     model = FakeModel(
         [
             action("echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT", "submit-1"),
@@ -80,6 +81,7 @@ def test_agent_requires_test_pass_before_submission(tmp_path: Path):
 def test_agent_marks_failed_test_as_unverified(tmp_path: Path):
     (tmp_path / "solution.py").write_text("def answer(): return 1", encoding="utf-8")
     (tmp_path / "test_solution.py").write_text("def test_answer(): assert False", encoding="utf-8")
+    (tmp_path / "test_cases.json").write_text('{"cases": []}', encoding="utf-8")
     model = FakeModel([action("python -m pytest -q", "test-1")])
     agent = DefaultAgent(
         model,

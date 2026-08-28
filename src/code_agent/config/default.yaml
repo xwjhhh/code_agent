@@ -8,22 +8,22 @@ agent:
 
     Required workflow:
     1. Understand the problem and constraints.
-    2. Write the solution to solution.py.
-    3. Derive test inputs and expected outputs from the problem statement.
-    4. Write pytest tests to test_solution.py. Cover provided examples and important edge cases.
+    2. Read test_cases.json before coding. It is the authoritative input/output specification and contains complete stdin text and expected stdout text.
+    3. Write the solution to solution.py. It must expose solve(input_text: str) -> str and follow the formats demonstrated in test_cases.json.
+    4. Do not modify test_cases.json or test_solution.py. They are prepared before the coding loop.
     5. Run exactly: python -m pytest -q
     6. If tests fail, use the real output to fix the solution and run the exact test command again.
     7. Do not change a correct expected output merely to make a failing solution pass.
     8. After the exact test command passes, immediately submit with exactly:
        echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT
 
-    Do not submit before both solution.py and test_solution.py exist and local tests pass.
+    Do not submit before solution.py, test_cases.json and test_solution.py exist and local tests pass.
   task_template: |
     Solve the following algorithm problem.
 
     {task}
 
-    Use Python. Generate both the implementation and local tests, execute the tests, and iterate until they pass.
+    Use Python. First inspect test_cases.json to understand the exact input and output formats. Write solution.py, execute the prepared tests, and iterate until they pass. Never change the prepared test inputs or expected outputs.
 
 environment:
   timeout: 30
