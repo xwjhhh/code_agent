@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 
 from code_agent.agents import DefaultAgent
 from code_agent.environments import LocalEnvironment
-from code_agent.models import LitellmModel
+from code_agent.models import LitellmModel, resolve_api_key
 from code_agent.reviewer import Reviewer
 from code_agent.run.main import create_run_id
 from code_agent.storage import RunStorage
@@ -252,6 +252,9 @@ def _build_model(model_name: str, config: dict[str, Any]) -> LitellmModel:
     api_base = os.getenv("OPENAI_API_BASE") or os.getenv("OPENAI_BASE_URL")
     if api_base:
         model_kwargs["api_base"] = api_base
+    api_key = resolve_api_key(model_name)
+    if api_key:
+        model_kwargs["api_key"] = api_key
     return LitellmModel(model_name=model_name, model_kwargs=model_kwargs, max_retries=config["model"].get("max_retries", 3))
 
 

@@ -3,7 +3,7 @@ import json
 from fastapi.testclient import TestClient
 
 import code_agent.api as api_module
-from code_agent.api import RUNS, RUNS_LOCK, RunState, app
+from code_agent.api import RUNS, RUNS_LOCK, RunState, _build_model, app
 from code_agent.storage import RunStorage
 from code_agent.test_cases import task_with_test_file
 
@@ -39,7 +39,7 @@ def test_test_file_is_described_to_coding_agent():
 
 
 def test_generate_test_cases_endpoint_uses_selected_model(monkeypatch):
-    model_name = "openai/Pro/zai-org/GLM-5.1"
+    model_name = "openai/zai-org/GLM-5.2"
     monkeypatch.setattr(api_module, "_build_model", lambda selected_model, config: StaticTextModel())
 
     response = TestClient(app).post(
@@ -52,6 +52,28 @@ def test_generate_test_cases_endpoint_uses_selected_model(monkeypatch):
     assert payload["source"] == "generated"
     assert len(payload["cases"]) == 2
     assert payload["cases"][0]["input"] == "a1b2"
+
+
+def test_siliconflow_deepseek_model_uses_dedicated_key(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "glm-test-key")
+    monkeypatch.setenv("SILICONFLOW_DEEPSEEK_API_KEY", "deepseek-test-key")
+    monkeypatch.setenv("OPENAI_API_BASE", "https://api.siliconflow.cn/v1")
+    config = {"model": {"max_retries": 3, "model_kwargs": {"drop_params": True}}}
+
+    model = _build_model("openai/deepseek-ai/DeepSeek-V4-Pro", config)
+
+    assert model.config.model_kwargs["api_key"] == "deepseek-test-key"
+    assert model.config.model_kwargs["api_base"] == "https://api.siliconflow.cn/v1"
+
+
+def test_siliconflow_glm_model_uses_default_key(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "glm-test-key")
+    monkeypatch.setenv("SILICONFLOW_DEEPSEEK_API_KEY", "deepseek-test-key")
+    config = {"model": {"max_retries": 3, "model_kwargs": {"drop_params": True}}}
+
+    model = _build_model("openai/zai-org/GLM-5.2", config)
+
+    assert model.config.model_kwargs["api_key"] == "glm-test-key"
 
 
 def test_generate_test_cases_endpoint_requires_model_name():

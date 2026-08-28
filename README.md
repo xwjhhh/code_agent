@@ -32,16 +32,19 @@
 python -m pip install -e .
 ```
 
-硅基流动凭据只放在 Windows 环境变量和未入库的 `.env` 中。假设系统变量名为 `glm_api`，项目根目录的 `.env` 写为：
+硅基流动凭据只放在 Windows 环境变量和未入库的 `.env` 中。假设系统变量名为 `glm_api` 和 `deepseek_api`，项目根目录的 `.env` 写为：
 
 ```text
 OPENAI_API_KEY=${GLM_API}
+SILICONFLOW_DEEPSEEK_API_KEY=${DEEPSEEK_API}
 OPENAI_API_BASE=https://api.siliconflow.cn/v1
-CODE_AGENT_MODEL=openai/Pro/zai-org/GLM-5.1
+CODE_AGENT_MODEL=openai/zai-org/GLM-5.2
 CODE_AGENT_BASH_PATH=C:\Program Files\Git\bin\bash.exe
 ```
 
-Windows 环境变量查找不区分大小写，所以系统设置中的 `glm_api` 可以由 `.env` 通过 `${GLM_API}` 引用。不要把真实 Key 写入仓库或前端代码。
+Windows 环境变量查找不区分大小写，所以系统设置中的 `glm_api` 和 `deepseek_api` 可分别由 `.env` 通过 `${GLM_API}` 与 `${DEEPSEEK_API}` 引用。不要把真实 Key 写入仓库或前端代码。
+
+当前前端可选的硅基流动模型包括：`GLM-5.2`、`DeepSeek V4 Pro`、`GLM-5.1` 和 `DeepSeek V3.2 Pro`。DeepSeek 选项仍调用 `https://api.siliconflow.cn/v1`，不会路由到 DeepSeek 官方接口。
 
 ## 启动 Web 应用
 

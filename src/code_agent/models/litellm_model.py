@@ -1,11 +1,18 @@
 """LiteLLM-backed model adapter."""
 
+import os
 import time
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from code_agent.exceptions import ModelError
 from code_agent.models.utils.actions import BASH_TOOL, format_observation_messages, parse_tool_calls
+
+
+def resolve_api_key(model_name: str) -> str | None:
+    if "/deepseek-ai/" in model_name.casefold():
+        return os.getenv("SILICONFLOW_DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
+    return os.getenv("OPENAI_API_KEY")
 
 
 @dataclass

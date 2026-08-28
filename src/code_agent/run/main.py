@@ -15,7 +15,7 @@ from code_agent import package_dir
 from code_agent.agents import DefaultAgent
 from code_agent.environments import LocalEnvironment
 from code_agent.exceptions import ModelError
-from code_agent.models import LitellmModel
+from code_agent.models import LitellmModel, resolve_api_key
 from code_agent.reviewer import Reviewer
 from code_agent.storage import RunStorage
 from code_agent.test_cases import generate_test_cases, save_test_files, task_with_test_file
@@ -40,6 +40,9 @@ def main(argv: list[str] | None = None) -> int:
     api_base = args.base_url or os.getenv("OPENAI_API_BASE") or os.getenv("OPENAI_BASE_URL")
     if api_base:
         model_kwargs["api_base"] = api_base
+    api_key = resolve_api_key(model_name)
+    if api_key:
+        model_kwargs["api_key"] = api_key
     model = LitellmModel(
         model_name=model_name,
         model_kwargs=model_kwargs,
