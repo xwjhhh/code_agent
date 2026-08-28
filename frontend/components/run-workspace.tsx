@@ -78,8 +78,12 @@ export function RunWorkspace() {
 
     const handleEvent = (type: string, data: Record<string, unknown>) => {
       const timestamp = typeof data._timestamp === "string" ? data._timestamp : new Date().toISOString();
-      const event: RunEvent = { type, data, timestamp };
-      setEvents((items) => [...items, event]);
+      const sequence = typeof data._sequence === "number" ? data._sequence : undefined;
+      const event: RunEvent = { sequence, type, data, timestamp };
+      setEvents((items) => {
+        if (sequence !== undefined && items.some((item) => item.sequence === sequence)) return items;
+        return [...items, event];
+      });
 
       if (type === "test_cases_ready") {
         setTestCases((Array.isArray(data.cases) ? data.cases : []) as TestCase[]);
@@ -108,6 +112,11 @@ export function RunWorkspace() {
         setReview(nextReview?.content ?? "");
         setReviewLoading(false);
         setStatus("passed");
+      }
+      if (type === "run_finished") {
+        source?.close();
+        setStatus(data.verified ? "passed" : "failed");
+        void refreshFiles();
       }
       if (type === "model_error" || type === "run_error") {
         setStatus("failed");

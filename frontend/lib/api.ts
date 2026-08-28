@@ -1,6 +1,6 @@
 export type ManualCase = { name?: string; input: string; expected_output: string };
 export type TestCase = ManualCase & { name: string; source?: string };
-export type RunEvent = { type: string; data: Record<string, unknown>; timestamp: string };
+export type RunEvent = { sequence?: number; type: string; data: Record<string, unknown>; timestamp: string };
 export type ApiRun = {
   run_id: string;
   task: string;

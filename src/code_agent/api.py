@@ -17,7 +17,7 @@ from typing import Any, Iterator
 
 import yaml
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -74,12 +74,13 @@ class RunState:
     test_case_source: str = "manual"
 
     def emit(self, event_type: str, data: dict[str, Any]) -> None:
-        event = {
-            "type": event_type,
-            "data": data,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        }
         with self.condition:
+            event = {
+                "sequence": len(self.events),
+                "type": event_type,
+                "data": data,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
             self.events.append(event)
             self.condition.notify_all()
 
@@ -153,11 +154,17 @@ def get_files(run_id: str) -> dict[str, str]:
 
 
 @app.get("/api/runs/{run_id}/events")
-def stream_events(run_id: str, cursor: int = 0) -> StreamingResponse:
+def stream_events(
+    run_id: str,
+    cursor: int = 0,
+    last_event_id: str | None = Header(default=None),
+) -> StreamingResponse:
     state = _get_state(run_id)
 
     def generate() -> Iterator[str]:
-        position = max(0, min(cursor, len(state.events)))
+        reconnect_cursor = _next_event_position(last_event_id)
+        position = max(cursor, reconnect_cursor)
+        position = max(0, min(position, len(state.events)))
         while True:
             with state.condition:
                 while position >= len(state.events) and not state.done:
@@ -166,8 +173,16 @@ def stream_events(run_id: str, cursor: int = 0) -> StreamingResponse:
                 position = len(state.events)
                 finished = state.done and not pending
             for event in pending:
-                payload = {**event["data"], "_timestamp": event["timestamp"]}
-                yield f"event: {event['type']}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+                payload = {
+                    **event["data"],
+                    "_sequence": event["sequence"],
+                    "_timestamp": event["timestamp"],
+                }
+                yield (
+                    f"id: {event['sequence']}\n"
+                    f"event: {event['type']}\n"
+                    f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+                )
             if finished:
                 break
 
@@ -222,6 +237,15 @@ def _run_agent(state: RunState, request: RunRequest) -> None:
         state.error = str(error)
         state.emit("run_error", {"error": state.error})
     finally:
+        verified = bool(state.result and state.result.get("verified"))
+        state.emit(
+            "run_finished",
+            {
+                "status": "error" if state.error else "completed",
+                "verified": verified,
+                "error": state.error or "",
+            },
+        )
         with state.condition:
             state.done = True
             state.condition.notify_all()
@@ -268,6 +292,15 @@ def _read_file(path: Path) -> str:
         return path.read_text(encoding="utf-8")
     except FileNotFoundError:
         return ""
+
+
+def _next_event_position(last_event_id: str | None) -> int:
+    if last_event_id is None:
+        return 0
+    try:
+        return int(last_event_id) + 1
+    except ValueError:
+        return 0
 
 
 if __name__ == "__main__":

@@ -16,6 +16,7 @@ export const RUN_EVENT_TYPES = [
   "agent_finished",
   "review_started",
   "review_finished",
+  "run_finished",
   "model_error",
   "run_error",
 ] as const;
@@ -35,6 +36,7 @@ const eventLabels: Record<string, string> = {
   agent_finished: "智能体循环结束",
   review_started: "开始代码评审",
   review_finished: "代码评审完成",
+  run_finished: "本次运行结束",
   model_error: "模型调用错误",
   run_error: "运行错误",
 };
