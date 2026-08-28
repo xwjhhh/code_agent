@@ -51,10 +51,10 @@ export function RunHistory() {
         </div>
         <button className="secondary-button" type="button" onClick={() => void load()} disabled={loading}><RefreshCw className={loading ? "spin" : ""} /> 刷新</button>
       </div>
-      {error && <div className="callout" style={{ marginBottom: 18, borderColor: "var(--red)", background: "var(--red-soft)", color: "#efabab" }}><CircleAlert style={{ width: 13, verticalAlign: "middle", marginRight: 6 }} />{error}</div>}
+      {error && <div className="callout" style={{ marginBottom: 18, borderColor: "var(--red)", background: "var(--red-soft)", color: "var(--red)" }}><CircleAlert style={{ width: 13, verticalAlign: "middle", marginRight: 6 }} />{error}</div>}
       <div className="section-heading"><div className="section-title">全部运行</div><span className="muted-link">{loading ? "加载中..." : `${runs.length} 条记录`}</span></div>
       <div className="runs-table history-runs-table">
-        <div className="run-row" style={{ minHeight: 39, background: "#111415", color: "var(--dim)", fontSize: 10 }}><div>题目</div><div>状态</div><div>模型</div><div>调用</div><div>创建时间</div><div /></div>
+        <div className="run-row table-header"><div>题目</div><div>状态</div><div>模型</div><div>调用</div><div>创建时间</div><div /></div>
         {runs.map((run) => {
           const status = runStatus(run);
           return <Link href={`/history/${run.run_id}`} className="run-row" key={run.run_id}>
@@ -69,7 +69,7 @@ export function RunHistory() {
             <span className="row-chevron"><ChevronRight /></span>
           </Link>;
         })}
-        {!loading && !runs.length && <div style={{ padding: 36, textAlign: "center", color: "var(--muted)" }}><Clock3 style={{ width: 16, verticalAlign: "middle", marginRight: 7 }} />暂无运行记录。<Link href="/task/new" style={{ color: "var(--green)", marginLeft: 6 }}>创建任务</Link></div>}
+        {!loading && !runs.length && <div style={{ padding: 36, textAlign: "center", color: "var(--muted)" }}><Clock3 style={{ width: 16, verticalAlign: "middle", marginRight: 7 }} />暂无运行记录。<Link href="/task/new" style={{ color: "var(--blue)", marginLeft: 6 }}>创建任务</Link></div>}
       </div>
     </main>
   </AppShell>;

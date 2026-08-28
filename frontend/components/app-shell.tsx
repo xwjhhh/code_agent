@@ -26,8 +26,8 @@ export function AppShell({ children, breadcrumb = "控制台" }: { children: Rea
     <div className="app-shell">
       <aside className="sidebar">
         <Link href="/" className="brand">
-          <span className="brand-mark">&gt;_</span>
-          <span className="brand-copy"><span className="brand-name">Code Agent</span><span className="brand-sub">local runtime / v0.1</span></span>
+          <span className="brand-mark">CA</span>
+          <span className="brand-copy"><span className="brand-name">Code Agent</span><span className="brand-sub">LOCAL AI WORKSPACE</span></span>
         </Link>
         <div className="nav-label">工作区</div>
         <nav className="nav-list">
@@ -44,7 +44,7 @@ export function AppShell({ children, breadcrumb = "控制台" }: { children: Rea
           <div className="runtime-row"><span className={"status-dot " + (connected ? "" : "red")} /> FastAPI {connected ? "在线" : "未连接"}</div>
           <div className="runtime-meta">Git Bash / Python</div>
         </div>
-        <div className="profile"><div className="avatar">XW</div><div><div className="profile-name">xwjhhh</div><div className="profile-role">开发者</div></div><ChevronRight style={{ marginLeft: "auto", width: 13, color: "var(--dim)" }} /></div>
+        <div className="profile"><div className="avatar">CA</div><div><div className="profile-name">本地工作区</div><div className="profile-role">双盲演示模式</div></div><ChevronRight style={{ marginLeft: "auto", width: 13, color: "var(--dim)" }} /></div>
       </aside>
       <div className="main-area">
         <header className="topbar">

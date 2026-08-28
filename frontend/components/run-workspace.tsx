@@ -163,7 +163,7 @@ export function RunWorkspace() {
         <Link className="secondary-button" href={"/history/" + runId}><CircleStop /><span>查看运行详情</span></Link>
       </div>
     </div>
-    {error && <div className="callout" style={{ margin: 16, borderColor: "var(--red)", background: "var(--red-soft)", color: "#efabab" }}>{error}</div>}
+    {error && <div className="callout" style={{ margin: 16, borderColor: "var(--red)", background: "var(--red-soft)", color: "var(--red)" }}>{error}</div>}
     <div className="workspace-grid">
       <ProblemPanel task={task} model={model} cases={testCases} source={testSource} />
       <section className="workspace-center">

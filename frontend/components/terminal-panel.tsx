@@ -10,6 +10,8 @@ export function TerminalPanel({ outputs = [] }: { outputs?: string[] }) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstance = useRef<TerminalLike | null>(null);
   const outputCount = useRef(0);
+  const latestOutputs = useRef(outputs);
+  latestOutputs.current = outputs;
 
   useEffect(() => {
     let disposed = false;
@@ -22,15 +24,15 @@ export function TerminalPanel({ outputs = [] }: { outputs?: string[] }) {
         disableStdin: true,
         fontFamily: "JetBrains Mono, Consolas, monospace",
         fontSize: 11,
-        theme: { background: "#0b0d0e", foreground: "#8da19a", green: "#62d39a", red: "#f07c7c" },
+        theme: { background: "#0d1117", foreground: "#a7b2c1", green: "#4fd39a", red: "#ff7b7b" },
       });
       const fit = new fitModule.FitAddon();
       terminal.loadAddon(fit);
       terminal.open(terminalRef.current);
       fit.fit();
       terminalInstance.current = terminal;
-      outputs.forEach((output) => output.split("\n").forEach((line) => terminal.writeln(line)));
-      outputCount.current = outputs.length;
+      latestOutputs.current.forEach((output) => output.split("\n").forEach((line) => terminal.writeln(line)));
+      outputCount.current = latestOutputs.current.length;
       const observer = new ResizeObserver(() => fit.fit());
       observer.observe(terminalRef.current);
       cleanup = () => {

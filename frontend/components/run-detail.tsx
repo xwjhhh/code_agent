@@ -70,7 +70,7 @@ export function RunDetail() {
 
   return <AppShell breadcrumb="运行详情">
     <main className="page">
-      {error && <div className="callout" style={{ marginBottom: 17, borderColor: "var(--red)", background: "var(--red-soft)", color: "#efabab" }}>{error}</div>}
+      {error && <div className="callout" style={{ marginBottom: 17, borderColor: "var(--red)", background: "var(--red-soft)", color: "var(--red)" }}>{error}</div>}
       <div className="page-header">
         <div>
           <Link href="/" className="muted-link"><ArrowLeft style={{ width: 12, verticalAlign: "middle", marginRight: 5 }} /> 全部运行</Link>
