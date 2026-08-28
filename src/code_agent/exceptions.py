@@ -21,3 +21,7 @@ class LimitsExceeded(AgentFlowError):
 
 class ModelError(Exception):
     """The model request failed after retries."""
+
+
+class MemoryServiceError(Exception):
+    """A memory extraction, embedding, retrieval, or persistence operation failed."""

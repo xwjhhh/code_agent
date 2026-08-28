@@ -16,6 +16,12 @@ export const RUN_EVENT_TYPES = [
   "agent_finished",
   "review_started",
   "review_finished",
+  "memory_retrieval_started",
+  "memory_retrieval_finished",
+  "memory_context_injected",
+  "memory_learning_started",
+  "memory_learning_finished",
+  "memory_error",
   "run_finished",
   "model_error",
   "run_error",
@@ -36,6 +42,12 @@ const eventLabels: Record<string, string> = {
   agent_finished: "智能体循环结束",
   review_started: "开始代码评审",
   review_finished: "代码评审完成",
+  memory_retrieval_started: "开始记忆检索",
+  memory_retrieval_finished: "记忆检索完成",
+  memory_context_injected: "经验已注入模型",
+  memory_learning_started: "开始提炼经验",
+  memory_learning_finished: "经验已持久化",
+  memory_error: "记忆服务错误",
   run_finished: "本次运行结束",
   model_error: "模型调用错误",
   run_error: "运行错误",
@@ -68,6 +80,18 @@ export function toTraceEvent(event: RunEvent, index: number): TraceEvent {
     summary = "本地测试通过，进入独立评审";
   } else if (type === "review_finished") {
     summary = "评审意见已保存";
+  } else if (type === "memory_retrieval_started") {
+    summary = `${data.phase === "recovery" ? "失败恢复" : "任务"}记忆检索中`;
+  } else if (type === "memory_retrieval_finished") {
+    summary = `召回 ${data.candidate_count ?? 0} 条候选，选中 ${Array.isArray(data.selected) ? data.selected.length : 0} 条`;
+  } else if (type === "memory_context_injected") {
+    summary = `${data.phase === "recovery" ? "恢复" : "任务"}经验已加入模型上下文`;
+  } else if (type === "memory_learning_started") {
+    summary = "从已验证运行中提炼可复用经验";
+  } else if (type === "memory_learning_finished") {
+    summary = `提炼 ${data.extracted_count ?? 0} 条，新增 ${data.stored_count ?? 0} 条记忆`;
+  } else if (type === "memory_error") {
+    summary = String(data.error ?? "记忆服务不可用");
   } else if (!summary) {
     summary = eventLabels[type] ?? type;
   }

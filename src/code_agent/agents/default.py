@@ -33,6 +33,8 @@ class DefaultAgent:
         step_limit: int = 20,
         output_path: str | Path | None = None,
         event_callback: Callable[[str, dict[str, Any]], None] | None = None,
+        memory_context: str | None = None,
+        recovery_context_provider: Callable[[str, str, list[dict[str, Any]]], str] | None = None,
     ):
         self.config = AgentConfig(
             system_prompt=system_prompt,
@@ -49,6 +51,9 @@ class DefaultAgent:
         self.last_test_output = ""
         self.exit_status = "running"
         self.event_callback = event_callback
+        self.memory_context = (memory_context or "").strip()
+        self.recovery_context_provider = recovery_context_provider
+        self.current_task = ""
 
     def run(self, task: str) -> dict[str, Any]:
         self._reset(task)
@@ -94,6 +99,7 @@ class DefaultAgent:
 
         outputs = []
         submitted = False
+        test_failed = False
         for action in actions:
             command = action["command"]
             if self.verified and command.strip() != SUBMISSION_COMMAND:
@@ -116,11 +122,21 @@ class DefaultAgent:
                     and self._required_files_exist()
                 )
                 self.last_test_output = output["output"]
+                test_failed = not self.verified
                 self._emit("test_passed" if self.verified else "test_failed", step=self.n_calls, output=output["output"], returncode=output["returncode"])
             self.steps.append({"step": self.n_calls, "action": action, "observation": output})
 
         observations = self.model.format_observation_messages(message, outputs)
         result_messages = self.add_messages(*observations)
+        if test_failed:
+            recovery_context = self._recovery_memory_context()
+            if recovery_context:
+                result_messages.extend(
+                    self.add_messages(
+                        self.model.format_message(role="user", content=recovery_context, extra={"memory_phase": "recovery"})
+                    )
+                )
+                self._emit("memory_context_injected", phase="recovery")
         if submitted:
             result_messages.extend(self._handle_submission(message))
         return result_messages
@@ -167,10 +183,23 @@ class DefaultAgent:
         self.verified = False
         self.last_test_output = ""
         self.exit_status = "running"
+        self.current_task = task
         self.add_messages(
             self.model.format_message(role="system", content=self.config.system_prompt),
             self.model.format_message(role="user", content=self.config.task_template.format(task=task)),
         )
+        if self.memory_context:
+            self.add_messages(self.model.format_message(role="user", content=self.memory_context, extra={"memory_phase": "task"}))
+            self._emit("memory_context_injected", phase="task")
+
+    def _recovery_memory_context(self) -> str:
+        if self.recovery_context_provider is None:
+            return ""
+        try:
+            return self.recovery_context_provider(self.current_task, self.last_test_output, list(self.steps)).strip()
+        except Exception as error:
+            self._emit("memory_error", phase="recovery", error=str(error))
+            return ""
 
     def _finish_from_flow(self, error: LimitsExceeded, status: str) -> None:
         self.exit_status = status

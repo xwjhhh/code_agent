@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 
 from code_agent.agents import DefaultAgent
 from code_agent.environments import LocalEnvironment
+from code_agent.memory import MemoryManager, build_memory_manager
 from code_agent.models import LitellmModel, resolve_api_key
 from code_agent.reviewer import Reviewer
 from code_agent.run.main import create_run_id
@@ -68,6 +69,7 @@ class RunState:
     error: str | None = None
     test_cases: list[dict[str, str]] = field(default_factory=list)
     test_case_source: str = "manual"
+    memory: dict[str, Any] = field(default_factory=dict)
 
     def emit(self, event_type: str, data: dict[str, Any]) -> None:
         with self.condition:
@@ -120,6 +122,16 @@ def list_runs() -> list[dict[str, Any]]:
     with RUNS_LOCK:
         states = list(RUNS.values())
     return [_state_payload(state) for state in reversed(states)]
+
+
+@app.get("/api/memories")
+def list_memories(limit: int = 100) -> dict[str, Any]:
+    config = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
+    manager = build_memory_manager(_NoopTextModel(), config, PROJECT_ROOT)
+    if manager is None:
+        return {"enabled": False, "count": 0, "items": []}
+    memories = manager.list_memories(max(1, min(limit, 500)))
+    return {"enabled": True, "count": manager.store.count(), "items": [node.to_dict() for node in memories]}
 
 
 @app.post("/api/test-cases/generate")
@@ -192,8 +204,15 @@ def stream_events(
 def _run_agent(state: RunState, request: RunRequest) -> None:
     config = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
     submitted_cases = [case.model_dump() for case in request.test_cases]
-    model = _build_model(request.model, config)
     try:
+        model = _build_model(request.model, config)
+        try:
+            memory_manager = build_memory_manager(model, config, PROJECT_ROOT, state.emit)
+        except Exception as memory_error:
+            memory_manager = None
+            state.memory["enabled"] = False
+            state.memory["initialization_error"] = str(memory_error)
+            state.emit("memory_error", {"phase": "initialization", "error": str(memory_error)})
         if submitted_cases:
             cases = normalize_cases(submitted_cases, request.test_case_source)
             source = request.test_case_source
@@ -205,6 +224,7 @@ def _run_agent(state: RunState, request: RunRequest) -> None:
         save_test_files(state.workspace, state.task, cases, source)
         state.emit("test_cases_ready", {"source": source, "cases": cases})
         task = task_with_test_file(state.task, len(cases))
+        initial_memory_context = _retrieve_task_memory(memory_manager, state, state.task)
         environment = LocalEnvironment(
             state.workspace,
             timeout=request.timeout,
@@ -218,6 +238,8 @@ def _run_agent(state: RunState, request: RunRequest) -> None:
             step_limit=request.max_steps,
             output_path=state.storage.trajectory_path,
             event_callback=state.emit,
+            memory_context=initial_memory_context,
+            recovery_context_provider=_recovery_context_provider(memory_manager, state),
         )
         state.result = agent.run(task)
         if state.result["status"] == "success" and state.result["verified"]:
@@ -228,7 +250,9 @@ def _run_agent(state: RunState, request: RunRequest) -> None:
                 state.review = {"status": "error", "local_verification": "passed", "content": f"Reviewer 执行失败：{error}"}
             state.storage.save_review(state.review)
             state.emit("review_finished", {"step": state.result["model_calls"], "review": state.review})
-        state.storage.save_trajectory(task, agent.serialize(review=state.review))
+        state.storage.save_trajectory(state.task, agent.serialize(review=state.review, memory=state.memory))
+        _learn_memory(memory_manager, state, agent)
+        state.storage.save_trajectory(state.task, agent.serialize(review=state.review, memory=state.memory))
     except Exception as error:  # The event stream must expose failures to the UI.
         state.error = str(error)
         state.emit("run_error", {"error": state.error})
@@ -258,6 +282,65 @@ def _build_model(model_name: str, config: dict[str, Any]) -> LitellmModel:
     return LitellmModel(model_name=model_name, model_kwargs=model_kwargs, max_retries=config["model"].get("max_retries", 3))
 
 
+def _retrieve_task_memory(manager: MemoryManager | None, state: RunState, task: str) -> str:
+    if manager is None:
+        state.memory["enabled"] = False
+        return ""
+    state.memory["enabled"] = True
+    try:
+        retrieval = manager.retrieve_for_task(task)
+    except Exception as error:
+        state.emit("memory_error", {"phase": "task", "error": str(error)})
+        state.memory["task_retrieval_error"] = str(error)
+        return ""
+    state.memory["task_retrieval"] = retrieval.to_dict()
+    return retrieval.context
+
+
+def _recovery_context_provider(manager: MemoryManager | None, state: RunState):
+    def provide(task: str, error: str, steps: list[dict[str, Any]]) -> str:
+        if manager is None:
+            return ""
+        try:
+            retrieval = manager.retrieve_for_failure(task, error, steps)
+        except Exception as retrieval_error:
+            state.emit("memory_error", {"phase": "recovery", "error": str(retrieval_error)})
+            state.memory["recovery_retrieval_error"] = str(retrieval_error)
+            return ""
+        state.memory.setdefault("recovery_retrievals", []).append(retrieval.to_dict())
+        return retrieval.context
+
+    return provide
+
+
+def _learn_memory(manager: MemoryManager | None, state: RunState, agent: DefaultAgent) -> None:
+    if (
+        manager is None
+        or state.result is None
+        or not state.result.get("verified")
+        or not state.review
+        or state.review.get("status") != "completed"
+    ):
+        return
+    try:
+        learned = manager.learn_from_run(
+            task=state.task,
+            result=state.result,
+            review=state.review,
+            source_run_id=state.run_id,
+        )
+    except Exception as error:
+        state.emit("memory_error", {"phase": "learning", "error": str(error)})
+        state.memory["learning_error"] = str(error)
+        return
+    state.memory["learned"] = [node.to_dict() for node in learned]
+
+
+class _NoopTextModel:
+    def query_text(self, messages: list[dict[str, Any]], **kwargs: Any) -> str:
+        raise RuntimeError("Listing persisted memories does not require a model call.")
+
+
 def _get_state(run_id: str) -> RunState:
     with RUNS_LOCK:
         state = RUNS.get(run_id)
@@ -281,6 +364,7 @@ def _state_payload(state: RunState) -> dict[str, Any]:
         "test_cases": state.test_cases,
         "test_case_source": state.test_case_source,
         "events": list(state.events),
+        "memory": state.memory,
     }
 
 

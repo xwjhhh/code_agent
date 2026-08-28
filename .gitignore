@@ -15,3 +15,6 @@ workspace/*
 !workspace/.gitkeep
 trajectories/*
 !trajectories/.gitkeep
+
+memory_store/*
+!memory_store/.gitkeep

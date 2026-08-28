@@ -95,3 +95,22 @@ def test_agent_marks_failed_test_as_unverified(tmp_path: Path):
 
     assert result["status"] == "max_steps"
     assert result["verified"] is False
+
+
+def test_agent_injects_recovery_memory_after_failed_pytest(tmp_path: Path):
+    (tmp_path / "solution.py").write_text("def answer(): return 1", encoding="utf-8")
+    (tmp_path / "test_solution.py").write_text("def test_answer(): assert False", encoding="utf-8")
+    (tmp_path / "test_cases.json").write_text('{"cases": []}', encoding="utf-8")
+    model = FakeModel([action("python -m pytest -q", "test-1")])
+    agent = DefaultAgent(
+        model,
+        FakeEnvironment(tmp_path, test_returncode=1),
+        system_prompt="system",
+        task_template="{task}",
+        step_limit=1,
+        recovery_context_provider=lambda task, output, steps: "Relevant Past Experience: preserve line boundaries.",
+    )
+
+    agent.run("solve")
+
+    assert any(message.get("extra", {}).get("memory_phase") == "recovery" for message in agent.messages)

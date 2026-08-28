@@ -15,6 +15,7 @@ from code_agent import package_dir
 from code_agent.agents import DefaultAgent
 from code_agent.environments import LocalEnvironment
 from code_agent.exceptions import ModelError
+from code_agent.memory import build_memory_manager
 from code_agent.models import LitellmModel, resolve_api_key
 from code_agent.reviewer import Reviewer
 from code_agent.storage import RunStorage
@@ -48,6 +49,7 @@ def main(argv: list[str] | None = None) -> int:
         model_kwargs=model_kwargs,
         max_retries=config["model"].get("max_retries", 3),
     )
+    memory_manager = build_memory_manager(model, config, Path.cwd())
     try:
         test_cases = generate_test_cases(model, task)
         save_test_files(workspace, task, test_cases, "generated")
@@ -66,6 +68,8 @@ def main(argv: list[str] | None = None) -> int:
         task_template=config["agent"]["task_template"],
         step_limit=args.max_steps or config["agent"].get("step_limit", 20),
         output_path=storage.trajectory_path,
+        memory_context=_retrieve_task_memory(memory_manager, task),
+        recovery_context_provider=_recovery_context_provider(memory_manager),
     )
 
     print(f"Run: {run_id}")
@@ -81,7 +85,20 @@ def main(argv: list[str] | None = None) -> int:
         except (ModelError, OSError, ValueError) as error:
             review = {"status": "error", "content": str(error)}
             storage.save_review(review)
-    storage.save_trajectory(task, agent.serialize(review=review))
+    memory_data: dict[str, Any] = {"enabled": memory_manager is not None}
+    if memory_manager is not None and result.get("verified") and review and review.get("status") == "completed":
+        try:
+            learned = memory_manager.learn_from_run(
+                task=task,
+                result=result,
+                review=review,
+                source_run_id=run_id,
+            )
+            memory_data["learned"] = [node.to_dict() for node in learned]
+        except Exception as error:
+            print(f"Memory learning skipped: {error}")
+            memory_data["learning_error"] = str(error)
+    storage.save_trajectory(task, agent.serialize(review=review, memory=memory_data))
     print_result(result, review, storage)
     return 0 if result["status"] == "success" else 1
 
@@ -128,6 +145,29 @@ def print_result(result: dict[str, Any], review: dict[str, Any] | None, storage:
     if review:
         print(f"Review: {storage.review_path}")
         print(review.get("content", ""))
+
+
+def _retrieve_task_memory(memory_manager: Any, task: str) -> str:
+    if memory_manager is None:
+        return ""
+    try:
+        return memory_manager.retrieve_for_task(task).context
+    except Exception as error:
+        print(f"Memory retrieval skipped: {error}")
+        return ""
+
+
+def _recovery_context_provider(memory_manager: Any):
+    def provide(task: str, error: str, steps: list[dict[str, Any]]) -> str:
+        if memory_manager is None:
+            return ""
+        try:
+            return memory_manager.retrieve_for_failure(task, error, steps).context
+        except Exception as retrieval_error:
+            print(f"Recovery memory retrieval skipped: {retrieval_error}")
+            return ""
+
+    return provide
 
 
 if __name__ == "__main__":

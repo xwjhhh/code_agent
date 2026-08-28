@@ -34,3 +34,16 @@ model:
   max_retries: 3
   model_kwargs:
     drop_params: true
+
+memory:
+  enabled: true
+  database_path: memory_store/memory.sqlite3
+  embedding_model: BAAI/bge-m3
+  embedding_api_base: null
+  embedding_dimensions: null
+  embedding_timeout: 30
+  embedding_max_retries: 3
+  recall_limit_per_query: 8
+  selected_limit: 4
+  min_similarity: 0.35
+  rerank_with_llm: true
