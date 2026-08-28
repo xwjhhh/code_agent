@@ -194,9 +194,11 @@ frontend/
 │   ├── page.tsx
 │   ├── task/new/page.tsx
 │   ├── run/[id]/page.tsx
+│   ├── history/page.tsx
 │   └── history/[id]/page.tsx
 ├── components/
 │   ├── dashboard.tsx
+│   ├── run-history.tsx
 │   ├── new-task-form.tsx
 │   ├── run-workspace.tsx
 │   ├── run-detail.tsx
@@ -215,6 +217,7 @@ frontend/
 ### 页面组件
 
 - `dashboard.tsx`：调用运行列表和健康检查接口，展示真实任务状态。
+- `run-history.tsx`：展示全部运行记录，并链接到每条运行的详情页。
 - `new-task-form.tsx`：收集题目、人工输入输出或 AI 生成用例，然后创建运行。
 - `run-workspace.tsx`：读取初始状态并订阅 SSE，实时展示文件、终端、测试、轨迹和评审。
 - `run-detail.tsx`：读取某次运行的最终文件、指标、测试结果和 Reviewer。

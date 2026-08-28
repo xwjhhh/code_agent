@@ -33,7 +33,7 @@ export function AppShell({ children, breadcrumb = "控制台" }: { children: Rea
         <nav className="nav-list">
           <Link href="/" className={"nav-item " + (pathname === "/" ? "active" : "")}><LayoutDashboard /><span>控制台</span></Link>
           <Link href="/task/new" className={"nav-item " + (pathname.startsWith("/task/new") ? "active" : "")}><Plus /><span>新建任务</span></Link>
-          <Link href="/" className={"nav-item " + (pathname.startsWith("/history") ? "active" : "")}><Clock3 /><span>历史运行</span></Link>
+          <Link href="/history" className={"nav-item " + (pathname.startsWith("/history") ? "active" : "")}><Clock3 /><span>历史运行</span></Link>
         </nav>
         <div className="nav-label" style={{ marginTop: 25 }}>运行时</div>
         <nav className="nav-list">
@@ -51,7 +51,7 @@ export function AppShell({ children, breadcrumb = "控制台" }: { children: Rea
           <div className="breadcrumb"><span>Code Agent</span><ChevronRight /><strong>{breadcrumb}</strong></div>
           <div className="top-actions">
             <div className="connection"><span className={"status-dot " + (connected ? "" : "red")} /> 接口{connected ? "已连接" : "未连接"}</div>
-            <Link className="icon-button" href="/" title="运行活动"><Activity /></Link>
+            <Link className="icon-button" href="/history" title="运行活动"><Activity /></Link>
           </div>
         </header>
         {children}
