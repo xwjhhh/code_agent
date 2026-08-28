@@ -1,20 +1,22 @@
 # 算法题编程智能体：架构说明
 
-## 1. 总体闭环
+## 1. 总体数据流
 
 ```text
 用户输入题目
     |
     +-- 人工填写输入/输出 ----------+
     |                               |
-    +-- 测试生成模型生成输入/输出 ---+
+    +-- GLM-5.2 生成输入/输出 -------+
                                     v
                              test_cases.json
+                                    |
+                          任务记忆检索（可选）
                                     |
                    +----------------+----------------+
                    |                                 |
                    v                                 v
-          编程模型先读取该文件              test_solution.py 读取该文件
+          编程模型读取该文件                test_solution.py 读取该文件
                    |                                 |
                    v                                 v
              编写 solution.py                 执行 pytest
@@ -25,20 +27,23 @@
                          通过：允许提交并进入 Reviewer
                                     |
                                     v
+                              Reviewer 完成
+                                    |
+                         提炼、向量化并持久化经验
+                                    |
+                                    v
                                FinalResult
 ```
 
-运行中的核心循环是：
+编程循环的核心消息闭环是：
 
 ```text
 Messages -> Model -> Bash Action -> LocalEnvironment -> Observation -> Messages
 ```
 
-测试用例准备发生在编程循环之前。Agent 不负责随意改测试答案，只负责基于已经确定的输入输出编写并修正题解。
+测试用例在编程循环之前准备。`test_cases.json` 是编程模型、pytest 和 Reviewer 共用的权威输入输出文件；Agent 不能通过修改测试答案来规避失败。Memory 是辅助上下文，当前题目和权威测试始终优先。
 
-## 2. 核心文件约定
-
-每次运行拥有独立的 `workspace/<run_id>/`：
+## 2. 每次运行的文件
 
 ```text
 workspace/<run_id>/
@@ -47,7 +52,7 @@ workspace/<run_id>/
 └── solution.py
 ```
 
-`test_cases.json` 是唯一权威测试数据，结构如下：
+`test_cases.json` 的结构示例：
 
 ```json
 {
@@ -65,16 +70,16 @@ workspace/<run_id>/
 }
 ```
 
-`input` 与 `expected_output` 都是完整文本，可以包含多行。编程模型必须提供统一接口：
+`input` 和 `expected_output` 都是完整文本，可以包含多行。题解模型必须在 `solution.py` 中提供：
 
 ```python
 def solve(input_text: str) -> str:
     ...
 ```
 
-`test_solution.py` 由系统固定生成。它读取 JSON，对每个用例调用 `solve()` 并比较输出。`test_cases.json` 和 `test_solution.py` 在 Agent 运行期间受保护，模型若修改它们，Environment 会恢复原内容并将本次命令标记为失败。
+`test_solution.py` 由系统固定生成，读取 JSON 后逐个调用 `solve()` 比较输出。两个测试文件在 Agent 运行期间受保护，模型修改后会被 Environment 恢复并将命令标记为失败。
 
-## 3. 后端目录与职责
+## 3. 后端目录和职责
 
 ```text
 src/code_agent/
@@ -87,10 +92,23 @@ src/code_agent/
 ├── agents/
 │   └── default.py
 ├── models/
+│   ├── __init__.py
 │   ├── litellm_model.py
 │   └── utils/actions.py
 ├── environments/
 │   └── local.py
+├── memory/
+│   ├── __init__.py
+│   ├── schemas.py
+│   ├── embedding.py
+│   ├── store.py
+│   ├── query_analyzer.py
+│   ├── extractor.py
+│   ├── reranker.py
+│   ├── formatter.py
+│   ├── consolidator.py
+│   ├── manager.py
+│   └── factory.py
 ├── run/
 │   └── main.py
 └── config/
@@ -99,89 +117,78 @@ src/code_agent/
 
 ### `src/code_agent/__init__.py`
 
-定义 Model、Environment、Agent 三类协议和项目版本。输入是实现类的方法签名，输出是其他模块可以依赖的稳定接口。
+定义 Model、Environment、Agent 三类协议和项目版本，为其他模块提供稳定接口。
 
 ### `src/code_agent/api.py`
 
-FastAPI 前后端桥接层。输入是浏览器提交的题目、模型、运行参数和测试用例；输出是运行 ID、运行状态、工作区文件以及 SSE 事件。
+FastAPI 桥接层。接收浏览器提交的题目、模型、运行参数和测试用例，启动后台 Agent，并通过 SSE 返回真实执行事件。
 
-它负责：
-
-- `POST /api/test-cases/generate`：调用所选模型生成测试用例；
-- `POST /api/runs`：创建后台线程并启动 Agent；
-- `GET /api/runs`：返回当前后端进程内的运行列表；
-- `GET /api/runs/{id}`：返回任务、用例、结果、评审和事件；
-- `GET /api/runs/{id}/files`：返回三个工作区文件；
-- `GET /api/runs/{id}/events`：通过 SSE 实时发送运行事件。
+- `POST /api/test-cases/generate`：调用 GLM-5.2 生成测试用例。
+- `POST /api/runs`：创建工作区并启动 Agent。
+- `GET /api/runs`：返回当前进程内的运行列表。
+- `GET /api/runs/{id}`：返回任务、测试、结果、评审、Memory 状态和事件。
+- `GET /api/runs/{id}/files`：返回三个工作区文件。
+- `GET /api/runs/{id}/events`：以 SSE 实时发送事件。
+- `GET /api/memories`：读取本地 SQLite 记忆库中的结构化经验。
 
 ### `src/code_agent/test_cases.py`
 
-统一测试数据层。输入是人工用例或测试生成模型的 JSON 文本；输出是规范化用例、`test_cases.json` 和固定 `test_solution.py`。
-
-它负责：
-
-- 统一用例字段和名称；
-- 构造测试生成提示词并解析 JSON；
-- 保存权威测试文件；
-- 生成编程模型必须遵守的测试文件说明。
+统一测试数据层。输入是人工用例或测试生成模型的 JSON，输出是规范化用例、权威 `test_cases.json` 和固定 `test_solution.py`。它负责字段校验、JSON 解析、文件生成以及给编程模型的测试文件说明。
 
 ### `src/code_agent/models/litellm_model.py`
 
-模型调用适配层。输入是 Agent 的 messages；输出是标准 assistant message 和解析后的 Bash actions。LiteLLM 只负责把请求发送到不同模型厂商，本项目自己的 Agent 循环、工具执行、完成判断都不在 LiteLLM 中。
-
-`query()` 使用模型原生 tool calling；`query_text()` 用于测试生成和 Reviewer 的纯文本调用。
+模型适配层。输入是 messages，输出是标准 assistant message 和解析后的 Bash action。项目固定使用硅基流动 `openai/zai-org/GLM-5.2`；LiteLLM 只负责 API 调用，不负责 Agent 循环、工具执行或完成判断。`query()` 使用原生 tool calling，`query_text()` 用于测试生成、Reviewer 和 Memory 文本任务。
 
 ### `src/code_agent/models/utils/actions.py`
 
-定义唯一的 Bash 工具并解析模型工具调用。输入是模型原生 `tool_calls`；输出为：
-
-```python
-{"command": "python -m pytest -q", "tool_call_id": "call_123"}
-```
-
-它还把 Environment 的执行结果转换成带相同 `tool_call_id` 的 tool observation，供下一轮模型读取。
+定义唯一的 Bash 工具，解析模型的 `tool_calls`，并把 Environment 结果转换成带相同 `tool_call_id` 的 tool observation。
 
 ### `src/code_agent/environments/local.py`
 
-本地命令执行器。输入是 Bash action；输出统一包含 `output`、`returncode` 和 `exception_info`。
-
-它使用 Windows Git Bash 执行命令、处理超时和系统错误，并在每次命令后检查受保护测试文件是否被修改。
+本地执行器。输入是 Bash action，输出统一包含 `output`、`returncode` 和 `exception_info`。Windows 下使用 Git Bash，处理超时和系统错误，并恢复被保护的测试文件。
 
 ### `src/code_agent/agents/default.py`
 
-整个系统的控制核心。输入是题目、模型、Environment 和提示词；输出是最终状态、验证结果、文件路径、消息历史和步骤记录。
-
-它负责：
-
-- 保存 messages 和模型调用次数；
-- 调用 Model 并执行 Bash action；
-- 将 observation 加回 messages；
-- 只认固定命令 `python -m pytest -q` 的真实成功结果；
-- 测试通过后才接受提交命令；
-- 发出前端需要的运行事件；
-- 达到步骤上限或模型错误时终止。
+Agent 控制核心。它保存 messages、调用模型、执行 Bash、回传 observation、记录步骤和发送事件。只有精确执行 `python -m pytest -q` 并真实通过，且三个工作区文件存在时，才记录本地验证成功；之后模型发出精确提交命令，Agent 才结束并允许 Reviewer 运行。达到调用上限或出现模型错误时受控终止。
 
 ### `src/code_agent/reviewer.py`
 
-只读评审器。输入是原题、`solution.py`、固定测试脚本、`test_cases.json` 和 pytest 输出；输出是中文算法评审。它只在本地验证通过后运行，不执行命令也不改文件。
+只读代码评审器。输入是题目、题解、测试文件和 pytest 结果，输出算法正确性、复杂度、边界情况、测试充分性和可读性分析。只有本地验证成功后才调用，不执行命令也不修改文件。
 
 ### `src/code_agent/storage.py`
 
-运行持久化模块。输入是 Agent 的序列化数据和 Reviewer 结果；输出是 `trajectory.json` 与 `review.json`。
+运行持久化模块，将 Agent 序列化数据和 Reviewer 结果保存为 `trajectory.json` 与 `review.json`。
+
+### `src/code_agent/memory/`
+
+持久化经验记忆子系统。它不保存完整旧对话，而是从本地验证成功且 Reviewer 完成的运行中提炼 Strategy、Recovery、Optimization 经验。
+
+- `schemas.py`：定义 `MemoryNode`、`MemoryQuery`、`RetrievedMemory`。
+- `embedding.py`：调用硅基流动 `/v1/embeddings`，固定使用 `Qwen/Qwen3-Embedding-8B`。
+- `store.py`：负责 SQLite 建表、增删查和本地余弦相似度搜索。
+- `query_analyzer.py`：把新题目改写为 task/subtask 检索查询，并提取题型和算法标签。
+- `extractor.py`：从已验证运行的题目、轨迹、题解、pytest 输出和 Reviewer 结果中提炼结构化经验。
+- `reranker.py`：使用 GLM-5.2 从向量召回候选中筛选少量高价值经验。
+- `formatter.py`：将选中的经验格式化为注入编程模型上下文的参考文本。
+- `consolidator.py`：按向量相似度抑制近重复经验。
+- `manager.py`：统筹任务检索、pytest 失败后的 Recovery 检索、经验学习和事件通知。
+- `factory.py`：读取 YAML 和环境变量，构建记忆服务和 Embedding 客户端。
+
+写入记忆时，经验正文和 metadata 保存在 SQLite，Embedding 仅用于检索索引。新任务开始时进行 task/subtask 召回；pytest 失败时追加失败输出和最近动作进行 Recovery 召回；Reviewer 完成后才提炼并写入新经验。
 
 ### `src/code_agent/run/main.py`
 
-命令行入口。输入是命令行题目、模型名、Git Bash 路径等参数；输出是终端结果和运行产物。CLI 会先让模型生成权威测试文件，再启动与 Web 相同的 Agent 闭环。
+命令行入口。读取题目和参数，生成权威测试，启动与 Web 相同的 Agent、Reviewer 和 Memory 流程，并输出运行产物路径。
 
 ### `src/code_agent/config/default.yaml`
 
-保存 Agent 系统提示词、任务模板、步骤上限、环境超时和模型默认参数。提示词要求模型先读取 `test_cases.json`，只能修改题解并按固定命令运行测试。
+保存 Agent 系统提示词、任务模板、调用上限、环境超时、GLM-5.2 默认参数和 Memory 配置。提示词要求模型先读 `test_cases.json`，只修改 `solution.py` 并按固定命令测试。
 
 ### `src/code_agent/exceptions.py`
 
-定义格式错误、步骤上限和模型调用错误等异常，用于把失败转成可控的 Agent 状态。
+定义工具格式错误、步骤上限、模型调用错误和 Memory 服务错误等异常。
 
-## 4. 前端目录与职责
+## 4. 前端目录和职责
 
 ```text
 frontend/
@@ -192,6 +199,7 @@ frontend/
 │   ├── history/page.tsx
 │   └── history/[id]/page.tsx
 ├── components/
+│   ├── app-shell.tsx
 │   ├── dashboard.tsx
 │   ├── run-history.tsx
 │   ├── new-task-form.tsx
@@ -202,43 +210,29 @@ frontend/
 │   ├── terminal-panel.tsx
 │   ├── test-panel.tsx
 │   ├── trace-timeline.tsx
-│   └── reviewer-card.tsx
+│   ├── reviewer-card.tsx
+│   └── status-badge.tsx
 └── lib/
     ├── api.ts
     ├── trace.ts
     └── data.ts
 ```
 
-### 页面组件
+`dashboard.tsx` 展示真实运行列表和后端连接；`new-task-form.tsx` 收集题目、人工用例或 AI 生成用例；`run-workspace.tsx` 订阅 SSE 并刷新文件、终端、测试、轨迹和评审；`run-detail.tsx` 展示历史运行结果。
 
-- `dashboard.tsx`：调用运行列表和健康检查接口，展示真实任务状态。
-- `run-history.tsx`：展示全部运行记录，并链接到每条运行的详情页。
-- `new-task-form.tsx`：收集题目、人工输入输出或 AI 生成用例，然后创建运行。
-- `run-workspace.tsx`：读取初始状态并订阅 SSE，实时展示文件、终端、测试、轨迹和评审。
-- `run-detail.tsx`：读取某次运行的最终文件、指标、测试结果和 Reviewer。
+`problem-panel.tsx` 展示题目和用例；`code-editor.tsx` 只读展示代码；`terminal-panel.tsx` 展示真实 Bash 输出；`test-panel.tsx` 展示输入输出用例和 pytest 状态；`trace-timeline.tsx` 将 SSE 事件转换为可展开时间线；`reviewer-card.tsx` 展示 Reviewer 文本；`app-shell.tsx` 提供导航和 FastAPI 健康状态。
 
-### 展示组件
+当前前端通过运行轨迹展示 Memory 事件，后端已经提供 `/api/memories` 查询接口，但尚未提供独立的记忆库页面。
 
-- `problem-panel.tsx`：展示题目、模型和当前权威用例样例。
-- `code-editor.tsx`：用只读 Monaco 展示 Python 或 JSON 文件。
-- `terminal-panel.tsx`：用只读 xterm.js 展示真实 Bash 命令及输出。
-- `test-panel.tsx`：展示真实用例来源、输入输出和 pytest 状态。
-- `trace-timeline.tsx`：将 SSE 事件展示成可展开时间线。
-- `reviewer-card.tsx`：展示真实 Reviewer 文本。
-- `app-shell.tsx`：全局导航并调用健康检查显示后端连接状态。
-
-### 数据模块
-
-- `lib/api.ts`：封装 FastAPI 请求、响应类型和 SSE URL。
-- `lib/trace.ts`：把后端事件转换为时间线和终端输出。
-- `lib/data.ts`：只保留前端共享状态类型。
+`lib/api.ts` 封装 FastAPI 请求、类型和 SSE URL；`lib/trace.ts` 将事件转换为时间线和终端行；`lib/data.ts` 保存前端共享类型。
 
 ## 5. SSE 事件
 
-后端会按真实执行顺序发出：
-
 ```text
 test_cases_ready
+memory_retrieval_started
+memory_retrieval_finished
+memory_context_injected
 agent_started
 model_thinking
 model_response
@@ -247,6 +241,8 @@ command_finished
 file_changed
 test_started
 test_failed / test_passed
+memory_learning_started
+memory_learning_finished
 agent_submitted
 agent_finished
 review_started
@@ -254,19 +250,19 @@ review_finished
 run_finished
 ```
 
-异常时发出 `model_error` 或 `run_error`，运行结束时发出 `run_finished`。每个事件都有稳定递增 ID；SSE 重连通过 `Last-Event-ID` 只发送未接收事件，前端按 ID 去重并在收到 `run_finished` 后关闭连接。
+异常时发送 `memory_error`、`model_error` 或 `run_error`。每个事件有递增 ID；SSE 通过 `Last-Event-ID` 支持断线重连，前端按 ID 去重，并在收到 `run_finished` 后关闭连接。
 
 ## 6. 完成条件
 
-只有同时满足以下条件才算本地验证成功：
+只有同时满足以下条件，才算本地验证成功：
 
 1. `solution.py`、`test_cases.json`、`test_solution.py` 都存在；
 2. 模型执行的命令恰好是 `python -m pytest -q`；
 3. 命令返回码为 0，输出包含实际通过数量；
-4. 测试通过后没有再修改题解；
-5. 模型主动发出完成提交命令。
+4. 测试通过后没有继续修改题解；
+5. 模型发出精确的完成提交命令。
 
-满足后 Agent 才停止循环并启动 Reviewer。
+满足后 Agent 停止循环并启动 Reviewer；Reviewer 完成后才允许 Memory 学习阶段提炼经验。
 
 ## 7. 运行产物
 
@@ -279,6 +275,9 @@ workspace/<run_id>/
 trajectories/<run_id>/
 ├── trajectory.json
 └── review.json
+
+memory_store/
+└── memory.sqlite3
 ```
 
-前端当前运行列表由 FastAPI 进程内状态提供；文件和轨迹会保存在磁盘中。
+`memory_store/`、`workspace/` 和 `trajectories/` 中的本地运行数据已被 Git 忽略；公开仓库只包含代码、配置示例和文档，不包含 API Key 或个人运行数据。
