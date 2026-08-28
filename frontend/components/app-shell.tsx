@@ -44,7 +44,7 @@ export function AppShell({ children, breadcrumb = "控制台" }: { children: Rea
           <div className="runtime-row"><span className={"status-dot " + (connected ? "" : "red")} /> FastAPI {connected ? "在线" : "未连接"}</div>
           <div className="runtime-meta">Git Bash / Python</div>
         </div>
-        <div className="profile"><div className="avatar">CA</div><div><div className="profile-name">本地工作区</div><div className="profile-role">双盲演示模式</div></div><ChevronRight style={{ marginLeft: "auto", width: 13, color: "var(--dim)" }} /></div>
+        <div className="profile"><div className="avatar">CA</div><div><div className="profile-name">本地工作区</div><div className="profile-role">真实执行环境</div></div><ChevronRight style={{ marginLeft: "auto", width: 13, color: "var(--dim)" }} /></div>
       </aside>
       <div className="main-area">
         <header className="topbar">

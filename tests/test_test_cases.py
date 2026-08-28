@@ -2,12 +2,22 @@ import json
 from pathlib import Path
 
 from code_agent.environments.local import LocalEnvironment
-from code_agent.models import DemoModel
 from code_agent.test_cases import generate_test_cases, normalize_cases, save_test_files
 
 
+class StaticTextModel:
+    def query_text(self, messages, **kwargs):
+        return json.dumps(
+            [
+                {"name": "sample", "input": "ab4f35gr#a6", "expected_output": "abfgr#a4356"},
+                {"name": "alternate", "input": "a1b2", "expected_output": "ab12"},
+                {"name": "no_digits", "input": "abc", "expected_output": "abc"},
+            ]
+        )
+
+
 def test_generated_cases_use_canonical_shape():
-    cases = generate_test_cases(DemoModel("字符移动"), "字符移动", count=3)
+    cases = generate_test_cases(StaticTextModel(), "字符移动", count=3)
 
     assert len(cases) == 3
     assert cases[0]["input"] == "ab4f35gr#a6"

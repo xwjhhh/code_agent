@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 
 from code_agent.agents import DefaultAgent
 from code_agent.environments import LocalEnvironment
-from code_agent.models import DemoModel, LitellmModel
+from code_agent.models import LitellmModel
 from code_agent.reviewer import Reviewer
 from code_agent.run.main import create_run_id
 from code_agent.storage import RunStorage
@@ -33,8 +33,6 @@ from code_agent.test_cases import generate_test_cases, normalize_cases, save_tes
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = PROJECT_ROOT / "src" / "code_agent" / "config" / "default.yaml"
 load_dotenv(PROJECT_ROOT / ".env")
-
-
 class TestCaseInput(BaseModel):
     name: str | None = Field(default=None, description="测试名称")
     input: str = Field(default="", description="测试输入")
@@ -43,18 +41,16 @@ class TestCaseInput(BaseModel):
 
 class RunRequest(BaseModel):
     task: str = Field(min_length=1, description="算法题目")
-    model: str = Field(default="demo", description="demo 或 LiteLLM 模型名")
+    model: str = Field(min_length=1, description="LiteLLM 模型名")
     max_steps: int = Field(default=20, ge=1, le=100)
     timeout: int = Field(default=120, ge=1, le=600)
     test_cases: list[TestCaseInput] = Field(default_factory=list)
     test_case_source: str = Field(default="manual", pattern="^(manual|generated)$")
 
-
 class GenerateTestsRequest(BaseModel):
     task: str = Field(min_length=1, description="算法题目")
-    model: str = Field(default="demo", description="用于生成测试的模型")
+    model: str = Field(min_length=1, description="用于生成测试的 LiteLLM 模型名")
     count: int = Field(default=6, ge=1, le=20)
-
 
 @dataclass
 class RunState:
@@ -129,7 +125,7 @@ def list_runs() -> list[dict[str, Any]]:
 @app.post("/api/test-cases/generate")
 def generate_cases(request: GenerateTestsRequest) -> dict[str, Any]:
     config = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
-    model = _build_model(request.model, request.task, [], config)
+    model = _build_model(request.model, config)
     try:
         cases = generate_test_cases(model, request.task, request.count)
     except Exception as error:
@@ -196,7 +192,7 @@ def stream_events(
 def _run_agent(state: RunState, request: RunRequest) -> None:
     config = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
     submitted_cases = [case.model_dump() for case in request.test_cases]
-    model = _build_model(request.model, state.task, submitted_cases, config)
+    model = _build_model(request.model, config)
     try:
         if submitted_cases:
             cases = normalize_cases(submitted_cases, request.test_case_source)
@@ -251,9 +247,7 @@ def _run_agent(state: RunState, request: RunRequest) -> None:
             state.condition.notify_all()
 
 
-def _build_model(model_name: str, task: str, cases: list[dict[str, str]], config: dict[str, Any]) -> Any:
-    if model_name.lower() in {"demo", "演示", "mock"}:
-        return DemoModel(task, cases)
+def _build_model(model_name: str, config: dict[str, Any]) -> LitellmModel:
     model_kwargs = dict(config["model"].get("model_kwargs", {}))
     api_base = os.getenv("OPENAI_API_BASE") or os.getenv("OPENAI_BASE_URL")
     if api_base:

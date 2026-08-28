@@ -88,7 +88,6 @@ src/code_agent/
 │   └── default.py
 ├── models/
 │   ├── litellm_model.py
-│   ├── demo_model.py
 │   └── utils/actions.py
 ├── environments/
 │   └── local.py
@@ -131,10 +130,6 @@ FastAPI 前后端桥接层。输入是浏览器提交的题目、模型、运行
 模型调用适配层。输入是 Agent 的 messages；输出是标准 assistant message 和解析后的 Bash actions。LiteLLM 只负责把请求发送到不同模型厂商，本项目自己的 Agent 循环、工具执行、完成判断都不在 LiteLLM 中。
 
 `query()` 使用模型原生 tool calling；`query_text()` 用于测试生成和 Reviewer 的纯文本调用。
-
-### `src/code_agent/models/demo_model.py`
-
-无需 API Key 的确定性演示模型。输入仍是正常 Agent messages，输出仍是标准 Bash tool call，因此会真实经过 Agent、Git Bash、文件写入和 pytest，而不是前端假数据。
 
 ### `src/code_agent/models/utils/actions.py`
 
@@ -236,7 +231,7 @@ frontend/
 
 - `lib/api.ts`：封装 FastAPI 请求、响应类型和 SSE URL。
 - `lib/trace.ts`：把后端事件转换为时间线和终端输出。
-- `lib/data.ts`：只保留前端共享状态类型，不包含演示运行数据。
+- `lib/data.ts`：只保留前端共享状态类型。
 
 ## 5. SSE 事件
 
@@ -256,9 +251,10 @@ agent_submitted
 agent_finished
 review_started
 review_finished
+run_finished
 ```
 
-异常时发出 `model_error` 或 `run_error`。前端先获取已有事件数量，再用 cursor 订阅后续事件，避免重复显示。
+异常时发出 `model_error` 或 `run_error`，运行结束时发出 `run_finished`。每个事件都有稳定递增 ID；SSE 重连通过 `Last-Event-ID` 只发送未接收事件，前端按 ID 去重并在收到 `run_finished` 后关闭连接。
 
 ## 6. 完成条件
 

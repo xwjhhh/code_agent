@@ -38,7 +38,7 @@ python -m pip install -e .
 OPENAI_API_KEY=${GLM_API}
 OPENAI_API_BASE=https://api.siliconflow.cn/v1
 CODE_AGENT_MODEL=openai/Pro/zai-org/GLM-5.1
-CODE_AGENT_BASH_PATH=D:\software\Git\bin\bash.exe
+CODE_AGENT_BASH_PATH=C:\Program Files\Git\bin\bash.exe
 ```
 
 Windows 环境变量查找不区分大小写，所以系统设置中的 `glm_api` 可以由 `.env` 通过 `${GLM_API}` 引用。不要把真实 Key 写入仓库或前端代码。
@@ -68,7 +68,7 @@ npm run dev
 - `solution.py`、`test_solution.py`、`test_cases.json` 文件展示；
 - 真实命令输出、pytest 结果和 Reviewer。
 
-选择“演示模型”无需 API Key，也会真实执行 Agent 循环、Git Bash、文件写入和 pytest。选择 LiteLLM 模型时由 LiteLLM 负责厂商 API 调用，Agent 循环和本地工具仍由本项目实现。
+所有运行均使用 LiteLLM 调用所选模型。LiteLLM 只负责厂商 API 调用，Agent 循环和本地工具仍由本项目实现。
 
 ## 命令行运行
 

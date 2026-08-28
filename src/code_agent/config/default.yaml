@@ -9,7 +9,7 @@ agent:
     Required workflow:
     1. Understand the problem and constraints.
     2. Read test_cases.json before coding. It is the authoritative input/output specification and contains complete stdin text and expected stdout text.
-    3. Write the solution to solution.py. It must expose solve(input_text: str) -> str and follow the formats demonstrated in test_cases.json.
+    3. Write the solution to solution.py. It must expose solve(input_text: str) -> str and follow the formats specified in test_cases.json.
     4. Do not modify test_cases.json or test_solution.py. They are prepared before the coding loop.
     5. Run exactly: python -m pytest -q
     6. If tests fail, use the real output to fix the solution and run the exact test command again.
