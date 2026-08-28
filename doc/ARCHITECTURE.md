@@ -210,6 +210,7 @@ frontend/
 │   ├── terminal-panel.tsx
 │   ├── test-panel.tsx
 │   ├── trace-timeline.tsx
+│   ├── memory-graph.tsx
 │   ├── reviewer-card.tsx
 │   └── status-badge.tsx
 └── lib/
@@ -222,9 +223,11 @@ frontend/
 
 `problem-panel.tsx` 展示题目和用例；`code-editor.tsx` 只读展示代码；`terminal-panel.tsx` 展示真实 Bash 输出；`test-panel.tsx` 展示输入输出用例和 pytest 状态；`trace-timeline.tsx` 将 SSE 事件转换为可展开时间线；`reviewer-card.tsx` 展示 Reviewer 文本；`app-shell.tsx` 提供导航和 FastAPI 健康状态。
 
-当前前端通过运行轨迹展示 Memory 事件，后端已经提供 `/api/memories` 查询接口，但尚未提供独立的记忆库页面。
+当前运行页右侧默认展示 Memory Graph，Trace 作为可切换的次级视图；后端已经提供 `/api/memories` 查询接口，但尚未提供独立的全局记忆库页面。
 
-`lib/api.ts` 封装 FastAPI 请求、类型和 SSE URL；`lib/trace.ts` 将事件转换为时间线和终端行；`lib/data.ts` 保存前端共享类型。
+`memory-graph.tsx` 只使用四种视觉规则：Task-level 为大节点、Subtask-level 为小节点、Strategy/Recovery/Optimization 使用不同图标、关系使用实线或虚线。点击节点后才显示相似度、来源和完整行动步骤等详情。
+
+`lib/api.ts` 封装 FastAPI 请求、运行/Memory 类型和 SSE URL；`lib/trace.ts` 将事件转换为时间线和终端行；`lib/data.ts` 保存前端共享类型。
 
 ## 5. SSE 事件
 

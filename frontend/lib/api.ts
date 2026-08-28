@@ -1,6 +1,45 @@
 export type ManualCase = { name?: string; input: string; expected_output: string };
 export type TestCase = ManualCase & { name: string; source?: string };
 export type RunEvent = { sequence?: number; type: string; data: Record<string, unknown>; timestamp: string };
+export type MemoryCategory = "strategy" | "recovery" | "optimization";
+export type MemoryGranularity = "task" | "subtask";
+export type MemoryNode = {
+  id: string;
+  category: MemoryCategory;
+  granularity: MemoryGranularity;
+  trigger: string;
+  content: string;
+  purpose?: string;
+  steps?: string[];
+  negative_example?: string | null;
+  problem_family?: string[];
+  algorithm_tags?: string[];
+  constraints?: string[];
+  priority?: number;
+  quality_score?: number;
+  source_run_id?: string;
+  source_verified?: boolean;
+  embedding_model?: string;
+  created_at?: string;
+  retrieval_count?: number;
+  similarity?: number;
+  matched_query?: string;
+};
+export type MemoryRetrieval = {
+  phase: "task" | "recovery";
+  queries: { granularity: MemoryGranularity; category?: MemoryCategory | null; text: string }[];
+  candidate_count: number;
+  selected: MemoryNode[];
+};
+export type RunMemory = {
+  enabled?: boolean;
+  task_retrieval?: MemoryRetrieval;
+  recovery_retrievals?: MemoryRetrieval[];
+  learned?: MemoryNode[];
+  initialization_error?: string;
+  task_retrieval_error?: string;
+  learning_error?: string;
+};
 export type ApiRun = {
   run_id: string;
   task: string;
@@ -12,6 +51,7 @@ export type ApiRun = {
   test_cases: TestCase[];
   test_case_source: "manual" | "generated";
   events: RunEvent[];
+  memory?: RunMemory;
   result?: { verified?: boolean; model_calls?: number; solution_path?: string; test_path?: string; test_cases_path?: string; last_test_output?: string };
   review?: { content?: string; local_verification?: string };
 };

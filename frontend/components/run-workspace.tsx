@@ -8,6 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { CodeEditor } from "@/components/code-editor";
 import { ProblemPanel } from "@/components/problem-panel";
 import { ReviewerCard } from "@/components/reviewer-card";
+import { MemoryGraph } from "@/components/memory-graph";
 import { StatusBadge } from "@/components/status-badge";
 import { TerminalPanel } from "@/components/terminal-panel";
 import { TestPanel } from "@/components/test-panel";
@@ -49,6 +50,8 @@ export function RunWorkspace() {
   const [review, setReview] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
   const [error, setError] = useState("");
+  const [inspectorTab, setInspectorTab] = useState<"memory" | "trace">("memory");
+  const [memory, setMemory] = useState<ApiRun["memory"]>();
 
   useEffect(() => {
     let source: EventSource | undefined;
@@ -68,6 +71,7 @@ export function RunWorkspace() {
       setEvents(run.events ?? []);
       setLastTestOutput(run.result?.last_test_output ?? "");
       setReview(run.review?.content ?? "");
+      setMemory(run.memory);
       setReviewLoading(run.events.some((event) => event.type === "review_started") && !run.review);
       if (run.result?.verified) {
         setTestStatus("passed");
@@ -191,7 +195,19 @@ export function RunWorkspace() {
           {(reviewLoading || review) && <ReviewerCard content={review} verified={testStatus === "passed"} loading={reviewLoading} />}
         </div>
       </section>
-      <TraceTimeline items={traceItems} />
+      <div className="workspace-right workspace-inspector">
+        <div className="inspector-tabs" role="tablist" aria-label="运行信息">
+          <button type="button" role="tab" aria-selected={inspectorTab === "memory"} className={inspectorTab === "memory" ? "active" : ""} onClick={() => setInspectorTab("memory")}>
+            Memory
+          </button>
+          <button type="button" role="tab" aria-selected={inspectorTab === "trace"} className={inspectorTab === "trace" ? "active" : ""} onClick={() => setInspectorTab("trace")}>
+            Trace
+          </button>
+        </div>
+        <div className="inspector-content">
+          {inspectorTab === "memory" ? <MemoryGraph task={task} memory={memory} events={events} /> : <TraceTimeline items={traceItems} embedded />}
+        </div>
+      </div>
     </div>
   </AppShell>;
 }
