@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 import yaml
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -31,6 +32,7 @@ from code_agent.test_cases import generate_test_cases, normalize_cases, save_tes
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = PROJECT_ROOT / "src" / "code_agent" / "config" / "default.yaml"
+load_dotenv(PROJECT_ROOT / ".env")
 
 
 class TestCaseInput(BaseModel):
@@ -229,6 +231,9 @@ def _build_model(model_name: str, task: str, cases: list[dict[str, str]], config
     if model_name.lower() in {"demo", "演示", "mock"}:
         return DemoModel(task, cases)
     model_kwargs = dict(config["model"].get("model_kwargs", {}))
+    api_base = os.getenv("OPENAI_API_BASE") or os.getenv("OPENAI_BASE_URL")
+    if api_base:
+        model_kwargs["api_base"] = api_base
     return LitellmModel(model_name=model_name, model_kwargs=model_kwargs, max_retries=config["model"].get("max_retries", 3))
 
 

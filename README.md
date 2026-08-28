@@ -32,13 +32,16 @@
 python -m pip install -e .
 ```
 
-凭据只放在环境变量或未入库的 `.env` 中：
+硅基流动凭据只放在 Windows 环境变量和未入库的 `.env` 中。假设系统变量名为 `glm_api`，项目根目录的 `.env` 写为：
 
 ```text
-CODE_AGENT_MODEL=openai/gpt-4o-mini
-OPENAI_API_KEY=your-key
-CODE_AGENT_BASH_PATH=C:\Program Files\Git\bin\bash.exe
+OPENAI_API_KEY=${GLM_API}
+OPENAI_API_BASE=https://api.siliconflow.cn/v1
+CODE_AGENT_MODEL=openai/Pro/zai-org/GLM-5.1
+CODE_AGENT_BASH_PATH=D:\software\Git\bin\bash.exe
 ```
+
+Windows 环境变量查找不区分大小写，所以系统设置中的 `glm_api` 可以由 `.env` 通过 `${GLM_API}` 引用。不要把真实 Key 写入仓库或前端代码。
 
 ## 启动 Web 应用
 

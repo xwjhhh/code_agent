@@ -37,8 +37,9 @@ def main(argv: list[str] | None = None) -> int:
     storage = RunStorage(Path(args.trajectory_root).resolve() / run_id)
 
     model_kwargs = dict(config["model"].get("model_kwargs", {}))
-    if args.base_url:
-        model_kwargs["api_base"] = args.base_url
+    api_base = args.base_url or os.getenv("OPENAI_API_BASE") or os.getenv("OPENAI_BASE_URL")
+    if api_base:
+        model_kwargs["api_base"] = api_base
     model = LitellmModel(
         model_name=model_name,
         model_kwargs=model_kwargs,
