@@ -1,7 +1,7 @@
 import json
 from contextlib import contextmanager
 
-from code_agent.memory.embedding import SiliconFlowEmbeddingClient, SiliconFlowEmbeddingConfig
+from code_agent.memory.embedding import EMBEDDING_MODEL_NAME, SiliconFlowEmbeddingClient, SiliconFlowEmbeddingConfig
 
 
 def test_siliconflow_embedding_request_uses_documented_endpoint_and_payload(monkeypatch):
@@ -25,7 +25,7 @@ def test_siliconflow_embedding_request_uses_documented_endpoint_and_payload(monk
     client = SiliconFlowEmbeddingClient(
         SiliconFlowEmbeddingConfig(
             api_key="test-key",
-            model="Qwen/Qwen3-Embedding-0.6B",
+            model=EMBEDDING_MODEL_NAME,
             api_base="https://api.siliconflow.cn/v1",
             dimensions=1024,
         )
@@ -35,7 +35,7 @@ def test_siliconflow_embedding_request_uses_documented_endpoint_and_payload(monk
 
     assert captured["url"] == "https://api.siliconflow.cn/v1/embeddings"
     assert captured["payload"] == {
-        "model": "Qwen/Qwen3-Embedding-0.6B",
+        "model": EMBEDDING_MODEL_NAME,
         "input": ["first", "second"],
         "encoding_format": "float",
         "dimensions": 1024,

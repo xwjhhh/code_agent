@@ -11,11 +11,13 @@ from urllib.request import Request, urlopen
 
 from code_agent.exceptions import MemoryServiceError
 
+EMBEDDING_MODEL_NAME = "Qwen/Qwen3-Embedding-8B"
+
 
 @dataclass(frozen=True)
 class SiliconFlowEmbeddingConfig:
     api_key: str
-    model: str = "BAAI/bge-m3"
+    model: str = EMBEDDING_MODEL_NAME
     api_base: str = "https://api.siliconflow.cn/v1"
     dimensions: int | None = None
     timeout: int = 30
@@ -28,6 +30,8 @@ class SiliconFlowEmbeddingClient:
     def __init__(self, config: SiliconFlowEmbeddingConfig):
         if not config.api_key:
             raise MemoryServiceError("SiliconFlow embedding API key is missing.")
+        if config.model != EMBEDDING_MODEL_NAME:
+            raise ValueError(f"This project fixes the embedding model to {EMBEDDING_MODEL_NAME}.")
         self.config = config
 
     def embed(self, texts: str | list[str]) -> list[list[float]]:

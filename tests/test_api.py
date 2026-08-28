@@ -54,32 +54,32 @@ def test_generate_test_cases_endpoint_uses_selected_model(monkeypatch):
     assert payload["cases"][0]["input"] == "a1b2"
 
 
-def test_siliconflow_deepseek_model_uses_dedicated_key(monkeypatch):
+def test_only_glm_52_model_is_accepted(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "glm-test-key")
-    monkeypatch.setenv("SILICONFLOW_DEEPSEEK_API_KEY", "deepseek-test-key")
     monkeypatch.setenv("OPENAI_API_BASE", "https://api.siliconflow.cn/v1")
-    config = {"model": {"max_retries": 3, "model_kwargs": {"drop_params": True}}}
-
-    model = _build_model("openai/deepseek-ai/DeepSeek-V4-Pro", config)
-
-    assert model.config.model_kwargs["api_key"] == "deepseek-test-key"
-    assert model.config.model_kwargs["api_base"] == "https://api.siliconflow.cn/v1"
-
-
-def test_siliconflow_glm_model_uses_default_key(monkeypatch):
-    monkeypatch.setenv("OPENAI_API_KEY", "glm-test-key")
-    monkeypatch.setenv("SILICONFLOW_DEEPSEEK_API_KEY", "deepseek-test-key")
     config = {"model": {"max_retries": 3, "model_kwargs": {"drop_params": True}}}
 
     model = _build_model("openai/zai-org/GLM-5.2", config)
 
     assert model.config.model_kwargs["api_key"] == "glm-test-key"
+    assert model.config.model_kwargs["api_base"] == "https://api.siliconflow.cn/v1"
 
 
-def test_generate_test_cases_endpoint_requires_model_name():
+def test_other_model_is_rejected():
+    config = {"model": {"max_retries": 3, "model_kwargs": {"drop_params": True}}}
+
+    try:
+        _build_model("openai/deepseek-ai/DeepSeek-V4-Pro", config)
+    except ValueError as error:
+        assert "GLM-5.2" in str(error)
+    else:
+        raise AssertionError("Non-GLM model should be rejected")
+
+
+def test_generate_test_cases_endpoint_rejects_other_model():
     response = TestClient(app).post(
         "/api/test-cases/generate",
-        json={"task": "字符移动", "count": 2},
+        json={"task": "字符移动", "model": "openai/deepseek-ai/DeepSeek-V4-Pro", "count": 2},
     )
 
     assert response.status_code == 422

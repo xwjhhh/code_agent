@@ -44,7 +44,7 @@ CODE_AGENT_BASH_PATH=C:\Program Files\Git\bin\bash.exe
 
 Windows 环境变量查找不区分大小写，所以系统设置中的 `glm_api` 和 `deepseek_api` 可分别由 `.env` 通过 `${GLM_API}` 与 `${DEEPSEEK_API}` 引用。不要把真实 Key 写入仓库或前端代码。
 
-当前前端可选的硅基流动模型包括：`GLM-5.2`、`DeepSeek V4 Pro`、`GLM-5.1` 和 `DeepSeek V3.2 Pro`。DeepSeek 选项仍调用 `https://api.siliconflow.cn/v1`，不会路由到 DeepSeek 官方接口。
+项目固定使用硅基流动的 `GLM-5.2` 作为唯一对话模型，负责任务分析、Bash 工具调用、测试生成、Reviewer 和记忆分析。
 
 ## 启动 Web 应用
 
@@ -76,13 +76,13 @@ npm run dev
 ## 命令行运行
 
 ```powershell
-code-agent --task-file problem.txt --model openai/gpt-4o-mini
+code-agent --task-file problem.txt --model openai/zai-org/GLM-5.2
 ```
 
 也可以覆盖 Git Bash 路径：
 
 ```powershell
-code-agent --task-file problem.txt --model openai/gpt-4o-mini --bash-path "C:\Program Files\Git\bin\bash.exe"
+code-agent --task-file problem.txt --model openai/zai-org/GLM-5.2 --bash-path "C:\Program Files\Git\bin\bash.exe"
 ```
 
 CLI 会先调用模型生成 `test_cases.json`，然后运行与 Web 相同的编程闭环。
@@ -103,7 +103,7 @@ trajectories/<run_id>/review.json
 
 项目已加入可选的轨迹经验记忆：验证成功的运行会提炼 Strategy、Recovery、Optimization 经验，调用硅基流动 Embeddings API 建立向量索引，并保存到本地 SQLite。新任务开始前进行 task/subtask 多粒度检索，pytest 失败后进行 Recovery 检索，最多把少量筛选后的经验作为参考注入编程模型。详细设计见 [`doc/MEMORY_V2.md`](doc/MEMORY_V2.md)。
 
-Embedding 默认使用 `BAAI/bge-m3`。可在 `.env` 中设置 `SILICONFLOW_EMBEDDING_API_KEY`；未设置时回退到 `OPENAI_API_KEY`，Base URL 仍为 `https://api.siliconflow.cn/v1`。记忆库目录 `memory_store/` 已被 Git 忽略。
+Embedding 固定使用 `Qwen/Qwen3-Embedding-8B`。可在 `.env` 中设置 `SILICONFLOW_EMBEDDING_API_KEY`；未设置时回退到 `OPENAI_API_KEY`，Base URL 仍为 `https://api.siliconflow.cn/v1`。记忆库目录 `memory_store/` 已被 Git 忽略。
 
 ## 验证
 

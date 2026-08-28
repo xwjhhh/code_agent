@@ -5,7 +5,7 @@ import { Check, ChevronRight, Clock3, Cpu, FileCheck2, Plus, Sparkles } from "lu
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
-import { checkApi, listRuns, type ApiRun } from "@/lib/api";
+import { API_BASE, checkApi, listRuns, type ApiRun } from "@/lib/api";
 import type { RunStatus } from "@/lib/data";
 
 function runStatus(run: ApiRun): RunStatus {
@@ -91,7 +91,7 @@ export function Dashboard() {
             <div className="panel-body" style={{ display: "grid", gap: 10 }}>
               <div className="runtime-row"><span className={`status-dot ${connected ? "" : "yellow"}`} /> FastAPI {connected ? "已连接" : "未连接"}</div>
               <div className="runtime-row"><span className={`status-dot ${connected ? "" : "yellow"}`} /> Agent 事件流 {connected ? "可用" : "不可用"}</div>
-              <div style={{ color: "var(--dim)", fontSize: 10, fontFamily: "var(--mono)" }}>http://127.0.0.1:8000</div>
+              <div style={{ color: "var(--dim)", fontSize: 10, fontFamily: "var(--mono)" }}>{API_BASE}</div>
             </div>
           </section>
         </div>

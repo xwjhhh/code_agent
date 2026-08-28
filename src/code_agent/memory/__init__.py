@@ -1,6 +1,6 @@
 """Persistent, trajectory-informed experience memory for the coding agent."""
 
-from code_agent.memory.embedding import SiliconFlowEmbeddingClient, SiliconFlowEmbeddingConfig
+from code_agent.memory.embedding import EMBEDDING_MODEL_NAME, SiliconFlowEmbeddingClient, SiliconFlowEmbeddingConfig
 from code_agent.memory.factory import build_memory_manager, resolve_embedding_api_key
 from code_agent.memory.manager import MemoryManager, MemoryManagerConfig, MemoryRetrieval
 from code_agent.memory.schemas import MemoryNode, MemoryQuery, RetrievedMemory
@@ -16,6 +16,7 @@ __all__ = [
     "RetrievedMemory",
     "SiliconFlowEmbeddingClient",
     "SiliconFlowEmbeddingConfig",
+    "EMBEDDING_MODEL_NAME",
     "build_memory_manager",
     "cosine_similarity",
     "resolve_embedding_api_key",

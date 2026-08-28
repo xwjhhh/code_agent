@@ -30,7 +30,7 @@ environment:
   bash_path: null
 
 model:
-  model_name: ""
+  model_name: openai/zai-org/GLM-5.2
   max_retries: 3
   model_kwargs:
     drop_params: true
@@ -38,7 +38,7 @@ model:
 memory:
   enabled: true
   database_path: memory_store/memory.sqlite3
-  embedding_model: BAAI/bge-m3
+  embedding_model: Qwen/Qwen3-Embedding-8B
   embedding_api_base: null
   embedding_dimensions: null
   embedding_timeout: 30

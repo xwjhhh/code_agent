@@ -20,12 +20,12 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from code_agent.agents import DefaultAgent
 from code_agent.environments import LocalEnvironment
 from code_agent.memory import MemoryManager, build_memory_manager
-from code_agent.models import LitellmModel, resolve_api_key
+from code_agent.models import PRIMARY_MODEL_NAME, LitellmModel, resolve_api_key, validate_model_name
 from code_agent.reviewer import Reviewer
 from code_agent.run.main import create_run_id
 from code_agent.storage import RunStorage
@@ -42,16 +42,26 @@ class TestCaseInput(BaseModel):
 
 class RunRequest(BaseModel):
     task: str = Field(min_length=1, description="算法题目")
-    model: str = Field(min_length=1, description="LiteLLM 模型名")
+    model: str = Field(default=PRIMARY_MODEL_NAME, min_length=1, description="固定使用的 GLM-5.2 模型名")
     max_steps: int = Field(default=20, ge=1, le=100)
     timeout: int = Field(default=120, ge=1, le=600)
     test_cases: list[TestCaseInput] = Field(default_factory=list)
     test_case_source: str = Field(default="manual", pattern="^(manual|generated)$")
 
+    @field_validator("model")
+    @classmethod
+    def only_glm_52(cls, value: str) -> str:
+        return validate_model_name(value)
+
 class GenerateTestsRequest(BaseModel):
     task: str = Field(min_length=1, description="算法题目")
-    model: str = Field(min_length=1, description="用于生成测试的 LiteLLM 模型名")
+    model: str = Field(default=PRIMARY_MODEL_NAME, min_length=1, description="固定使用的 GLM-5.2 模型名")
     count: int = Field(default=6, ge=1, le=20)
+
+    @field_validator("model")
+    @classmethod
+    def only_glm_52(cls, value: str) -> str:
+        return validate_model_name(value)
 
 @dataclass
 class RunState:

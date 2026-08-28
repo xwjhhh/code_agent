@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from typing import Any, Callable
 
-from code_agent.memory.embedding import SiliconFlowEmbeddingClient, SiliconFlowEmbeddingConfig
+from code_agent.memory.embedding import EMBEDDING_MODEL_NAME, SiliconFlowEmbeddingClient, SiliconFlowEmbeddingConfig
 from code_agent.memory.manager import MemoryManager, MemoryManagerConfig
 from code_agent.memory.query_analyzer import TextModel
 from code_agent.memory.store import MemoryStore
@@ -40,7 +40,7 @@ def build_memory_manager(
     embedder = SiliconFlowEmbeddingClient(
         SiliconFlowEmbeddingConfig(
             api_key=api_key,
-            model=memory.get("embedding_model", "BAAI/bge-m3"),
+            model=EMBEDDING_MODEL_NAME,
             api_base=api_base,
             dimensions=memory.get("embedding_dimensions"),
             timeout=memory.get("embedding_timeout", 30),

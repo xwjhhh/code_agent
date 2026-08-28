@@ -8,11 +8,20 @@ from typing import Any
 from code_agent.exceptions import ModelError
 from code_agent.models.utils.actions import BASH_TOOL, format_observation_messages, parse_tool_calls
 
+PRIMARY_MODEL_NAME = "openai/zai-org/GLM-5.2"
 
-def resolve_api_key(model_name: str) -> str | None:
-    if "/deepseek-ai/" in model_name.casefold():
-        return os.getenv("SILICONFLOW_DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
+def resolve_api_key(model_name: str | None = None) -> str | None:
+    """Return the single SiliconFlow key used by GLM-5.2 calls."""
     return os.getenv("OPENAI_API_KEY")
+
+
+def validate_model_name(model_name: str) -> str:
+    if model_name != PRIMARY_MODEL_NAME:
+        raise ValueError(
+            f"This project is configured to use only {PRIMARY_MODEL_NAME}; "
+            f"received {model_name!r}."
+        )
+    return model_name
 
 
 @dataclass
@@ -24,6 +33,7 @@ class LitellmModelConfig:
 
 class LitellmModel:
     def __init__(self, model_name: str, model_kwargs: dict[str, Any] | None = None, max_retries: int = 3):
+        validate_model_name(model_name)
         self.config = LitellmModelConfig(model_name, model_kwargs or {}, max_retries)
 
     def query(self, messages: list[dict[str, Any]], **kwargs: Any) -> dict[str, Any]:

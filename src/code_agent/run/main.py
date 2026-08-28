@@ -16,7 +16,7 @@ from code_agent.agents import DefaultAgent
 from code_agent.environments import LocalEnvironment
 from code_agent.exceptions import ModelError
 from code_agent.memory import build_memory_manager
-from code_agent.models import LitellmModel, resolve_api_key
+from code_agent.models import PRIMARY_MODEL_NAME, LitellmModel, resolve_api_key, validate_model_name
 from code_agent.reviewer import Reviewer
 from code_agent.storage import RunStorage
 from code_agent.test_cases import generate_test_cases, save_test_files, task_with_test_file
@@ -29,9 +29,13 @@ def main(argv: list[str] | None = None) -> int:
     task = read_task(args)
     if not task.strip():
         raise SystemExit("Task cannot be empty.")
-    model_name = args.model or os.getenv("CODE_AGENT_MODEL") or config["model"].get("model_name")
+    model_name = args.model or os.getenv("CODE_AGENT_MODEL") or config["model"].get("model_name") or PRIMARY_MODEL_NAME
     if not model_name:
         raise SystemExit("Model name is required. Use --model or set CODE_AGENT_MODEL.")
+    try:
+        model_name = validate_model_name(model_name)
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
 
     run_id = args.run_id or create_run_id(task)
     workspace = Path(args.workspace_root).resolve() / run_id
