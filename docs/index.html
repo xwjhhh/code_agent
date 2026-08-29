@@ -85,12 +85,29 @@
     .panel { overflow: hidden; border: 1px solid var(--line); border-radius: 7px; background: #fff; box-shadow: var(--shadow); }
     .panel-head { min-height: 49px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 17px; border-bottom: 1px solid var(--line-soft); }
     .panel-title { display: flex; align-items: center; gap: 7px; color: #344054; font-size: 12px; font-weight: 650; } .panel-title svg { width: 15px; color: var(--blue); }
+    .graph-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 9px 15px; border-bottom: 1px solid var(--line-soft); background: #fcfdff; }
+    .graph-filter { height: 27px; padding: 0 9px; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); background: #fff; font-size: 10px; font-weight: 650; }
+    .graph-filter:hover, .graph-filter.active { color: #095ec9; border-color: #9fc5ff; background: var(--blue-soft); }
+    .graph-hint { margin-left: auto; color: var(--dim); font-size: 10px; }
     .canvas-wrap { min-height: 510px; padding: 10px; overflow: auto; background: #fbfcfe; }
-    .graph { display: block; width: 100%; min-width: 680px; min-height: 470px; }
-    .edge { stroke: #c4cfdd; stroke-width: 1.4; } .edge.dotted { stroke-dasharray: 5 5; stroke: #b2bfce; }
+    .graph { display: block; width: 100%; min-width: 760px; min-height: 510px; }
+    .edge { stroke: #c4cfdd; stroke-width: 1.4; opacity: .72; } .edge.dotted { stroke-dasharray: 5 5; stroke: #b2bfce; }
     .node { cursor: pointer; } .node circle { fill: #fff; stroke: #cbd6e3; stroke-width: 1.5; transition: .15s; } .node:hover circle, .node.selected circle { fill: #f3f8ff; stroke: var(--blue); stroke-width: 2.2; }
-    .node.task circle { stroke-width: 2; } .node.strategy circle { stroke: #8cbaf5; } .node.recovery circle { stroke: #e6bd70; } .node.optimization circle { stroke: #b6a3f2; }
-    .node text { pointer-events: none; fill: #536174; font: 600 11px var(--ui); text-anchor: middle; dominant-baseline: middle; }
+    .node.task circle { stroke-width: 2.4; } .node.strategy circle { stroke: #8cbaf5; } .node.recovery circle { stroke: #e6bd70; } .node.optimization circle { stroke: #b6a3f2; }
+    .node text { pointer-events: none; fill: #536174; font: 600 11px var(--ui); dominant-baseline: middle; }
+    .graph-column-title { fill: #667085; font: 700 11px var(--ui); }
+    .node-label { paint-order: stroke; stroke: #fbfcfe; stroke-width: 4px; stroke-linejoin: round; }
+    .node.subtask .node-label { display: none; }
+    .node.subtask:hover .node-label, .node.subtask.selected .node-label { display: block; }
+    .node .node-label { fill: #344054; font-size: 11px; font-weight: 650; }
+    .node .node-meta { fill: var(--dim); font-size: 9px; font-weight: 500; }
+    .node.subtask circle { stroke-width: 1.4; }
+    .code-block { margin: 10px 0 0; overflow: hidden; border: 1px solid #dfe5ed; border-radius: 6px; background: #111827; }
+    .code-head { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; color: #b8c4d5; background: #1b2433; font: 10px var(--mono); }
+    .copy-code { padding: 3px 7px; border: 1px solid #46556c; border-radius: 4px; color: #dce7f5; background: transparent; font: 10px var(--ui); }
+    .copy-code:hover { border-color: #91bfff; color: #fff; }
+    .code-block pre { max-height: 520px; margin: 0; padding: 13px; overflow: auto; color: #e5edf8; font: 11px/1.65 var(--mono); white-space: pre; tab-size: 4; }
+    .test-output { max-height: 180px; margin: 0; padding: 9px 10px; overflow: auto; border: 1px solid var(--line-soft); border-radius: 5px; color: #475467; background: #f8fafc; font: 10px/1.6 var(--mono); white-space: pre-wrap; }
     .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 10px 15px; border-top: 1px solid var(--line-soft); color: var(--dim); font-size: 9px; }
     .legend span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; } .legend i { display: inline-block; width: 19px; border-top: 1px solid #aeb9c8; } .legend i.dotted { border-top-style: dashed; }
     .side { position: sticky; top: 76px; display: grid; gap: 16px; max-height: calc(100vh - 108px); overflow-y: auto; }
@@ -101,7 +118,7 @@
     .run-detail { margin-top: 16px; } .run-detail[hidden] { display: none; } .run-detail .detail { max-height: 320px; overflow: auto; } .empty-row { padding: 34px; color: var(--muted); text-align: center; }
     .footer { margin-top: 28px; color: var(--dim); font-size: 10px; text-align: center; } .footer a { color: var(--blue); }
     @media (max-width: 980px) { .sidebar { width: 72px; flex-basis: 72px; padding: 16px 10px; } .brand { justify-content: center; padding: 0 0 16px; } .brand-copy, .nav-label, .nav-item span, .profile > div, .profile::after { display: none; } .nav-item { justify-content: center; padding: 0; } .profile { justify-content: center; padding-left: 0; padding-right: 0; } .topbar { padding: 0 20px; } .page { padding: 24px 20px 40px; } .graph-layout { grid-template-columns: 1fr; } .side { position: static; max-height: none; overflow: visible; grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 680px) { .sidebar { display: none; } .topbar { height: 54px; flex-basis: 54px; padding: 0 15px; } .github-link span, .top-meta .pill { display: none; } .page { padding: 21px 14px 34px; } .page-header { align-items: flex-start; flex-direction: column; margin-bottom: 19px; } h1 { font-size: 22px; } .stats { grid-template-columns: repeat(2, 1fr); gap: 9px; margin-bottom: 16px; } .stat { min-height: 86px; padding: 14px; } .stat-value { margin-top: 9px; font-size: 21px; } .tabs { margin-bottom: 15px; } .tab { flex: 1; padding: 0 5px; font-size: 11px; } .run-row { grid-template-columns: minmax(150px, 1fr) 26px; padding: 0 11px; } .run-row > :nth-child(2), .run-row > :nth-child(3), .run-row > :nth-child(4), .run-row > :nth-child(5) { display: none; } .run-row.header { min-height: 35px; } .run-row.header > :first-child { display: block; } .run-row.header > :last-child { display: none; } .canvas-wrap { min-height: 440px; } .graph { min-width: 620px; min-height: 410px; } .side { grid-template-columns: 1fr; } }
+    @media (max-width: 680px) { .sidebar { display: none; } .topbar { height: 54px; flex-basis: 54px; padding: 0 15px; } .github-link span, .top-meta .pill { display: none; } .page { padding: 21px 14px 34px; } .page-header { align-items: flex-start; flex-direction: column; margin-bottom: 19px; } h1 { font-size: 22px; } .stats { grid-template-columns: repeat(2, 1fr); gap: 9px; margin-bottom: 16px; } .stat { min-height: 86px; padding: 14px; } .stat-value { margin-top: 9px; font-size: 21px; } .tabs { margin-bottom: 15px; } .tab { flex: 1; padding: 0 5px; font-size: 11px; } .run-row { grid-template-columns: minmax(150px, 1fr) 26px; padding: 0 11px; } .run-row > :nth-child(2), .run-row > :nth-child(3), .run-row > :nth-child(4), .run-row > :nth-child(5) { display: none; } .run-row.header { min-height: 35px; } .run-row.header > :first-child { display: block; } .run-row.header > :last-child { display: none; } .canvas-wrap { min-height: 440px; } .graph { min-width: 720px; min-height: 510px; } .graph-hint { width: 100%; margin-left: 0; } .side { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -123,7 +140,7 @@
         <section class="stats"><div class="stat"><div class="stat-label">历史运行</div><div id="stat-runs" class="stat-value">-</div></div><div class="stat"><div class="stat-label">验证通过</div><div id="stat-passed" class="stat-value">-</div></div><div class="stat"><div class="stat-label">知识节点</div><div id="stat-memories" class="stat-value">-</div></div><div class="stat"><div class="stat-label">累计模型调用</div><div id="stat-calls" class="stat-value">-</div></div></section>
         <div class="tabs" role="tablist"><button class="tab active" data-view="history" role="tab">历史运行</button><button class="tab" data-view="memory" role="tab">知识图谱</button></div>
         <section id="history" class="view active" data-panel="history"><div class="section-heading"><div class="section-title">历史运行记录</div><span id="runs-count" class="muted">正在读取数据快照...</span></div><div class="table"><div class="run-row header"><div>题目</div><div>状态</div><div>模型</div><div>调用</div><div>创建时间</div><div></div></div><div id="runs"></div></div><div id="run-detail" class="panel run-detail" hidden></div></section>
-        <section id="memory" class="view" data-panel="memory"><div class="section-heading"><div class="section-title">中文知识图谱</div><span id="memory-count" class="muted">正在读取本机数据...</span></div><div class="graph-layout"><section class="panel"><div class="panel-head"><div class="panel-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="5" r="2.5"></circle><circle cx="5" cy="18" r="2.5"></circle><circle cx="19" cy="18" r="2.5"></circle><path d="m10.5 7-4 8.5M13.5 7l4 8.5M7.8 18h8.4"></path></svg>经验演进关系</div><span class="muted">点击节点查看详情</span></div><div class="canvas-wrap"><svg id="graph" class="graph" viewBox="0 0 820 500" role="img" aria-label="中文知识图谱"></svg></div><div class="legend"><span><i></i>同一运行经验</span><span><i class="dotted"></i>相似度关系</span><span>○ 策略经验</span><span>○ 恢复经验</span><span>○ 优化经验</span></div></section><aside class="side"><section class="panel"><div class="panel-head"><span class="panel-title">经验详情</span><span id="detail-kind" class="muted">请选择节点</span></div><div id="detail" class="detail"><h3>从图谱中选择一条经验</h3><p>这里展示它的适用条件、行动步骤和来源运行。</p></div></section><section class="panel"><div class="panel-head"><span class="panel-title">经验来源</span><span class="muted">运行 ID</span></div><div id="sources" class="source-list"></div></section></aside></div></section>
+        <section id="memory" class="view" data-panel="memory"><div class="section-heading"><div class="section-title">中文知识图谱</div><span id="memory-count" class="muted">正在读取本机数据...</span></div><div class="graph-layout"><section class="panel"><div class="panel-head"><div class="panel-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="5" r="2.5"></circle><circle cx="5" cy="18" r="2.5"></circle><circle cx="19" cy="18" r="2.5"></circle><path d="m10.5 7-4 8.5M13.5 7l4 8.5M7.8 18h8.4"></path></svg>经验演进关系</div><span class="muted">点击节点查看详情</span></div><div class="graph-toolbar" role="toolbar" aria-label="图谱筛选"><button class="graph-filter active" data-graph-filter="tasks" type="button">任务级概览</button><button class="graph-filter" data-graph-filter="all" type="button">全部经验</button><button class="graph-filter" data-graph-filter="strategy" type="button">策略</button><button class="graph-filter" data-graph-filter="recovery" type="button">恢复</button><button class="graph-filter" data-graph-filter="optimization" type="button">优化</button><span class="graph-hint">默认收起子任务，悬停小节点查看名称</span></div><div class="canvas-wrap"><svg id="graph" class="graph" viewBox="0 0 980 520" role="img" aria-label="中文知识图谱"></svg></div><div class="legend"><span><i></i>同一运行经验</span><span><i class="dotted"></i>相似度关系</span><span>○ 策略经验</span><span>○ 恢复经验</span><span>○ 优化经验</span></div></section><aside class="side"><section class="panel"><div class="panel-head"><span class="panel-title">经验详情</span><span id="detail-kind" class="muted">请选择节点</span></div><div id="detail" class="detail"><h3>从图谱中选择一条经验</h3><p>这里展示它的适用条件、行动步骤和来源运行。</p></div></section><section class="panel"><div class="panel-head"><span class="panel-title">经验来源</span><span class="muted">运行 ID</span></div><div id="sources" class="source-list"></div></section></aside></div></section>
         <div class="footer">这是 Code Agent 的静态项目展示页 · <a href="https://github.com/xwjhhh/code_agent" target="_blank" rel="noreferrer">返回 GitHub 仓库</a></div>
       </main>
     </div>
@@ -175,10 +192,119 @@
       document.getElementById('stat-calls').textContent = items.reduce((total, run) => total + Number(run.model_calls || 0), 0);
       document.querySelectorAll('#runs [data-run-id]').forEach(row => { row.addEventListener('click', () => showRun(row.dataset.runId, items)); row.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') showRun(row.dataset.runId, items); }); });
     }
-    function showRun(id, items) { const run = items.find(item => item.run_id === id); if (!run) return; const [status,label] = runStatus(run); runDetail.hidden = false; runDetail.innerHTML = `<div class="panel-head"><span class="panel-title">运行详情</span><span class="badge ${status}">${label}</span></div><div class="detail"><h3>${escapeHtml(String(run.task || '').split('\n')[0])}</h3><div class="detail-meta"><span>运行 ID ${escapeHtml(run.run_id)}</span><span>${escapeHtml(formatDate(run.created_at))}</span><span>${escapeHtml(run.model || '-')}</span></div><div class="detail-label">测试结果</div><p>${escapeHtml(run.last_test_output || (run.verified ? '本地测试已通过。' : '暂无测试输出。'))}</p>${run.review && run.review.content ? `<div class="detail-label">Reviewer</div><p>${escapeHtml(run.review.content).slice(0, 900)}</p>` : ''}</div>`; runDetail.scrollIntoView({behavior:'smooth', block:'nearest'}); }
-    function layoutSnapshotNodes(items) { const points = new Map(); const tasks = items.filter(item => item.granularity === 'task'); const subtasks = items.filter(item => item.granularity !== 'task'); const anchors = new Map(); const radius = Math.min(280, 150 + tasks.length * 18); tasks.forEach((item,index) => { const angle = tasks.length < 2 ? -Math.PI / 2 : -Math.PI / 2 + Math.PI * 2 * index / tasks.length; const point = {x:410 + Math.cos(angle) * radius, y:245 + Math.sin(angle) * 170}; points.set(item.id, point); if (item.source_run_id) anchors.set(item.source_run_id, point); }); const grouped = new Map(); subtasks.forEach(item => { const key = item.source_run_id || 'orphan'; if (!grouped.has(key)) grouped.set(key, []); grouped.get(key).push(item); }); grouped.forEach((group, source) => { const anchor = anchors.get(source) || {x:410,y:245}; group.forEach((item,index) => { const angle = -Math.PI / 2 + Math.PI * 2 * index / Math.max(group.length,1); points.set(item.id, {x: anchor.x + Math.cos(angle) * 84, y: anchor.y + Math.sin(angle) * 68}); }); }); return points; }
-    function memoryLabel(memory) { return escapeHtml(String(memory.trigger || memory.content || memory.purpose || '未命名经验').replace(/\s+/g, ' ').slice(0, 14)); }
-    function renderMemorySnapshot(payload) { const items = Array.isArray(payload.nodes) ? payload.nodes : []; const points = layoutSnapshotNodes(items); byId = Object.fromEntries(items.map(item => [item.id, item])); const links = Array.isArray(payload.edges) ? payload.edges : []; graph.innerHTML = links.map(edge => { const a = points.get(edge.source), b = points.get(edge.target); return a && b ? `<line class="edge ${edge.kind === 'dotted' ? 'dotted' : ''}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"></line>` : ''; }).join('') + items.map(item => { const point = points.get(item.id) || {x:410,y:245}; const radius = item.granularity === 'task' ? 40 : 28; const kind = categoryLabel[item.category] ? item.category : 'strategy'; return `<g class="node ${kind} ${item.granularity === 'task' ? 'task' : ''}" data-id="${escapeHtml(item.id)}" tabindex="0" role="button"><circle cx="${point.x}" cy="${point.y}" r="${radius}"></circle><text x="${point.x}" y="${point.y}">${memoryLabel(item)}</text></g>`; }).join(''); document.querySelectorAll('#graph .node').forEach(node => { node.addEventListener('click', () => selectMemory(node.dataset.id)); node.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') selectMemory(node.dataset.id); }); }); document.getElementById('memory-count').textContent = `${items.length} 条本机经验 · 点击节点查看详情`; document.getElementById('stat-memories').textContent = payload.count ?? items.length; document.getElementById('sources').innerHTML = [...new Set(items.map(item => item.source_run_id).filter(Boolean))].slice(0, 12).map(source => `<div class="source"><span>↻</span><span><b>${escapeHtml(source)}</b><br><span>已沉淀多条经验</span></span><button class="source-action" data-run-id="${escapeHtml(source)}">查看</button></div>`).join('') || '<span class="muted">暂无来源运行</span>'; document.querySelectorAll('.source-action').forEach(button => button.addEventListener('click', () => { activate('history'); showRun(button.dataset.runId, window.__runs || []); })); }
+    function showRun(id, items) {
+      const run = items.find(item => item.run_id === id);
+      if (!run) return;
+      const [status, label] = runStatus(run);
+      const code = typeof run.solution_code === 'string' ? run.solution_code : '';
+      const codeBlock = code
+        ? `<div class="detail-label">Agent 生成的 solution.py</div><div class="code-block"><div class="code-head"><span>solution.py</span><button class="copy-code" type="button" data-copy-code="run-solution">复制代码</button></div><pre id="run-solution">${escapeHtml(code)}</pre></div>`
+        : `<div class="detail-label">Agent 生成的 solution.py</div><p class="muted">本次运行没有找到 solution.py，可能是模型调用失败或该历史快照创建于代码导出功能启用之前。</p>`;
+      runDetail.hidden = false;
+      runDetail.innerHTML = `<div class="panel-head"><span class="panel-title">运行详情</span><span class="badge ${status}">${label}</span></div><div class="detail"><h3>${escapeHtml(String(run.task || '').split('\n')[0])}</h3><div class="detail-meta"><span>运行 ID ${escapeHtml(run.run_id)}</span><span>${escapeHtml(formatDate(run.created_at))}</span><span>${escapeHtml(run.model || '-')}</span><span>模型调用 ${escapeHtml(run.model_calls ?? '-')} 次</span></div><div class="detail-label">测试结果</div><pre class="test-output">${escapeHtml(run.last_test_output || (run.verified ? '本地测试已通过。' : '暂无测试输出。'))}</pre>${run.error ? `<div class="detail-label">错误信息</div><p>${escapeHtml(run.error)}</p>` : ''}${run.review && run.review.content ? `<div class="detail-label">Reviewer</div><p>${escapeHtml(run.review.content).slice(0, 900)}</p>` : ''}${codeBlock}</div>`;
+      const copyButton = runDetail.querySelector('[data-copy-code]');
+      if (copyButton) copyButton.addEventListener('click', () => copySolutionCode(code, copyButton));
+      runDetail.scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
+    async function copySolutionCode(code, button) {
+      try {
+        await navigator.clipboard.writeText(code);
+      } catch (error) {
+        const textarea = document.createElement('textarea');
+        textarea.value = code;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+      }
+      const original = button.textContent;
+      button.textContent = '已复制';
+      window.setTimeout(() => { button.textContent = original; }, 1400);
+    }
+    const memoryState = {items: [], edges: [], filter: 'tasks'};
+    const graphCategories = ['strategy', 'recovery', 'optimization'];
+    function memoryTitle(memory) {
+      const raw = String(memory.title || memory.trigger || memory.content || memory.purpose || '未命名经验').replace(/\s+/g, ' ');
+      return raw.length > 22 ? `${raw.slice(0, 22)}…` : raw;
+    }
+    function splitLabel(value, size = 9) {
+      const chars = Array.from(value);
+      const lines = [];
+      for (let index = 0; index < chars.length; index += size) lines.push(chars.slice(index, index + size).join(''));
+      return lines.slice(0, 2);
+    }
+    function graphItems() {
+      if (memoryState.filter === 'tasks') return memoryState.items.filter(item => item.granularity === 'task');
+      if (graphCategories.includes(memoryState.filter)) return memoryState.items.filter(item => item.category === memoryState.filter);
+      return memoryState.items;
+    }
+    function layoutSnapshotNodes(items) {
+      const points = new Map();
+      const grouped = new Map(graphCategories.map(category => [category, []]));
+      items.forEach(item => grouped.has(item.category) ? grouped.get(item.category).push(item) : grouped.get('strategy').push(item));
+      const compact = memoryState.filter === 'all';
+      const groups = graphCategories.filter(category => grouped.get(category).length);
+      const width = groups.length > 1 ? 1080 : 760;
+      const centers = groups.length > 1 ? groups.map((_, index) => 180 + index * 360) : [width / 2];
+      let maxRows = 1;
+      groups.forEach((category, column) => {
+        const group = grouped.get(category).slice().sort((left, right) => Number(right.granularity === 'task') - Number(left.granularity === 'task') || Number(right.quality_score || 0) - Number(left.quality_score || 0));
+        const columns = compact || group.length > 6 ? 2 : 1;
+        const rowGap = compact ? 48 : 104;
+        const rows = Math.ceil(group.length / columns);
+        maxRows = Math.max(maxRows, rows);
+        group.forEach((item, index) => {
+          const row = Math.floor(index / columns);
+          const subColumn = index % columns;
+          points.set(item.id, {x: centers[column] + (columns === 2 ? (subColumn ? 82 : -82) : 0), y: (compact ? 58 : 86) + row * rowGap});
+        });
+      });
+      return {points, width, height: Math.max(compact ? 540 : 460, 120 + maxRows * (compact ? 48 : 104)), groups, centers};
+    }
+    function graphText(item, point, radius, visible) {
+      if (!visible) return '';
+      const lines = splitLabel(memoryTitle(item), item.granularity === 'task' ? 10 : 8);
+      const y = point.y + radius + 16;
+      return `<text class="node-label" x="${point.x}" y="${y}" text-anchor="middle">${lines.map((line, index) => `<tspan x="${point.x}" dy="${index ? 13 : 0}">${escapeHtml(line)}</tspan>`).join('')}</text>`;
+    }
+    function wireGraphNodes() {
+      document.querySelectorAll('#graph .node').forEach(node => {
+        node.addEventListener('click', () => selectMemory(node.dataset.id));
+        node.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectMemory(node.dataset.id); } });
+      });
+    }
+    function renderMemorySnapshot(payload) {
+      memoryState.items = Array.isArray(payload.nodes) ? payload.nodes : [];
+      memoryState.edges = Array.isArray(payload.edges) ? payload.edges : [];
+      byId = Object.fromEntries(memoryState.items.map(item => [item.id, item]));
+      renderMemoryGraph();
+      document.getElementById('stat-memories').textContent = payload.count ?? memoryState.items.length;
+      document.getElementById('sources').innerHTML = [...new Set(memoryState.items.map(item => item.source_run_id).filter(Boolean))].slice(0, 12).map(source => `<div class="source"><span>↻</span><span><b>${escapeHtml(source)}</b><br><span>已沉淀多条经验</span></span><button class="source-action" data-run-id="${escapeHtml(source)}">查看</button></div>`).join('') || '<span class="muted">暂无来源运行</span>';
+      document.querySelectorAll('.source-action').forEach(button => button.addEventListener('click', () => { activate('history'); showRun(button.dataset.runId, window.__runs || []); }));
+    }
+    function renderMemoryGraph() {
+      const items = graphItems();
+      const {points, width, height, groups, centers} = layoutSnapshotNodes(items);
+      const visibleIds = new Set(items.map(item => item.id));
+      const compact = memoryState.filter === 'all';
+      graph.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      const headings = groups.map((category, index) => `<text class="graph-column-title" x="${centers[index]}" y="25" text-anchor="middle">${categoryLabel[category]} · ${items.filter(item => item.category === category).length}</text>`).join('');
+      const links = memoryState.edges.filter(edge => visibleIds.has(edge.source) && visibleIds.has(edge.target)).map(edge => { const a = points.get(edge.source); const b = points.get(edge.target); return a && b ? `<line class="edge ${edge.kind === 'dotted' ? 'dotted' : ''}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"></line>` : ''; }).join('');
+      const nodes = items.map(item => {
+        const point = points.get(item.id) || {x: width / 2, y: height / 2};
+        const task = item.granularity === 'task';
+        const radius = task ? (compact ? 23 : 30) : (compact ? 10 : 17);
+        const kind = categoryLabel[item.category] ? item.category : 'strategy';
+        const labelVisible = !compact || task && memoryState.filter !== 'all';
+        return `<g class="node ${kind} ${task ? 'task' : 'subtask'}" data-id="${escapeHtml(item.id)}" tabindex="0" role="button" aria-label="${escapeHtml(memoryTitle(item))}"><title>${escapeHtml(memoryTitle(item))}</title><circle cx="${point.x}" cy="${point.y}" r="${radius}"></circle>${graphText(item, point, radius, labelVisible)}</g>`;
+      }).join('');
+      graph.innerHTML = headings + links + nodes;
+      document.getElementById('memory-count').textContent = `${items.length} / ${memoryState.items.length} 条经验 · ${memoryState.filter === 'tasks' ? '任务级概览' : memoryState.filter === 'all' ? '全部经验' : categoryLabel[memoryState.filter]}`;
+      wireGraphNodes();
+    }
+    document.querySelectorAll('[data-graph-filter]').forEach(button => button.addEventListener('click', () => { memoryState.filter = button.dataset.graphFilter; document.querySelectorAll('[data-graph-filter]').forEach(item => item.classList.toggle('active', item === button)); renderMemoryGraph(); }));
     async function loadSnapshot() { try { const [runsResponse, memoryResponse] = await Promise.all([fetch(`${API_SNAPSHOT}runs.json`, {cache:'no-store'}), fetch(`${API_SNAPSHOT}memories.json`, {cache:'no-store'})]); if (!runsResponse.ok || !memoryResponse.ok) throw new Error('快照文件不可用'); const runPayload = await runsResponse.json(); const memoryPayload = await memoryResponse.json(); window.__runs = Array.isArray(runPayload.items) ? runPayload.items : []; renderRuns(window.__runs); renderMemorySnapshot(memoryPayload); statusText.textContent = `本机数据快照 · ${formatDate(runPayload.generated_at)}`; } catch (error) { statusText.textContent = '无法读取数据快照'; document.getElementById('runs-count').textContent = '请先运行导出脚本'; document.getElementById('memory-count').textContent = '请先运行导出脚本'; } }
     loadSnapshot();
     if (location.hash === '#memory') activate('memory');

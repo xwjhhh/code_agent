@@ -37,6 +37,25 @@ def safe_list(raw: str | None) -> list[str]:
     return [str(item) for item in value] if isinstance(value, list) else []
 
 
+def read_solution_code(run_dir: Path, result: dict[str, Any]) -> str:
+    """Read the generated solution for the public, static run detail view."""
+    candidates: list[Path] = []
+    solution_path = result.get("solution_path")
+    if isinstance(solution_path, str) and solution_path:
+        candidates.append(Path(solution_path))
+    workspace = result.get("workspace")
+    if isinstance(workspace, str) and workspace:
+        candidates.append(Path(workspace) / "solution.py")
+    candidates.append(PROJECT_ROOT / "workspace" / run_dir.name / "solution.py")
+    for candidate in candidates:
+        try:
+            if candidate.is_file():
+                return candidate.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+    return ""
+
+
 def cosine_similarity(left: list[float], right: list[float]) -> float:
     if not left or len(left) != len(right):
         return -1.0
@@ -179,6 +198,7 @@ def export_runs() -> dict[str, Any]:
         if not task:
             continue
         cases = payload.get("test_cases") if isinstance(payload.get("test_cases"), list) else []
+        solution_code = read_solution_code(run_dir, result)
         runs.append(
             {
                 "run_id": run_dir.name,
@@ -190,6 +210,7 @@ def export_runs() -> dict[str, Any]:
                 "created_at": str(payload.get("created_at") or datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).isoformat()),
                 "test_case_count": len(cases),
                 "last_test_output": str(result.get("last_test_output", "")),
+                "solution_code": solution_code,
                 "review": {"status": review.get("status"), "content": review.get("content", "")},
                 "error": error,
             }
