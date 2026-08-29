@@ -79,7 +79,7 @@ npm run dev
 
 `https://xwjhhh.github.io/code_agent/`
 
-工作流会尝试自动启用 GitHub Pages；若仓库策略禁止自动启用，再在仓库 Settings → Pages 中将 Source 设为 GitHub Actions。页面中的“查看仓库”链接仍指向源码仓库，便于面试或项目演示时切换查看。
+若仓库尚未启用 Pages，请在仓库 Settings → Pages 中将 Source 设为 GitHub Actions。页面中的“查看仓库”链接仍指向源码仓库，便于面试或项目演示时切换查看。
 
 所有运行均使用 LiteLLM 调用所选模型。LiteLLM 只负责厂商 API 调用，Agent 循环和本地工具仍由本项目实现。
 
