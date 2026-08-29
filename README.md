@@ -73,7 +73,15 @@ npm run dev
 
 ## GitHub 项目展示
 
-仓库内的 [`docs/index.html`](docs/index.html) 是一个独立的只读展示页，只呈现历史运行快照和中文知识图谱，不连接 FastAPI、不调用模型，也不会创建或执行任务。
+仓库内的 [`docs/index.html`](docs/index.html) 是一个静态展示页，只呈现从本机数据库导出的历史运行快照和中文知识图谱，不连接 FastAPI、不调用模型，也不会创建或执行任务。
+
+更新本机运行或记忆后，在项目根目录执行：
+
+```powershell
+python scripts/export_showcase_data.py
+```
+
+脚本会从 `trajectories/` 和 `memory_store/memory.sqlite3` 生成 `docs/data/runs.json` 与 `docs/data/memories.json`。导出数据会排除向量、模型消息、工作区路径和密钥；检查内容后提交并推送这两个 JSON，GitHub Pages 就会显示最新快照。
 
 推送到 `main` 后，`.github/workflows/pages.yml` 会自动将 `docs/` 部署到 GitHub Pages。仓库 `xwjhhh/code_agent` 的展示地址为：
 
