@@ -72,6 +72,32 @@ Rules: do not copy source code, task names, sample values, variable names, file 
                 },
             ]
         )
+        nodes = self._parse_nodes(response, source_run_id)
+        if nodes:
+            return nodes
+
+        # Provider responses occasionally contain explanatory text or omit an
+        # enum field. A single strict retry keeps a verified run from losing
+        # its experience solely because of a transient formatting error.
+        try:
+            retry_response = self.model.query_text(
+                [
+                    {
+                        "role": "system",
+                        "content": "Return valid JSON only. Do not use Markdown fences or commentary. Use category strategy, recovery, or optimization and granularity task or subtask.",
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Repair this experience extraction into a JSON object with a memories array. Keep the useful Chinese experiences and include trigger, content, purpose, steps, negative_example, problem_family, algorithm_tags, constraints, priority, category, and granularity for every item.\n\n{response[:12000]}",
+                    },
+                ]
+            )
+        except Exception:
+            return []
+        return self._parse_nodes(retry_response, source_run_id)
+
+    @classmethod
+    def _parse_nodes(cls, response: str, source_run_id: str) -> list[MemoryNode]:
         try:
             items = parse_json_object(response).get("memories", [])
         except (TypeError, ValueError):
@@ -80,7 +106,7 @@ Rules: do not copy source code, task names, sample values, variable names, file 
             return []
         nodes: list[MemoryNode] = []
         for item in items[:6]:
-            node = self._node_from_item(item, source_run_id)
+            node = cls._node_from_item(item, source_run_id)
             if node is not None:
                 nodes.append(node)
         return nodes

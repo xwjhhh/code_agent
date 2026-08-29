@@ -1,665 +1,435 @@
 {
-  "generated_at": "2026-08-29T05:42:02.627566+00:00",
-  "count": 18,
+  "generated_at": "2026-08-29T07:25:37.040376+00:00",
+  "count": 12,
   "embedding_model": "Qwen/Qwen3-Embedding-8B",
   "nodes": [
     {
-      "id": "b77b5133d62f4928ba6b48eacf6269d1",
+      "id": "ffa4ff710f75447989535a20d883b042",
       "category": "strategy",
       "granularity": "subtask",
-      "trigger": "when a problem requires reordering characters into groups while preserving the original relative order within each group",
-      "content": "Use stable partition via two separate sequential filter-then-concatenate passes rather than in-place swaps or unstable partitioning. Collect group A characters in input order into one list, collect group B characters in input order into another list, then concatenate A+B. Because both passes traverse the original sequence in order, relative order within each group is automatically preserved without needing a stable-sort comparator.",
-      "purpose": "Guarantee order-preservation without complex comparisons or extra sort overhead",
+      "trigger": "背包问题中允许不选取任何物品且不要求恰好装满",
+      "content": "将DP数组初始化为全零而非负无穷，表示任意容量下什么都不选价值为零是合法解；转移时取max保证负价值物品自然不被选中。",
+      "purpose": "正确处理容量不足或所有物品净收益为非正的情况",
       "steps": [
-        "Identify the partition predicate (e.g., is-digit vs not)",
-        "Traverse input once appending matching elements to list A",
-        "Traverse input once appending non-matching elements to list B",
-        "Return concatenation of A followed by B"
+        "创建长度为容量加一的数组全部初始化为零",
+        "DP转移时取当前值与新选法值的较大者",
+        "最终返回DP末尾元素即为合法最优解"
       ],
-      "negative_example": "Do not use Python's sorted/sort with key returning 0/1 unless the sort is guaranteed stable and the predicate is well-defined; do not use in-place swap partitioning which loses relative order",
+      "negative_example": "若题目要求恰好装满背包，不能初始化为零，应将非零容量位初始化为负无穷",
       "problem_family": [
-        "stable partition",
-        "reorder while preserving relative order",
-        "segregate characters by class"
+        "完全背包",
+        "0-1背包"
       ],
       "algorithm_tags": [
-        "stable-partition",
-        "two-pointer-filter",
-        "order-preserving-reorder"
+        "dp"
       ],
       "constraints": [
-        "O(n) time",
-        "O(n) extra space acceptable"
-      ],
-      "priority": 1,
-      "quality_score": 0.85,
-      "source_run_id": "20260829-100600-100-ab4f35gr-a6-abfgr-b68aa4",
-      "source_verified": true,
-      "created_at": "2026-08-29T02:08:40.498292+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "57e8f0dda5d24df898a5d68e04e45c91",
-      "category": "strategy",
-      "granularity": "subtask",
-      "trigger": "when a competitive-programming problem refers to 'digit characters' and input is ASCII but the language has Unicode-aware built-ins",
-      "content": "Prefer an explicit ASCII digit-set membership test over str.isdigit() when the problem intends only '0'-'9'. str.isdigit() returns True for Unicode superscripts, subscript digits, and other non-ASCII digit code points, which can cause wrong answers on edge test cases containing such characters. An explicit ASCII set is unambiguous and matches judge expectations.",
-      "purpose": "Avoid false-positive digit detection from Unicode-only digit code points",
-      "steps": [
-        "Confirm the problem means ASCII 0-9",
-        "Check membership against an explicit set of the ten ASCII digits or use a range check like '0'<=c<='9'",
-        "Avoid isdigit/isnumeric for the partition predicate unless Unicode digits are explicitly required"
-      ],
-      "negative_example": "Do not blindly use str.isdigit() as the digit predicate in algorithmic problems sourced from online judges expecting ASCII semantics",
-      "problem_family": [
-        "string classification",
-        "digit-vs-nondigit partition"
-      ],
-      "algorithm_tags": [
-        "ascii-digit-check",
-        "predicate-precision"
-      ],
-      "constraints": [
-        "input may contain non-ASCII or special Unicode characters that isdigit misclassifies"
+        "不要求恰好装满背包"
       ],
       "priority": 2,
       "quality_score": 0.85,
-      "source_run_id": "20260829-100600-100-ab4f35gr-a6-abfgr-b68aa4",
+      "source_run_id": "20260829-142517-acwing-3-dp-n-6c3275",
       "source_verified": true,
-      "created_at": "2026-08-29T02:08:40.498292+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "d04b02e33b19424989914444f87416fb",
-      "category": "strategy",
-      "granularity": "subtask",
-      "trigger": "when reading single-line string input that may carry trailing newlines or carriage returns from different platforms",
-      "content": "Normalize line endings before partitioning by removing carriage returns entirely and stripping trailing newline characters from the raw input. This prevents stray control characters from being treated as part of the data string on Windows-based judges or judges that append CRLF. Apply normalization to the input string at the start of the solve function so both the test harness entry and the stdin entry behave identically.",
-      "purpose": "Prevent trailing CR/LF from being misclassified as non-digit characters and corrupting output",
-      "steps": [
-        "Replace all carriage-return characters with empty string",
-        "Right-strip newline characters",
-        "Use the cleaned string as the working data for all subsequent logic"
-      ],
-      "negative_example": "Do not strip with a broad whitespace rstrip() if internal spaces are meaningful; do not assume input has no trailing newline because judges often append one",
-      "problem_family": [
-        "single-line string parsing",
-        "platform-independent input handling"
-      ],
-      "algorithm_tags": [
-        "line-ending-normalization",
-        "input-sanitization"
-      ],
-      "constraints": [
-        "input is a single logical line",
-        "internal content must be preserved exactly"
-      ],
-      "priority": 3,
-      "quality_score": 0.85,
-      "source_run_id": "20260829-100600-100-ab4f35gr-a6-abfgr-b68aa4",
-      "source_verified": true,
-      "created_at": "2026-08-29T02:08:40.498292+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "a5cf379dbdb14a48b0e6c316d9370e5e",
-      "category": "strategy",
-      "granularity": "task",
-      "trigger": "when a submission must satisfy both a local pytest harness importing a solve function and an online judge reading stdin",
-      "content": "Provide dual entry points in the solution module: a pure solve(input_text) function that returns the result string, plus a guarded __main__ block that reads from stdin and prints the result. The function signature is what the test harness imports; the __main__ block is what the online judge executes. This lets the same file pass local tests and judge execution without modification.",
-      "purpose": "Make one solution file work for both local parametrized testing and online judge stdin/stdout",
-      "steps": [
-        "Define solve(input_text) returning the output string with no side effects",
-        "Add a guard block that reads sys.stdin.read(), calls solve, and prints the result",
-        "Ensure print adds exactly one trailing newline as judges typically expect"
-      ],
-      "negative_example": "Do not put input-reading logic inside solve itself; do not omit the __main__ guard or the harness import will trigger stdin reads during collection",
-      "problem_family": [
-        "dual-mode submission",
-        "local-test-plus-judge compatibility"
-      ],
-      "algorithm_tags": [
-        "entry-point-separation",
-        "pure-function-testing"
-      ],
-      "constraints": [
-        "test harness imports solve",
-        "judge runs the file directly"
-      ],
-      "priority": 4,
-      "quality_score": 0.85,
-      "source_run_id": "20260829-100600-100-ab4f35gr-a6-abfgr-b68aa4",
-      "source_verified": true,
-      "created_at": "2026-08-29T02:08:40.498292+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "e789e0bd067646e38349f2a8f4442999",
-      "category": "recovery",
-      "granularity": "subtask",
-      "trigger": "when a task-completion signal is emitted before verification actually confirms success, leading to repeated or premature completion markers",
-      "content": "Emit the task-completion signal exactly once, and only after the verification command (e.g., pytest with non-zero exit check) has returned success. If the signal must be re-emitted due to external coordination, first re-run the verification command to confirm state is still valid. Premature completion markers waste cycles and risk false-success reporting if the environment changed.",
-      "purpose": "Ensure completion signals reflect verified passing state rather than optimistic assumptions",
-      "steps": [
-        "Run the verification command capturing its exit code",
-        "Only if exit code is zero, emit the completion signal once",
-        "If forced to re-emit, re-run verification immediately before each re-emission"
-      ],
-      "negative_example": "Do not echo a completion marker multiple times in sequence without re-verifying between them; do not emit completion before the test run has finished",
-      "problem_family": [
-        "submission-finalization",
-        "verification-before-completion"
-      ],
-      "algorithm_tags": [
-        "signal-after-verify",
-        "idempotent-completion"
-      ],
-      "constraints": [
-        "completion signal should be emitted at most once per genuinely verified state"
-      ],
-      "priority": 5,
-      "quality_score": 0.85,
-      "source_run_id": "20260829-100600-100-ab4f35gr-a6-abfgr-b68aa4",
-      "source_verified": true,
-      "created_at": "2026-08-29T02:08:40.498292+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "2fe62ff130fa438e96d91ce13247a7fc",
-      "category": "optimization",
-      "granularity": "subtask",
-      "trigger": "when validating a stable-partition or character-reordering solution with a small manual test set",
-      "content": "Augment the minimal provided test cases with boundary-category inputs that exercise the partition predicate and order preservation: empty string, all-digit string, all-nondigit string, a single-character input, and an input containing consecutive same-class characters clustered together. These reveal off-by-one, empty-list concatenation, and order-preservation bugs that the happy-path example will miss.",
-      "purpose": "Catch partition edge cases that the single provided example cannot expose",
-      "steps": [
-        "Add an empty-string case asserting empty output",
-        "Add an all-digit case asserting output equals input",
-        "Add an all-nondigit case asserting output equals input",
-        "Add a case with multi-character digit clusters verifying intra-cluster order is preserved",
-        "Add a case with a trailing newline to confirm input normalization"
-      ],
-      "negative_example": "Do not rely solely on the problem's single worked example to validate correctness; do not add cases that duplicate coverage already provided by existing cases",
-      "problem_family": [
-        "stable-partition testing",
-        "boundary-driven test design"
-      ],
-      "algorithm_tags": [
-        "equivalence-class-testing",
-        "boundary-inputs"
-      ],
-      "constraints": [
-        "each added case should cover a distinct category not already exercised"
-      ],
-      "priority": 5,
-      "quality_score": 0.85,
-      "source_run_id": "20260829-100600-100-ab4f35gr-a6-abfgr-b68aa4",
-      "source_verified": true,
-      "created_at": "2026-08-29T02:08:40.498292+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "1c9d08e356bf4cda809b00742a1642e3",
-      "category": "strategy",
-      "granularity": "subtask",
-      "trigger": "When a shortest-path problem restricts certain nodes from being intermediate stops but exempts the source and/or destination from the restriction",
-      "content": "Run standard Dijkstra but apply the forbidden-node filter only during edge relaxation: skip relaxing into a neighbor if it is forbidden AND not the destination. Enqueue the source unconditionally regardless of its forbidden status. This precisely enforces 'forbidden nodes may appear only as endpoints'.",
-      "purpose": "Correctly implement path constraints that apply only to intermediate nodes without special-casing the graph structure",
-      "steps": [
-        "Enqueue source into the priority queue without any forbidden-set check",
-        "During neighbor relaxation, skip neighbor v if v is forbidden and v != destination",
-        "Allow relaxation into destination even if destination is in the forbidden set"
-      ],
-      "negative_example": "Do not pre-remove forbidden nodes from the adjacency list or skip the source if it is forbidden — this would incorrectly block valid paths where the source or destination itself is forbidden",
-      "problem_family": [
-        "shortest path with node restrictions",
-        "constrained graph traversal"
-      ],
-      "algorithm_tags": [
-        "dijkstra",
-        "priority queue",
-        "node filtering"
-      ],
-      "constraints": [
-        "positive edge weights",
-        "forbidden nodes exempt at endpoints"
-      ],
-      "priority": 1,
-      "quality_score": 0.85,
-      "source_run_id": "20260829-093549-time-limit-1000-ms-4521e8",
-      "source_verified": true,
-      "created_at": "2026-08-29T01:37:49.559970+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "e100ade0080a4685802f682478a6d545",
-      "category": "optimization",
-      "granularity": "subtask",
-      "trigger": "When running Dijkstra and only the single-pair shortest path is needed (source to one target)",
-      "content": "Break out of the main loop immediately when the target node is popped from the priority queue. Dijkstra guarantees the first time a node is popped its distance is final, so this yields the correct answer without processing remaining heap entries.",
-      "purpose": "Reduce runtime by avoiding unnecessary relaxation of nodes extracted after the target",
-      "steps": [
-        "After popping (dist, node) from heap and passing the stale-check, test if node == target",
-        "If so, break the loop and return the recorded distance"
-      ],
-      "negative_example": "Do not break when the target's distance is first updated during relaxation — only break when it is popped, because a later shorter path may still exist in the heap",
-      "problem_family": [
-        "single-pair shortest path",
-        "early termination"
-      ],
-      "algorithm_tags": [
-        "dijkstra",
-        "early stopping"
-      ],
-      "constraints": [
-        "non-negative edge weights"
-      ],
-      "priority": 2,
-      "quality_score": 0.85,
-      "source_run_id": "20260829-093549-time-limit-1000-ms-4521e8",
-      "source_verified": true,
-      "created_at": "2026-08-29T01:37:49.559970+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "d993266dfb8a4020bbc4573ec3673ed3",
-      "category": "optimization",
-      "granularity": "subtask",
-      "trigger": "When performing frequent membership tests inside the inner relaxation loop of a graph algorithm and node IDs are dense integers from 1 to n",
-      "content": "Use a boolean lookup array indexed by node ID instead of a hash set for forbidden/visited/active node membership tests. Array indexing has no hash overhead and better cache locality.",
-      "purpose": "Eliminate per-edge hash-set overhead in hot inner loops",
-      "steps": [
-        "Allocate a boolean array of size n+1 initialized to False",
-        "Mark forbidden nodes to True during input parsing",
-        "Test membership via direct array indexing in the relaxation loop"
-      ],
-      "negative_example": "Using a Python set for membership tests when n is up to 1e5 and the test runs inside an O(m) loop adds avoidable constant-factor overhead",
-      "problem_family": [
-        "graph traversal with node-state queries"
-      ],
-      "algorithm_tags": [
-        "lookup optimization",
-        "boolean array"
-      ],
-      "constraints": [
-        "dense integer node IDs 1..n"
-      ],
-      "priority": 3,
-      "quality_score": 0.85,
-      "source_run_id": "20260829-093549-time-limit-1000-ms-4521e8",
-      "source_verified": true,
-      "created_at": "2026-08-29T01:37:49.559970+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "9dbeb38fa34447bd8855a81a23ac6286",
-      "category": "strategy",
-      "granularity": "subtask",
-      "trigger": "When the source and destination may be the same node in a shortest-path problem",
-      "content": "Check for source == destination before any graph initialization or traversal and return zero immediately. This avoids issues where the source might be filtered out or where no edges exist.",
-      "purpose": "Correctly handle the degenerate same-node case and skip unnecessary computation",
-      "steps": [
-        "After parsing source and destination, compare them",
-        "If equal, return the trivial zero-distance result before building adjacency lists"
-      ],
-      "negative_example": "Null — this is a safe guard clause with no downside",
-      "problem_family": [
-        "shortest path",
-        "graph traversal"
-      ],
-      "algorithm_tags": [
-        "edge case handling",
-        "early return"
-      ],
-      "constraints": [
-        "source and destination share the same node space"
-      ],
-      "priority": 3,
-      "quality_score": 0.85,
-      "source_run_id": "20260829-093549-time-limit-1000-ms-4521e8",
-      "source_verified": true,
-      "created_at": "2026-08-29T01:37:49.559970+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "cf182e5fb7694018b61997b0b3ee200d",
-      "category": "strategy",
-      "granularity": "subtask",
-      "trigger": "When parsing competitive-programming input with irregular line breaks or mixed whitespace",
-      "content": "Tokenize the entire input string via split() and consume tokens with an index pointer rather than reading line by line. This is robust to arbitrary whitespace and line-break variations between test judges.",
-      "purpose": "Avoid input-parsing failures due to line-break format differences",
-      "steps": [
-        "Read the full input text, call split() to get a flat token list",
-        "Use a mutable index counter to Sequentially consume integers",
-        "Advance the index by exactly the number of tokens consumed for each field"
-      ],
-      "negative_example": "Do not assume one logical value per line or use fixed readline counts — judges may format input differently from the sample",
-      "problem_family": [
-        "competitive programming input parsing"
-      ],
-      "algorithm_tags": [
-        "token-based parsing"
-      ],
-      "constraints": [
-        "whitespace-separated integer input"
-      ],
-      "priority": 4,
-      "quality_score": 0.85,
-      "source_run_id": "20260829-093549-time-limit-1000-ms-4521e8",
-      "source_verified": true,
-      "created_at": "2026-08-29T01:37:49.559970+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "0e4b79a3f0da4b06ba043dc7de005740",
-      "category": "strategy",
-      "granularity": "subtask",
-      "trigger": "When using a priority queue with potential stale entries due to multiple pushes of the same node",
-      "content": "After popping an entry from the heap, compare its stored distance against the current best-known distance array. If the popped distance is greater, skip processing (lazy deletion). This avoids the need for a decrease-key operation.",
-      "purpose": "Maintain correctness and efficiency when using a binary heap without decrease-key support",
-      "steps": [
-        "After popping (d, u), check if d > dist[u]",
-        "If so, continue to the next iteration without relaxing u's edges",
-        "Only relax edges for entries whose distance matches the current best"
-      ],
-      "negative_example": "Do not process every popped entry without the stale check — stale entries waste time and can cause incorrect behavior if dist is used after popping",
-      "problem_family": [
-        "priority-queue-based graph algorithms"
-      ],
-      "algorithm_tags": [
-        "dijkstra",
-        "lazy deletion",
-        "binary heap"
-      ],
-      "constraints": [
-        "non-negative weights",
-        "language without decrease-key"
-      ],
-      "priority": 4,
-      "quality_score": 0.85,
-      "source_run_id": "20260829-093549-time-limit-1000-ms-4521e8",
-      "source_verified": true,
-      "created_at": "2026-08-29T01:37:49.559970+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "7417eea310354a47ad35d2f14f842991",
-      "category": "strategy",
-      "granularity": "task",
-      "trigger": "Solving a 'move certain characters to one end while preserving relative order within each group' problem",
-      "content": "Use stable partition via two-pass filtering: first pass collects all characters that stay, second pass collects all characters that move; concatenate the two lists. List comprehensions over the original string preserve intra-group relative order automatically.",
-      "purpose": "Produce a correct stable-partition result in linear time with clean, readable code",
-      "steps": [
-        "Identify the predicate separating the two character groups",
-        "Build group A (the ones that stay) by filtering on NOT predicate",
-        "Build group B (the ones that move) by filtering on predicate",
-        "Return concatenation A + B"
-      ],
-      "negative_example": "Do not sort or reorder within either group; do not use a single pass with index manipulation that risks breaking stability",
-      "problem_family": [
-        "string reordering",
-        "stable partition",
-        "character classification"
-      ],
-      "algorithm_tags": [
-        "stable partition",
-        "two-pass filtering",
-        "order-preserving"
-      ],
-      "constraints": [
-        "short string input (n < 100)",
-        "preserve original relative order within each group"
-      ],
-      "priority": 1,
-      "quality_score": 0.85,
-      "source_run_id": "20260828-220018-100-ab4f35gr-a6-abfgr-5d4155",
-      "source_verified": true,
-      "created_at": "2026-08-28T14:01:35.018673+00:00",
+      "created_at": "2026-08-29T06:31:57.558341+00:00",
       "retrieval_count": 1
     },
     {
-      "id": "8d435c73795447aeac619924dc29a81e",
-      "category": "recovery",
-      "granularity": "subtask",
-      "trigger": "Problem says 'digit characters' (数字字符) and code uses Python str.isdigit() to classify digits",
-      "content": "str.isdigit() returns True for non-ASCII Unicode digits such as superscripts (²), full-width digits, and Roman numeral characters. For competitive programming problems where 'digit' means ASCII 0-9 only, replace isdigit() with an explicit ASCII digit check to avoid hidden test failures.",
-      "purpose": "Prevent misclassification of Unicode digit-like characters as digits in online judge hidden tests",
+      "id": "073cec797413499f84f3c19fbacc1c4a",
+      "category": "strategy",
+      "granularity": "task",
+      "trigger": "为完全背包问题编写测试用例",
+      "content": "除基本重复选择和容量不足场景外，需额外覆盖容量为零、单种物品重复填满、体积为一边界、体积相同价值不同的物品竞争、体积大于容量的物品自动跳过等场景。",
+      "purpose": "确保解法在各类边界条件下正确且无遗漏",
       "steps": [
-        "Detect that str.isdigit() is being used for digit classification",
-        "Replace with c in '0123456789' or equivalent explicit ASCII range check",
-        "Re-run tests to confirm behavior unchanged on existing cases"
+        "构造容量为零的用例验证返回零",
+        "构造体积为一的物品验证可最大次数重复选取",
+        "构造体积超过容量的物品验证自动跳过",
+        "构造多物品体积相同但价值不同的用例验证择优"
       ],
-      "negative_example": "Do not assume str.isdigit() only matches 0-9 in Python; it has broad Unicode coverage by design",
+      "negative_example": null,
       "problem_family": [
-        "string classification",
-        "character type checking",
-        "competitive programming"
+        "完全背包",
+        "动态规划"
       ],
       "algorithm_tags": [
-        "character classification",
-        "ascii validation"
+        "testing",
+        "dp"
       ],
       "constraints": [
-        "Python str.isdigit Unicode semantics",
-        "OJ problems typically mean ASCII digits unless stated otherwise"
+        "测试数据应覆盖题目约束范围内的边界"
+      ],
+      "priority": 3,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-142517-acwing-3-dp-n-6c3275",
+      "source_verified": true,
+      "created_at": "2026-08-29T06:31:57.558341+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "e18e6829d91d4cfcb28f29ded817fd6f",
+      "category": "optimization",
+      "granularity": "subtask",
+      "trigger": "竞赛题输出为单个数值且需与预期精确匹配",
+      "content": "解题函数直接返回str(结果值)不加多余换行；测试端对实际输出和预期输出统一做rstrip和换行符归一化后再比较。",
+      "purpose": "避免尾部换行或换行符差异导致判定错误",
+      "steps": [
+        "解题函数末尾返回str(数值)不拼接换行",
+        "测试比对前对两端输出做replace换行符归一并rstrip",
+        "归一化后精确比较"
+      ],
+      "negative_example": "不要在返回值末尾添加print自带的换行符，严格匹配时可能导致失败",
+      "problem_family": [
+        "输出格式"
+      ],
+      "algorithm_tags": [
+        "formatting"
+      ],
+      "constraints": [
+        "输出为单个数值"
+      ],
+      "priority": 4,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-142517-acwing-3-dp-n-6c3275",
+      "source_verified": true,
+      "created_at": "2026-08-29T06:31:57.558341+00:00",
+      "retrieval_count": 1
+    },
+    {
+      "id": "a9bdbb77c067435c8e8c2d050afa6ab7",
+      "category": "strategy",
+      "granularity": "task",
+      "trigger": "求解每种物品可无限次选取的背包最大价值问题",
+      "content": "使用一维DP数组，内层循环按容量从物品体积到上限正向遍历；正向遍历使同一物品在当前轮次内可被多次引用，从而实现无限选取；这是与0-1背包逆向遍历的核心区别。",
+      "purpose": "在O(n·m)时间和O(m)空间内正确求解完全背包问题",
+      "steps": [
+        "初始化长度为容量加一的DP数组全为零",
+        "对每种物品，按容量从小到大正向遍历执行max转移",
+        "返回DP数组末尾元素"
+      ],
+      "negative_example": "不要像0-1背包那样逆向遍历内层循环，否则每种物品只能选一次",
+      "problem_family": [
+        "完全背包",
+        "动态规划"
+      ],
+      "algorithm_tags": [
+        "dp",
+        "knapsack"
+      ],
+      "constraints": [
+        "物品体积和价值为正整数",
+        "背包容量为非负整数"
       ],
       "priority": 1,
       "quality_score": 0.85,
-      "source_run_id": "20260828-220018-100-ab4f35gr-a6-abfgr-5d4155",
+      "source_run_id": "20260829-142517-acwing-3-dp-n-6c3275",
       "source_verified": true,
-      "created_at": "2026-08-28T14:01:35.018673+00:00",
+      "created_at": "2026-08-29T06:31:57.558186+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "fbefa4cbdfed4e04800c16c2bea02c85",
+      "category": "optimization",
+      "granularity": "subtask",
+      "trigger": "竞赛题输入含多行整数且空白换行格式不确定",
+      "content": "将整个输入字符串用split()按任意空白分割为token列表，再用iter逐个next取值，容忍换行与空格混用，无需逐行解析。",
+      "purpose": "鲁棒解析输入，不受具体换行格式影响",
+      "steps": [
+        "将输入字符串split()为token列表",
+        "创建iter对象逐个next按题目格式解析整数",
+        "解析完成后直接进入算法逻辑"
+      ],
+      "negative_example": "不要逐行split后按固定列索引取值，多行多数字混合格式容易越界或错位",
+      "problem_family": [
+        "输入解析"
+      ],
+      "algorithm_tags": [
+        "parsing"
+      ],
+      "constraints": [
+        "输入为纯数字和空白字符"
+      ],
+      "priority": 2,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-142517-acwing-3-dp-n-6c3275",
+      "source_verified": true,
+      "created_at": "2026-08-29T06:31:57.558186+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "ef15928c9e9d41f884279169d373be98",
+      "category": "strategy",
+      "granularity": "subtask",
+      "trigger": "背包问题中物品体积可能为零或负值",
+      "content": "在DP循环中对体积小于等于零的物品直接跳过，避免正价值零体积物品在正向遍历中无限自引用导致死循环或数组越界。",
+      "purpose": "防止异常输入导致无限循环或错误结果",
+      "steps": [
+        "读取物品体积后判断是否小于等于零",
+        "若是则跳过该物品不参与DP转移",
+        "继续处理后续物品"
+      ],
+      "negative_example": "不要对零体积正价值物品执行正向DP转移，会导致同一容量位置无限自增",
+      "problem_family": [
+        "完全背包",
+        "0-1背包"
+      ],
+      "algorithm_tags": [
+        "dp",
+        "edge-case"
+      ],
+      "constraints": [
+        "题目通常保证体积为正，此为防御性处理"
+      ],
+      "priority": 3,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-142517-acwing-3-dp-n-6c3275",
+      "source_verified": true,
+      "created_at": "2026-08-29T06:31:57.558186+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "29c533ab68bb4841806c199c0c7d2ac2",
+      "category": "strategy",
+      "granularity": "task",
+      "trigger": "求解0-1背包最大价值问题",
+      "content": "使用一维数组做动态规划，内层循环从背包容量倒序枚举到当前物品体积，确保每件物品最多被选取一次",
+      "purpose": "在正确求解0-1背包的同时将空间降至一维",
+      "steps": [
+        "初始化长度为容量加一的全零一维数组",
+        "对每件物品从容量到其体积倒序遍历，取不放与放入两者的较大值更新当前位置"
+      ],
+      "negative_example": null,
+      "problem_family": [
+        "0-1背包",
+        "动态规划"
+      ],
+      "algorithm_tags": [
+        "动态规划",
+        "空间优化",
+        "逆序遍历"
+      ],
+      "constraints": [
+        "每件物品最多选一次",
+        "总体积不超过背包容量"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-141840-acwing-2-dp-n-ad4dcb",
+      "source_verified": true,
+      "created_at": "2026-08-29T06:20:16.397325+00:00",
+      "retrieval_count": 1
+    },
+    {
+      "id": "8e92f290e80a41239c3f6243f61daadd",
+      "category": "optimization",
+      "granularity": "subtask",
+      "trigger": "0-1背包动态规划需要降低空间开销",
+      "content": "将物品维与容量维的二维状态表压缩为仅容量维的一维数组，靠逆序遍历保证每次读取的是上一轮物品更新前的值",
+      "purpose": "空间复杂度从两维降为一维",
+      "steps": [
+        "用一维数组替代二维表，外层遍历物品、内层倒序遍历容量",
+        "倒序保证同物品不会被重复计入"
+      ],
+      "negative_example": "正序遍历一维数组会导致同一物品被多次选取，退化为完全背包",
+      "problem_family": [
+        "0-1背包",
+        "动态规划"
+      ],
+      "algorithm_tags": [
+        "滚动数组",
+        "空间优化"
+      ],
+      "constraints": [
+        "内层必须逆序遍历"
+      ],
+      "priority": 2,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-141840-acwing-2-dp-n-ad4dcb",
+      "source_verified": true,
+      "created_at": "2026-08-29T06:20:16.397325+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "0e1d7358f9fa47cf866d413857c11675",
+      "category": "strategy",
+      "granularity": "subtask",
+      "trigger": "背包类问题的输入解析与边界处理",
+      "content": "先以空白分割提取全部token并检测空输入提前返回零值，零容量场景下倒序循环起点小于终点自然不执行、返回零，无需特殊分支",
+      "purpose": "以最小逻辑覆盖退化与空输入场景",
+      "steps": [
+        "对输入做strip加split提取全部token",
+        "token列表为空则直接返回零",
+        "容量为零时依赖倒序循环空集自动跳过"
+      ],
+      "negative_example": "对零容量单独写特殊处理分支，增加冗余代码",
+      "problem_family": [
+        "0-1背包"
+      ],
+      "algorithm_tags": [
+        "边界处理",
+        "输入解析"
+      ],
+      "constraints": [
+        "需保证循环区间在容量为零时为空集"
+      ],
+      "priority": 3,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-141840-acwing-2-dp-n-ad4dcb",
+      "source_verified": true,
+      "created_at": "2026-08-29T06:20:16.397325+00:00",
       "retrieval_count": 2
     },
     {
-      "id": "6056a7c6aedc4a70b7fa0d846837f67a",
-      "category": "optimization",
+      "id": "86c9141a4f694f4f9d6085da37c8dd01",
+      "category": "recovery",
       "granularity": "subtask",
-      "trigger": "Reading line-based input and stripping trailing newlines before processing",
-      "content": "Prefer rstrip('\\n') over strip('\\n') when the problem guarantees one line of input and leading characters are significant. strip('\\n') removes newlines from both ends, which can silently discard a leading newline if it were part of the data. Use strip('\\n') only when the entire input is a single line read that may have surrounding whitespace artifacts.",
-      "purpose": "Avoid unintended removal of significant leading characters in line-based input handling",
+      "trigger": "背包题面未明确物品体积下界时",
+      "content": "若体积可能为零，逆序遍历仍只对每个容量位置访问一次，不重复选取，但应核实题面约束是否允许体积为零并据此决定是否额外处理",
+      "purpose": "避免因未检查体积下界而在隐含约束下产生逻辑歧义",
       "steps": [
-        "Check whether problem states input is exactly one line with significant content",
-        "If only trailing newline from input() or readlines() is expected, use rstrip('\\n')",
-        "If input may contain surrounding artifacts from file reads, strip('\\n') is acceptable"
+        "审查题面对体积是否给出大于等于一的保证",
+        "若无保证则验证逆序遍历在体积为零时的正确性",
+        "必要时对体积为零的物品单独跳过或特殊处理"
       ],
-      "negative_example": "Do not use strip('\\n') blindly when the problem does not guarantee the first character is not a newline",
+      "negative_example": "默认体积恒为正而不检查题面约束说明",
       "problem_family": [
-        "input parsing",
-        "newline handling"
+        "0-1背包"
       ],
       "algorithm_tags": [
-        "input sanitization",
-        "string trimming"
+        "边界处理",
+        "正确性验证"
       ],
       "constraints": [
-        "line-based input",
-        "trailing newline from standard input"
+        "需以题面约束为准"
       ],
-      "priority": 2,
+      "priority": 4,
       "quality_score": 0.85,
-      "source_run_id": "20260828-220018-100-ab4f35gr-a6-abfgr-5d4155",
+      "source_run_id": "20260829-141840-acwing-2-dp-n-ad4dcb",
       "source_verified": true,
-      "created_at": "2026-08-28T14:01:35.018673+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "cb47c89f1feb4d0c8601703082d50875",
-      "category": "strategy",
-      "granularity": "subtask",
-      "trigger": "Designing test cases for a string transformation problem with character classification",
-      "content": "Beyond the provided example cases, include tests for: empty string, all-one-category (all digits / all non-digits), single character, characters that are whitespace or special symbols, and alternating pattern. These cover the partition boundaries and confirm stability of intra-group ordering.",
-      "purpose": "Achieve regression protection against hidden edge cases in online judge evaluation",
-      "steps": [
-        "List all character categories the problem distinguishes",
-        "Add a case with each category alone (all digits, all non-digits)",
-        "Add a case with empty string and single character",
-        "Add a case with whitespace and special symbols mixed in",
-        "Add a case with alternating pattern to verify stability"
-      ],
-      "negative_example": "Do not test only the problem's example and one trivial variation; partition logic can fail silently on empty or single-category inputs",
-      "problem_family": [
-        "test case design",
-        "string transformation",
-        "partition problems"
-      ],
-      "algorithm_tags": [
-        "boundary testing",
-        "edge case coverage"
-      ],
-      "constraints": [
-        "input length under 100",
-        "ASCII character space"
-      ],
-      "priority": 2,
-      "quality_score": 0.85,
-      "source_run_id": "20260828-220018-100-ab4f35gr-a6-abfgr-5d4155",
-      "source_verified": true,
-      "created_at": "2026-08-28T14:01:35.018673+00:00",
+      "created_at": "2026-08-29T06:20:16.397325+00:00",
       "retrieval_count": 1
     },
     {
-      "id": "4b404a5073d245ad85f77b5646d813a8",
-      "category": "strategy",
-      "granularity": "task",
-      "trigger": "Problem requires moving one character class to the end of a string while preserving all relative orders",
-      "content": "Two-pass stable partition is the simplest correct approach: O(n) time, O(n) space, and trivially correct. For n < 100 constraints, no in-place or single-pass optimization is warranted. Prefer code clarity over micro-optimization.",
-      "purpose": "Select the simplest correct algorithm that handles the constraint scale without overengineering",
-      "steps": [
-        "Verify the constraint size (small n means no need for in-place or streaming)",
-        "Implement two-pass filtering with concatenation",
-        "Confirm both groups preserve original order by construction"
-      ],
-      "negative_example": "Do not implement in-place pointer swaps or single-pass dual-collection unless the problem demands O(1) space or streaming",
-      "problem_family": [
-        "string reordering",
-        "stable partition"
-      ],
-      "algorithm_tags": [
-        "two-pass",
-        "linear time",
-        "order-preserving"
-      ],
-      "constraints": [
-        "n < 100",
-        "no space constraint beyond O(n)"
-      ],
-      "priority": 3,
-      "quality_score": 0.85,
-      "source_run_id": "20260828-220018-100-ab4f35gr-a6-abfgr-5d4155",
-      "source_verified": true,
-      "created_at": "2026-08-28T14:01:35.018673+00:00",
-      "retrieval_count": 0
-    },
-    {
-      "id": "112b71dd0f81463f9b8f9aa55ee2b9bb",
+      "id": "36f453821d0a420bb691d03b3484f9f4",
       "category": "recovery",
       "granularity": "subtask",
-      "trigger": "Solution passes all provided/local tests but reviewer flags potential Unicode character classification mismatch for online judge hidden tests",
-      "content": "When local tests pass but reviewer identifies a semantic mismatch between the problem's implied character set (ASCII) and the Python built-in used (str.isdigit, str.isalpha, etc.), treat this as a latent failure risk. Replace the broad Python built-in with an explicit character-set check before submitting to the judge.",
-      "purpose": "Eliminate latent failures from Python built-in character classification matching more than the problem intends",
+      "trigger": "使用固定偏移索引访问按行解析的输入token时",
+      "content": "未校验token总数与物品数量的一致性，输入残缺会直接抛出索引越界异常",
+      "purpose": "防止格式异常输入导致运行时崩溃",
       "steps": [
-        "Identify which Python built-in (isdigit, isalpha, isalnum, etc.) is used for character classification",
-        "Determine the exact character set the problem implies (typically ASCII)",
-        "Replace with explicit set membership or range check",
-        "Re-run tests and submit"
+        "访问前校验token总数不少于二加上二倍物品数",
+        "或改用迭代器逐步取值以避免手动索引管理"
       ],
-      "negative_example": "Do not assume passing provided examples means the classification is correct; Python built-ins have Unicode semantics that examples may not exercise",
+      "negative_example": "直接按固定偏移取值而不验证数据完整性，依赖输入格式完全正确",
       "problem_family": [
-        "string classification",
-        "competitive programming",
-        "pythonspecific semantics"
+        "0-1背包"
       ],
       "algorithm_tags": [
-        "character classification",
-        "ascii validation",
-        "unicode awareness"
+        "输入校验",
+        "鲁棒性"
       ],
       "constraints": [
-        "Python str method Unicode semantics",
-        "competitive programming typically uses ASCII"
+        "竞技编程可适当放宽，工程场景应严格校验"
       ],
-      "priority": 1,
+      "priority": 5,
       "quality_score": 0.85,
-      "source_run_id": "20260828-220018-100-ab4f35gr-a6-abfgr-5d4155",
+      "source_run_id": "20260829-141840-acwing-2-dp-n-ad4dcb",
       "source_verified": true,
-      "created_at": "2026-08-28T14:01:35.018673+00:00",
-      "retrieval_count": 0
+      "created_at": "2026-08-29T06:20:16.397325+00:00",
+      "retrieval_count": 1
+    },
+    {
+      "id": "cc6cfd11bfa24fe693b4563b4ddaf852",
+      "category": "strategy",
+      "granularity": "subtask",
+      "trigger": "为背包类问题设计测试用例",
+      "content": "除基础功能与空容量外，应覆盖单物品恰好装满、全部物品超出容量、物品数为零、全部物品恰好装入等边界情形",
+      "purpose": "提升测试覆盖面，减少隐藏用例失败风险",
+      "steps": [
+        "构造基础功能用例验证主流程",
+        "构造退化边界用例：零容量、零物品、全部超体积",
+        "构造拟合边界用例：物品体积恰好等于容量、全部装入"
+      ],
+      "negative_example": "仅有基础用例和单一退化用例即认为覆盖充分",
+      "problem_family": [
+        "0-1背包"
+      ],
+      "algorithm_tags": [
+        "测试用例设计",
+        "边界覆盖"
+      ],
+      "constraints": [
+        "用例应覆盖最优解选取与不选取两类路径"
+      ],
+      "priority": 5,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-141840-acwing-2-dp-n-ad4dcb",
+      "source_verified": true,
+      "created_at": "2026-08-29T06:20:16.397325+00:00",
+      "retrieval_count": 1
     }
   ],
   "edges": [
     {
-      "source": "a5cf379dbdb14a48b0e6c316d9370e5e",
-      "target": "b77b5133d62f4928ba6b48eacf6269d1",
+      "source": "073cec797413499f84f3c19fbacc1c4a",
+      "target": "ffa4ff710f75447989535a20d883b042",
       "kind": "solid"
     },
     {
-      "source": "a5cf379dbdb14a48b0e6c316d9370e5e",
-      "target": "57e8f0dda5d24df898a5d68e04e45c91",
+      "source": "073cec797413499f84f3c19fbacc1c4a",
+      "target": "e18e6829d91d4cfcb28f29ded817fd6f",
       "kind": "solid"
     },
     {
-      "source": "a5cf379dbdb14a48b0e6c316d9370e5e",
-      "target": "d04b02e33b19424989914444f87416fb",
+      "source": "073cec797413499f84f3c19fbacc1c4a",
+      "target": "a9bdbb77c067435c8e8c2d050afa6ab7",
       "kind": "solid"
     },
     {
-      "source": "a5cf379dbdb14a48b0e6c316d9370e5e",
-      "target": "e789e0bd067646e38349f2a8f4442999",
+      "source": "073cec797413499f84f3c19fbacc1c4a",
+      "target": "fbefa4cbdfed4e04800c16c2bea02c85",
       "kind": "solid"
     },
     {
-      "source": "a5cf379dbdb14a48b0e6c316d9370e5e",
-      "target": "2fe62ff130fa438e96d91ce13247a7fc",
+      "source": "073cec797413499f84f3c19fbacc1c4a",
+      "target": "ef15928c9e9d41f884279169d373be98",
       "kind": "solid"
     },
     {
-      "source": "1c9d08e356bf4cda809b00742a1642e3",
-      "target": "e100ade0080a4685802f682478a6d545",
+      "source": "29c533ab68bb4841806c199c0c7d2ac2",
+      "target": "8e92f290e80a41239c3f6243f61daadd",
       "kind": "solid"
     },
     {
-      "source": "1c9d08e356bf4cda809b00742a1642e3",
-      "target": "d993266dfb8a4020bbc4573ec3673ed3",
+      "source": "29c533ab68bb4841806c199c0c7d2ac2",
+      "target": "0e1d7358f9fa47cf866d413857c11675",
       "kind": "solid"
     },
     {
-      "source": "1c9d08e356bf4cda809b00742a1642e3",
-      "target": "9dbeb38fa34447bd8855a81a23ac6286",
+      "source": "29c533ab68bb4841806c199c0c7d2ac2",
+      "target": "86c9141a4f694f4f9d6085da37c8dd01",
       "kind": "solid"
     },
     {
-      "source": "1c9d08e356bf4cda809b00742a1642e3",
-      "target": "cf182e5fb7694018b61997b0b3ee200d",
+      "source": "29c533ab68bb4841806c199c0c7d2ac2",
+      "target": "36f453821d0a420bb691d03b3484f9f4",
       "kind": "solid"
     },
     {
-      "source": "1c9d08e356bf4cda809b00742a1642e3",
-      "target": "0e4b79a3f0da4b06ba043dc7de005740",
+      "source": "29c533ab68bb4841806c199c0c7d2ac2",
+      "target": "cc6cfd11bfa24fe693b4563b4ddaf852",
       "kind": "solid"
     },
     {
-      "source": "7417eea310354a47ad35d2f14f842991",
-      "target": "8d435c73795447aeac619924dc29a81e",
-      "kind": "solid"
+      "source": "a9bdbb77c067435c8e8c2d050afa6ab7",
+      "target": "29c533ab68bb4841806c199c0c7d2ac2",
+      "kind": "dotted",
+      "similarity": 0.7854
     },
     {
-      "source": "7417eea310354a47ad35d2f14f842991",
-      "target": "6056a7c6aedc4a70b7fa0d846837f67a",
-      "kind": "solid"
-    },
-    {
-      "source": "7417eea310354a47ad35d2f14f842991",
-      "target": "cb47c89f1feb4d0c8601703082d50875",
-      "kind": "solid"
-    },
-    {
-      "source": "7417eea310354a47ad35d2f14f842991",
-      "target": "4b404a5073d245ad85f77b5646d813a8",
-      "kind": "solid"
-    },
-    {
-      "source": "7417eea310354a47ad35d2f14f842991",
-      "target": "112b71dd0f81463f9b8f9aa55ee2b9bb",
-      "kind": "solid"
+      "source": "073cec797413499f84f3c19fbacc1c4a",
+      "target": "29c533ab68bb4841806c199c0c7d2ac2",
+      "kind": "dotted",
+      "similarity": 0.7264
     }
   ]
 }

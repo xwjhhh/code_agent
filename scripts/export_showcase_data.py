@@ -169,6 +169,12 @@ def export_runs() -> dict[str, Any]:
         model_name = str(model_config.get("model_name") or model.get("model_name") or "unknown")
         review = payload.get("review") if isinstance(payload.get("review"), dict) else {}
         error = str(payload.get("error")) if payload.get("error") else None
+        if not error and result.get("status") == "model_error":
+            messages = result.get("messages")
+            if isinstance(messages, list) and messages and isinstance(messages[-1], dict):
+                content = messages[-1].get("content")
+                if content:
+                    error = str(content)[:1000]
         task = str(payload.get("task", "")).strip()
         if not task:
             continue

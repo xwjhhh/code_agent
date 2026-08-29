@@ -105,10 +105,12 @@ class MemoryManager:
             review=review,
             source_run_id=source_run_id,
         )
-        added: list[MemoryNode] = []
         for node in candidates:
             node.embedding_text = node.build_embedding_text()
-            node.embedding = self.embedder.embed(node.embedding_text)[0]
+        vectors = self.embedder.embed([node.embedding_text for node in candidates]) if candidates else []
+        added: list[MemoryNode] = []
+        for node, vector in zip(candidates, vectors, strict=True):
+            node.embedding = vector
             node.embedding_model = self.embedder.config.model
             if not self.consolidator.is_duplicate(node):
                 self.store.add(node)

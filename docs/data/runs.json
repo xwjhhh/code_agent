@@ -1,7 +1,727 @@
 {
-  "generated_at": "2026-08-29T05:42:02.582263+00:00",
-  "count": 9,
+  "generated_at": "2026-08-29T07:25:37.013204+00:00",
+  "count": 54,
   "items": [
+    {
+      "run_id": "20260829-152222-acwing-514-dp-0-b4ef82",
+      "task": "【AcWing 514，DP-困难】小鸟初始高度为 0，每次可将高度增加 x，或不操作而下降 y；经过 n 个位置，每个位置有允许高度区间 [l_i,r_i]，超出即失败。输入 n x y 及 n 行 l r，求到达终点的最少上升操作次数，无法到达输出 -1。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:22:22.862998+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-152214-acwing-648-dp-f-268f4a",
+      "task": "【AcWing 648，DP-困难】虚拟兔子数量按斐波那契递推：f(0)=0、f(1)=1、f(n)=f(n-1)+f(n-2)。输入 n 和模数 p，输出 f(n) mod p；n 可能很大，应使用快速倍增或矩阵快速幂。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:22:14.839044+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-152138-acwing-301-dp-k-8d2012",
+      "task": "【AcWing 301，DP-困难】给定整数序列，选择一个非空连续子段，长度不超过 k，使元素和最大。输入 n k 及序列，输出最大和；要求用单调队列优化前缀和 DP。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:21:38.679996+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-152138-acwing-337-dp-n-c49190",
+      "task": "【AcWing 337，DP-困难】将按顺序到达的任务划分成连续批次。输入 n、a、b、c 及 n 个正整数 x，设前缀和 S，定义 dp[i]=max_{j<i}(dp[j]+a(S[i]-S[j])^2+b(S[i]-S[j])+c)。输出 dp[n]，需用斜率优化。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:21:38.679996+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-152110-acwing-514-dp-0-acbbd1",
+      "task": "【AcWing 514，DP-困难】小鸟初始高度为 0，每次可将高度增加 x，或不操作而下降 y；经过 n 个位置，每个位置有允许高度区间 [l_i,r_i]，超出即失败。输入 n x y 及 n 行 l r，求到达终点的最少上升操作次数，无法到达输出 -1。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:21:10.406543+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-152102-acwing-526-dp-n-8e1564",
+      "task": "【AcWing 526，DP-困难】平面上有 n 只猪，坐标均为正数。一只鸟沿经过原点的向下开口抛物线飞行，可消灭曲线上的所有猪；求消灭全部猪所需最少鸟数。输入 n m（m 为无关的上限参数），随后 n 行 x y；输出最少鸟数。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:21:02.509384+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-152102-acwing-736-dp-s-fa956a",
+      "task": "【AcWing 736，DP-困难】每块石头有吃掉耗时 s、初始能量 e、每单位时间损失 l。按任意顺序吃石头，获得 max(0,e-l*t) 能量，求最大总能量。输入 n 及 n 行 s e l。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:21:02.480385+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-152102-acwing-648-dp-f-78dbfa",
+      "task": "【AcWing 648，DP-困难】虚拟兔子数量按斐波那契递推：f(0)=0、f(1)=1、f(n)=f(n-1)+f(n-2)。输入 n 和模数 p，输出 f(n) mod p；n 可能很大，应使用快速倍增或矩阵快速幂。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:21:02.278327+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-152034-acwing-337-dp-n-cc1c15",
+      "task": "【AcWing 337，DP-困难】将按顺序到达的任务划分成连续批次。输入 n、a、b、c 及 n 个正整数 x，设前缀和 S，定义 dp[i]=max_{j<i}(dp[j]+a(S[i]-S[j])^2+b(S[i]-S[j])+c)。输出 dp[n]，需用斜率优化。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:20:34.223874+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-152026-acwing-559-dp-n-04ab83",
+      "task": "【AcWing 559，DP-困难】给定字符串，允许在任意位置插入字符，求变成回文串所需的最少插入次数。输入长度 n 和字符串，输出最少次数。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:20:26.392034+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-152026-acwing-334-dp-n-145d1d",
+      "task": "【AcWing 334，DP-困难】给定 n 天价格和最多 k 次完整交易（一次买入加一次卖出），同一时间只能持有一股，求最大利润。输入 n k 及价格序列，输出最大利润。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:20:26.359180+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-152026-acwing-301-dp-k-d0cbd9",
+      "task": "【AcWing 301，DP-困难】给定整数序列，选择一个非空连续子段，长度不超过 k，使元素和最大。输入 n k 及序列，输出最大和；要求用单调队列优化前缀和 DP。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:20:26.103381+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151958-acwing-526-dp-n-409e8d",
+      "task": "【AcWing 526，DP-困难】平面上有 n 只猪，坐标均为正数。一只鸟沿经过原点的向下开口抛物线飞行，可消灭曲线上的所有猪；求消灭全部猪所需最少鸟数。输入 n m（m 为无关的上限参数），随后 n 行 x y；输出最少鸟数。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:19:58.076907+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151953-acwing-736-dp-s-989da0",
+      "task": "【AcWing 736，DP-困难】每块石头有吃掉耗时 s、初始能量 e、每单位时间损失 l。按任意顺序吃石头，获得 max(0,e-l*t) 能量，求最大总能量。输入 n 及 n 行 s e l。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:19:53.941686+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151950-acwing-6-dp-n-ede9a3",
+      "task": "【AcWing 6，DP-困难】多重背包的大规模版本。输入 n m 及 n 行体积 v、价值 w、数量 s，每种物品最多选 s 件；输出最大价值。请使用单调队列等优化处理大容量。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:19:50.196832+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151950-acwing-10-dp-v-a65a7d",
+      "task": "【AcWing 10，DP-困难】物品构成树形依赖：每行体积 v、价值 w、父编号 p，p=-1 为主件，选附件必须先选父件。输入 n m 及物品，求容量内最大价值。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:19:50.185332+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151921-acwing-559-dp-n-f2dcfd",
+      "task": "【AcWing 559，DP-困难】给定字符串，允许在任意位置插入字符，求变成回文串所需的最少插入次数。输入长度 n 和字符串，输出最少次数。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:19:21.849200+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151917-acwing-334-dp-n-bb4373",
+      "task": "【AcWing 334，DP-困难】给定 n 天价格和最多 k 次完整交易（一次买入加一次卖出），同一时间只能持有一股，求最大利润。输入 n k 及价格序列，输出最大利润。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:19:17.809471+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151910-acwing-293-dp-1x2-c16d3b",
+      "task": "【AcWing 293，DP-中等】用 1x2 小方块完全覆盖 n 行 m 列棋盘，方块可旋转。多组输入，以 0 0 结束；每组输出铺法数量。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:19:10.016511+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151909-acwing-294-dp-n-7653ff",
+      "task": "【AcWing 294，DP-中等】n 行 m 列山地地图，P 为平原、H 为山地。炮之间同一行至少间隔两格，且连续三行同列不能放炮；山地不能放炮。输入地图，求最多炮数。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:19:10.000254+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151845-acwing-6-dp-n-d4b574",
+      "task": "【AcWing 6，DP-困难】多重背包的大规模版本。输入 n m 及 n 行体积 v、价值 w、数量 s，每种物品最多选 s 件；输出最大价值。请使用单调队列等优化处理大容量。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:18:45.687563+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151845-acwing-10-dp-v-97bceb",
+      "task": "【AcWing 10，DP-困难】物品构成树形依赖：每行体积 v、价值 w、父编号 p，p=-1 为主件，选附件必须先选父件。输入 n m 及物品，求容量内最大价值。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:18:45.673841+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151809-acwing-294-dp-n-da0b10",
+      "task": "【AcWing 294，DP-中等】n 行 m 列山地地图，P 为平原、H 为山地。炮之间同一行至少间隔两格，且连续三行同列不能放炮；山地不能放炮。输入地图，求最多炮数。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:18:09.523451+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151809-acwing-293-dp-1x2-d9a10f",
+      "task": "【AcWing 293，DP-中等】用 1x2 小方块完全覆盖 n 行 m 列棋盘，方块可旋转。多组输入，以 0 0 结束；每组输出铺法数量。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:18:09.466552+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151733-acwing-277-dp-n-5c8e1a",
+      "task": "【AcWing 277，DP-中等】在 n 行 m 列方格中，两个人同时从左上走到右下，只能向右或向下，不能重复领取同一格的数字（起点终点只计一次），求领取总和最大值。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:17:33.388458+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151733-acwing-898-dp-n-36d8ef",
+      "task": "【AcWing 898，DP-中等】给定 n 个整数，求严格递增子序列长度。输入规模很大，要求使用 O(n log n) 的贪心维护 tails 方法。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:17:33.340440+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151657-acwing-12-dp-n-e19b15",
+      "task": "【AcWing 12，DP-中等】n 件 01 物品和容量 m，输出字典序最小的最优方案：按物品编号升序输出被选物品编号，空方案输出空行。输入 n m 及 v_i w_i。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:16:57.251793+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151657-acwing-11-dp-n-cdd621",
+      "task": "【AcWing 11，DP-中等】n 件 01 物品和容量 m，求达到最大价值的不同选取方案数，答案对 1e9+7 取模。输入 n m 及 v_i w_i，输出方案数。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:16:57.180253+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151621-acwing-9-dp-n-04ed4c",
+      "task": "【AcWing 9，DP-中等】物品分成 n 组，每组最多选一件。输入 n m，随后每组先给出组内数量，再给出若干体积价值对；输出容量 m 内最大价值。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:16:21.089211+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151620-acwing-8-dp-v-6720d4",
+      "task": "【AcWing 8，DP-中等】每件物品占用体积 v 和重量 c，价值 w，每件最多一次。输入 n 背包体积上限 m、重量上限 k，随后 n 行 v w c；求最大价值。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:16:20.995260+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151544-acwing-7-dp-v-29a164",
+      "task": "【AcWing 7，DP-中等】每行 v w s：s=-1 表示 01 背包，s=0 表示完全背包，s>0 表示最多 s 件。输入 n m 及物品，输出最大价值。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:15:44.918379+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151544-acwing-5-dp-n-26fa9c",
+      "task": "【AcWing 5，DP-中等】每种物品有数量上限，输入 n m 及 n 行 v_i w_i s_i，求最大价值。数据范围较大，需使用二进制拆分或等价优化。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:15:44.870348+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151508-acwing-902-dp-n-3f5cfe",
+      "task": "【AcWing 902，DP-简单】将正整数 n 拆成若干个正整数之和，忽略顺序，求划分方案数，答案对 1e9+7 取模。输入 n，输出方案数。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:15:08.745890+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151508-acwing-903-dp-n-30b438",
+      "task": "【AcWing 903，DP-简单】给定 n 行 m 列高度矩阵，只能从高处滑向上下左右相邻的更低位置，求最长滑雪路线包含的格子数。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:15:08.738866+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151432-acwing-900-dp-n-8335ec",
+      "task": "【AcWing 900，DP-简单】给出 n 行数字三角形，从顶到底每次走到下一行相邻位置，求路径数字和最大值。输入 n 及三角形，输出最大和。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:14:32.548481+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151432-acwing-901-dp-1-cd863f",
+      "task": "【AcWing 901，DP-简单】允许插入、删除、替换一个字符代价均为 1，求两个字符串的最小编辑距离。输入 n m 及两行字符串，输出距离。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:14:32.548481+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151356-acwing-899-dp-n-3569af",
+      "task": "【AcWing 899，DP-简单】输入两个小写字符串，求最长公共子序列长度。第一行给出长度 n m，随后两行字符串；输出长度。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:13:56.394157+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151356-acwing-897-dp-n-481ad0",
+      "task": "【AcWing 897，DP-简单】给定长度 n 的整数序列，求严格递增子序列的最大长度。输入 n 和序列，输出长度。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:13:56.375032+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151308-acwing-79-dp-n-547fb2",
+      "task": "【AcWing 79，DP-简单】给定 n 天股价，每天最多买卖一次且只能持有一股，最多完成一次买入和一次卖出。输入 n 及 n 个价格，输出最大利润；无法获利输出 0。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:13:08.174299+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-151308-acwing-4-dp-s-26d958",
+      "task": "【AcWing 4，DP-简单】每种物品有数量上限 s_i，其他条件同 01 背包。输入 n m，随后 n 行 v_i w_i s_i；输出最大价值。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 1,
+      "created_at": "2026-08-29T07:13:08.171923+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-143223-acwing-4-dp-s-b2a1c1",
+      "task": "【AcWing 4，DP-简单】每种物品有数量上限 s_i，其他条件同 01 背包。输入 n m，随后 n 行 v_i w_i s_i；输出最大价值。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 3,
+      "created_at": "2026-08-29T06:32:23.144500+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
+    },
+    {
+      "run_id": "20260829-142517-acwing-3-dp-n-6c3275",
+      "task": "【AcWing 3，DP-简单】有 n 种物品和容量为 m 的背包，每种物品可无限次选择。输入 n m，随后每行体积 v 和价值 w；求最大总价值。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-08-29T06:25:17.175913+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.02s\n",
+      "review": {
+        "status": "completed",
+        "content": "# 算法代码评审\n\n## 1. 算法思路\n采用的经典的**完全背包问题**一维 DP 解法：\n- `dp[j]` 表示容量不超过 `j` 时能获得的最大价值，初始全为 0（即\"什么也不选\"价值为 0）。\n- 对每件物品，按 `j` 从 `v` 到 `m` **正向遍历**：`dp[j] = max(dp[j], dp[j-v] + w)`。正向遍历正是无限件物品可重复装入的关键——当前物品在同一轮中可被多次使用。\n- 最终答案为 `dp[m]`。\n\n该实现与 AcWing 3 完全背包的标准转移一致。\n\n## 2. 时间与空间复杂度\n- **时间复杂度**：`O(n·m)`，两层循环外层物品数、内层容量。\n- **空间复杂度**：`O(m)`，仅使用长度为 `m+1` 的一维数组。\n\n## 3. 边界情况\n- 空输入：返回 `\"0\"`，防御性处理合理。\n- `v <= 0`：题目一般保证 `v ≥ 1`，但代码额外跳过零/负体积的物品，避免无限价值或越界。这是一个合理的保险措施（注释也写明了原因）。\n- `v > m`：内层 `range(v, m+1)` 为空区间，自然跳过。\n- 负价值 `w < 0`：由于 `dp` 初值为 0 且只在更优时更新，负价值物品不会被选中（除非净收益仍为正，即等价于选或不选的最优决策，逻辑依然正确）。\n- `m = 0`：返回 `dp[0]=0`，正确。\n\n## 4. 测试覆盖\n本地验证通过（2 个用例均通过）。\n\n但现有公开用例较少：\n- 用例 1（`2 4 / 1 2 / 3 4` → `8`）覆盖了多物品重复选择；\n- 用例 2（`1 2 / 3 9` → `0`）覆盖了容量不足的情况。\n\n未覆盖的场景：`m = 0`、单种物品重复填满、价值或体积相同的多物品、`v = 1` 边界、大容量规模下的性能等。不过这些只是覆盖度建议，不影响当前用例的正确性。\n\n## 5. 潜在风险与代码质量\n- **输入解析**：用 `split()` + `iter(tokens)` 可容忍任意空白与换行格式，鲁棒性好。\n- **输出格式**：直接返回 `str(dp[m])`，无多余换行；测试用例 `normalize_output` 也会去掉尾随换行，匹配安全。\n- **数值范围**：使用 Python 任意精度整数，没有溢出风险。\n- **可读性**：代码简洁清晰，注释解释了 `v<=0` 处理的意图，结构良好。\n- **潜在风险**：\n  - 若在线评测存在 `v=0` 且 `w>0` 的数据，理论上答案应是无穷大，当前实现会跳过该物品；但完全背包题目通常不会给这种输入，且题目描述隐含 `v>0`，风险较低。\n  - 没有显式参数校验（如 token 数量是否匹配 `2+2n`），若输入残缺会抛 `StopIteration`/`IndexError`，但评测输入按规范提供，影响有限。\n- **总体评价**：实现正确、简洁、边界处理稳妥，符合题目要求。\n\n> 说明：仅确认本地提供用例通过，不保证在线评测的隐藏测试一定通过。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-141840-acwing-2-dp-n-ad4dcb",
+      "task": "【AcWing 2，DP-简单】有 n 件物品和容量为 m 的背包。第 i 件物品体积 v_i、价值 w_i，每件最多选一次。求不超过容量时的最大总价值。输入第一行 n m，随后 n 行 v_i w_i；输出最大价值。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-08-29T06:18:40.924578+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.02s\n",
+      "review": {
+        "status": "completed",
+        "content": "# 代码审查报告\n\n## 1. 算法思路\n采用经典的 **0-1 背包问题一维空间优化 DP** 解法。\n- `dp[j]` 表示容量不超过 `j` 时能获得的最大价值，初始全为 0。\n- 对每件物品，体积为 `v`、价值为 `w`，需保证该物品最多被选一次，因此 **内层循环从 `m` 倒序枚举到 `v`**，这样 `dp[j-v]` 引用的是本物品处理前的值，避免重复选取。\n- 转移：`dp[j] = max(dp[j], dp[j-v] + w)`，最终返回 `dp[m]`。\n\n倒序枚举是该算法正确性的关键，代码实现正确。\n\n## 2. 时间和空间复杂度\n- **时间复杂度**：O(n·m)，每个物品内层至多 m 次迭代。\n- **空间复杂度**：O(m)，仅维护一维 dp 数组，相较二维写法节省为原来的 1/(n+1)。\n\n对于该题数据规模，性能充足。\n\n## 3. 边界情况\n- ✅ 输入为空：`if not data: return \"0\"` 提前返回，避免索引越界。\n- ✅ 容量 `m=0`：`dp = [0]`，内层循环 `range(0, v-1, -1)` 对正体积物品不执行，最终返回 `\"0\"`，与\"空容量\"用例吻合。\n- ✅ 物品体积大于背包容量：`range(m, v-1, -1)` 集合为空，自动跳过该物品。\n- ⚠️ 物品体积为 0：题目未明确禁止。若 `v=0`，倒序循环会把所有 `dp[j]` 同时加 `w`，仍只加一次（因为同一 `j` 仅访问一次），结果正确性尚可，但若 `v=0` 且 `w>0` 会被纳入背包——这一点是否符合题意取决于题面约束，建议留意。\n- ⚠️ 未对 `n` 与后续数据数量做一致性校验，若输入残缺会抛 `IndexError`。\n\n## 4. 测试覆盖\n官方用例仅 2 个：\n- 基础背包：3 件物品容量 4，预期 6（选体积 1+2 的物品，价值 2+4=6），验证主流程。\n- 空容量：m=0，预期 0，验证退化情形。\n\n覆盖不足之处：\n- 缺少\"恰一物品可装入\"\"所有物品体积均超容量\"\"n=0\"\"物品数恰好全部装入\"\"单件物品体积恰好等于 m\"等情形。\n- 缺少较大规模用例以验证性能与无越界。\n- 未覆盖 `v=0` 或 `w=0` 的退化情形。\n\n本地验证已通过（2 passed）。\n\n## 5. 潜在风险与代码质量\n**优点**\n- 写法简洁标准，一维倒序 DP 无逻辑错误。\n- 使用 `strip().split()` 兼容任意外围空白与换行。\n- 提前处理空输入，鲁棒性略加。\n- 返回字符串而非数值，符合 `solve(input_text) -> str` 接口。\n\n**风险与改进建议**\n- 无输入合法性校验：依赖 `data[idx]`、`data[idx+1]` 直接取值，若用例格式异常会直接抛 `IndexError`。生产环境下应校验 `len(data) >= 2 + 2*n`。\n- 未使用 `data` 迭代器或切片，索引管理略显啰嗦，但可读性可接受。\n- 若题面隐含 `v_i ≥ 1`，则一切正常；若可能为 0，建议显式处理（题目通常 v_i ≥ 1）。\n- 测试用例偏少，虽本地方案通过，但 无法保证在线评测隐藏用例全部通过（例如大规模数据、特殊边界），仍需以实际提交结果为准。\n- 输出格式仅是数字，与权威用例一致；无需额外换行处理（评测端通常按空白/行尾容忍）。\n\n总体结论：算法实现正确、空间优化到位，符合 0-1 背包标准模板。本地两例验证通过；但官方用例覆盖面较窄，且未对异常输入与零体积物品做防御，提交后请以在线评测结果为最终判据。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-141336-acwing-2-dp-n-795c88",
+      "task": "【AcWing 2，DP-简单】有 n 件物品和容量为 m 的背包。第 i 件物品体积 v_i、价值 w_i，每件最多选一次。求不超过容量时的最大总价值。输入第一行 n m，随后 n 行 v_i w_i；输出最大价值。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 20,
+      "created_at": "2026-08-29T06:13:36.633880+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.02s\n",
+      "review": {
+        "status": "completed",
+        "content": "1. 算法思路\n经典 0/1 背包问题的一维空间优化实现。状态定义 `dp[j]` 表示容量不超过 `j` 时能获得的最大价值，初值为 0。对每件物品，_capacity_ 维度从 `m` 倒序枚举到 `v`，更新 `dp[j] = max(dp[j], dp[j-v] + w)`。倒序确保每件物品在同一轮中只被使用一次（避免 `dp[j-v]` 已被本轮更新而造成\"重复选取\"）。最终答案为 `dp[m]`，由于 DP 初值为 0 且转移时显式比较取最大值，`dp[m]` 自然表示\"不超过容量 m\"的最大价值。思路正确。\n\n2. 时间与空间复杂度\n- 时间复杂度：O(n·m)，外层 n 件物品，内层至多 m 次循环。\n- 空间复杂度：O(m)，仅维护一维长度为 m+1 的数组。\n对于本题规模属于最优实现。\n\n3. 边界情况\n- `m = 0`：`dp = [0]`，每件物品内层 `range(0, v-1, -1)` 在 `v >= 1` 时为空区间，不会越界，返回 0，与\"空容量\"用例一致。\n- `v_i > m`：`range(m, v-1, -1)` 为空，物品自动跳过，正确。\n- `v_i = 0`：`range(m, -1, -1)` 会覆盖 j=0；由于每个物品只在外层循环处理一次，0 体积物品也只会被加入一次，逻辑仍正确（但极端情况下若同时存在多个 0 体积正价值物品，会被全量加进所有容量，符合 0/1 语义）。\n- 输入解析采用 `split()` 而非按行切分，对多余空白、行尾换行、不同行分布均鲁棒。\n\n4. 测试覆盖\n本地用例只有 2 个：基础背包（3 件物品容量 4，期望 6）与空容量（容量 0，期望 0），均通过。覆盖维度偏少，未涉及：单件物品、物品体积恰好等于容量、所有物品体积之和等于容量、物品体积大于容量被排除、`w_i = 0` 或 `v_i = 0`、多件物品中需精确取舍的组合等。建议补充这些场景以增强信心，但目前两例均符合预期。\n\n5. 潜在风险与代码质量\n- 输入未做校验：若 `parts` 长度不足或含非数字字符会抛 `IndexError`/`ValueError`，但题目约定输入格式，可接受。\n- 未限制 `n`、`m` 的范围；若 `m` 极大可能内存超限，但本题未给出上限，无明确问题。\n- `if val > dp[j]: dp[j] = val` 与 `dp[j] = max(dp[j], val)` 等价，可读性略可改为 `max` 写法，但当前写法在部分解释器上略快，属风格选择。\n- 变量名 `m` 既是\"容量\"又是DP语义中的上限，命名尚可；`v`、`w` 与题面一致，清晰。\n- 没有副作用，纯函数，便于测试。\n\n本地验证已通过（2 个用例全部通过）；不保证隐含在线评测用例一定通过。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-141100-acwing-2-dp-n-9ede74",
+      "task": "【AcWing 2，DP-简单】有 n 件物品和容量为 m 的背包。第 i 件物品体积 v_i、价值 w_i，每件最多选一次。求不超过容量时的最大总价值。输入第一行 n m，随后 n 行 v_i w_i；输出最大价值。",
+      "model": "openai/zai-org/GLM-5.2",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 12,
+      "created_at": "2026-08-29T06:11:00.650136+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.02s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
     {
       "run_id": "20260829-100600-100-ab4f35gr-a6-abfgr-b68aa4",
       "task": "输入一个字符串，将其中的数字字符移动到非数字字符之后，并保持数字字符和非数字字符输入时的顺序。\n\n输入：一行字符串，长度小于 100。\n输出：移动后的字符串。\n\n例如：输入 ab4f35gr#a6，输出 abfgr#a4356。",
@@ -64,7 +784,7 @@
         "status": null,
         "content": ""
       },
-      "error": null
+      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Missing credentials. Please pass an `api_key`, `workload_identity`, `admin_api_key`, or set the `OPENAI_API_KEY` or `OPENAI_ADMIN_KEY` environment variable."
     },
     {
       "run_id": "20260828-174226-100-ab4f35gr-a6-abfgr-64c36f",
@@ -144,7 +864,7 @@
         "status": null,
         "content": ""
       },
-      "error": null
+      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Missing credentials. Please pass an `api_key`, `workload_identity`, `admin_api_key`, or set the `OPENAI_API_KEY` or `OPENAI_ADMIN_KEY` environment variable."
     }
   ]
 }
