@@ -1,125 +1,127 @@
-<div align="center">
-
 # Code Agent
 
-### An autonomous coding agent that writes, tests, debugs and reviews Python solutions.
+面向 Python 算法题的本地编程智能体。用户提交自然语言题目和输入输出用例后，模型通过 Bash 在独立工作目录中编写 `solution.py`、执行 pytest、根据真实失败信息迭代修改，并在测试通过后执行独立代码评审。
 
-自然语言题目 → 生成测试 → 编写 `solution.py` → `pytest` → 按失败修复 → Reviewer
+仓库：https://github.com/xwjhhh/code_agent
 
-[🚀 Live Demo](https://xwjhhh.github.io/code_agent/) · [📖 Architecture](doc/ARCHITECTURE.md) · [⭐ GitHub](https://github.com/xwjhhh/code_agent)
+## 数据闭环
 
-<br>
+```text
+人工输入测试用例 或 模型生成测试用例
+    -> test_cases.json
+    -> 编程模型读取输入输出格式
+    -> 编写 solution.py
+    -> 固定 test_solution.py 读取同一份 JSON
+    -> pytest
+    -> 失败则继续修改题解
+    -> 通过后 Reviewer
+```
 
-**打开 Demo，点击 `Run Agent`，查看一条真实本地运行轨迹的交互式回放。**
+`test_cases.json` 是编程模型、pytest 和 Reviewer 共用的权威输入输出文件。测试文件在 Agent 循环中受保护，模型不能通过修改期望输出规避失败。
 
-</div>
+## 环境要求
 
-![GitHub Pages deployment](https://github.com/xwjhhh/code_agent/actions/workflows/pages.yml/badge.svg)
+- Python 3.10+
+- Node.js 18+
+- Windows 安装 Git for Windows，并提供 `bin\bash.exe`
+- 使用真实模型时配置对应厂商的 API Key
 
-## 项目亮点
-
-Code Agent 是一个面向 Python 算法题的 local-first 编程智能体。它让模型只能通过受控的 Bash 工具修改隔离工作区，再用真实的 `pytest` 输出驱动下一轮修复；测试通过后才进入独立的 Reviewer，并将可复用经验沉淀到本地记忆库。
-
-GitHub Pages 是一个零后端的项目展示页：它读取仓库中的 `docs/data/*.json` 快照，默认展示 Agent Demo，按时间线回放分析、测试、编码和验证过程。回放不会连接 FastAPI、不会调用模型，也不会暴露 API Key，因此任何人打开链接都能直接体验。
-
-## Demo 回放
-
-| 阶段 | 页面展示 |
-| --- | --- |
-| Analyze | 解析输入输出格式、约束和边界条件 |
-| Generate tests | 展示导出的测试用例数量和 `test_cases.json` |
-| Write code | 展示 Agent 通过 Bash 写入的 `solution.py` |
-| Run pytest | 回放真实快照里的命令输出和通过/失败状态 |
-| Verify | 进入 Reviewer，展示最终验证结果 |
-
-线上展示：<https://xwjhhh.github.io/code_agent/>
-
-## 本地运行
-
-环境要求：Python 3.10+、Node.js 18+、Windows Git Bash（需要 `bin\\bash.exe`）。真实模型运行还需要对应厂商的 API Key。
+安装后端：
 
 ```powershell
 python -m pip install -e .
+```
 
-# 启动 FastAPI
+硅基流动凭据只放在 Windows 环境变量和未入库的 `.env` 中。建议将硅基流动 API Key 保存为 `SILICONFLOW_API_KEY`，项目根目录的 `.env` 写为：
+
+```text
+OPENAI_API_KEY=${SILICONFLOW_API_KEY}
+SILICONFLOW_EMBEDDING_API_KEY=${SILICONFLOW_API_KEY}
+OPENAI_API_BASE=https://api.siliconflow.cn/v1
+CODE_AGENT_MODEL=openai/deepseek-ai/DeepSeek-V4-Flash
+CODE_AGENT_BASH_PATH=C:\Program Files\Git\bin\bash.exe
+```
+
+不要把真实 Key 写入仓库或前端代码。DeepSeek V4 Flash 通过硅基流动的 OpenAI 兼容接口调用。
+
+项目固定使用硅基流动的 `DeepSeek-V4-Flash` 作为唯一对话模型，负责任务分析、Bash 工具调用、测试生成、Reviewer 和记忆分析。
+
+## 启动 Web 应用
+
+项目根目录启动 FastAPI：
+
+```powershell
 python -m uvicorn code_agent.api:app --app-dir src --host 127.0.0.1 --port 8000
+```
 
-# 另开终端启动 Next.js 工作台
+另开终端启动 Next.js：
+
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
 
-打开 <http://localhost:3000>。工作台提供实时 SSE 轨迹、测试用例、终端输出、代码文件、Reviewer 和记忆图谱。
+打开 `http://localhost:3000`。页面提供：
 
-也可以直接使用 CLI 运行一条任务：
+- 真实 FastAPI 运行列表；
+- 手工输入多组标准输入/期望输出；
+- 调用所选模型生成测试用例；
+- SSE 实时运行轨迹；
+- `solution.py`、`test_solution.py`、`test_cases.json` 文件展示；
+- 真实命令输出、pytest 结果和 Reviewer。
 
-```powershell
-code-agent --task-file problem.txt --model openai/deepseek-ai/DeepSeek-V4-Flash
-```
+## GitHub 项目展示
 
-需要覆盖 Git Bash 路径时追加 `--bash-path "C:\Program Files\Git\bin\bash.exe"`。
+仓库内的 [`docs/index.html`](docs/index.html) 是一个静态展示页，只呈现从本机数据库导出的历史运行快照和中文知识图谱，不连接 FastAPI、不调用模型，也不会创建或执行任务。
 
-### 环境变量
-
-将密钥只放在系统环境变量或未入库的 `.env` 中。以硅基流动为例：
-
-```text
-OPENAI_API_KEY=your_key
-SILICONFLOW_EMBEDDING_API_KEY=your_key
-OPENAI_API_BASE=https://api.siliconflow.cn/v1
-CODE_AGENT_MODEL=openai/deepseek-ai/DeepSeek-V4-Flash
-CODE_AGENT_BASH_PATH=C:\\Program Files\\Git\\bin\\bash.exe
-```
-
-不要把真实 Key 写入 Git、README 或前端代码。Embedding 固定使用 `Qwen/Qwen3-Embedding-8B`；没有 Embedding Key 时会回退到 `OPENAI_API_KEY`。
-
-## 导出 Pages 快照
-
-运行完成后，在项目根目录执行：
+更新本机运行或记忆后，在项目根目录执行：
 
 ```powershell
 python scripts/export_showcase_data.py
 ```
 
-脚本从 `trajectories/` 和本地 `memory_store/memory.sqlite3` 生成：
+脚本会从 `trajectories/` 和 `memory_store/memory.sqlite3` 生成 `docs/data/runs.json` 与 `docs/data/memories.json`。导出数据会排除向量、模型消息、工作区路径和密钥；检查内容后提交并推送这两个 JSON，GitHub Pages 就会显示最新快照。
 
-- `docs/data/runs.json`：题目、状态、测试输出、模型调用次数和公开的 `solution.py`。
-- `docs/data/memories.json`：知识节点及其关系。
+推送到 `main` 后，`.github/workflows/pages.yml` 会自动将 `docs/` 部署到 GitHub Pages。仓库 `xwjhhh/code_agent` 的展示地址为：
 
-导出过程会排除向量、模型消息、工作区路径、环境配置和密钥。检查快照内容后提交并推送，GitHub Actions 会自动将 `docs/` 部署到 Pages。仓库 Settings → Pages 的 Source 需要设置为 **GitHub Actions**。
+`https://xwjhhh.github.io/code_agent/`
 
-## 架构概览
+若仓库尚未启用 Pages，请在仓库 Settings → Pages 中将 Source 设为 GitHub Actions。页面中的“查看仓库”链接仍指向源码仓库，便于面试或项目演示时切换查看。
 
-```text
-自然语言题目 + 输入/输出用例
-        │
-        ▼
-  FastAPI / SSE ──▶ Agent loop ──▶ 受控 Bash ──▶ workspace/<run_id>
-        │                 │                 │
-        │                 └── pytest ◀──────┘
-        │                         │
-        └── trajectory.json ◀─────┴── Reviewer / Memory
-                                      │
-                                      ▼
-                              docs/data/*.json
-                                      │
-                                      ▼
-                              GitHub Pages Replay
+所有运行均使用 LiteLLM 调用所选模型。LiteLLM 只负责厂商 API 调用，Agent 循环和本地工具仍由本项目实现。
+
+## 命令行运行
+
+```powershell
+code-agent --task-file problem.txt --model openai/deepseek-ai/DeepSeek-V4-Flash
 ```
 
-更多设计取舍见 [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md)、[`doc/REQUIREMENTS.md`](doc/REQUIREMENTS.md) 和 [`doc/MEMORY_V2.md`](doc/MEMORY_V2.md)。
+也可以覆盖 Git Bash 路径：
 
-## 目录结构
+```powershell
+code-agent --task-file problem.txt --model openai/deepseek-ai/DeepSeek-V4-Flash --bash-path "C:\Program Files\Git\bin\bash.exe"
+```
+
+CLI 会先调用模型生成 `test_cases.json`，然后运行与 Web 相同的编程闭环。
+
+## 运行产物
 
 ```text
-src/code_agent/       Agent、模型、环境、Reviewer 与记忆实现
-frontend/              本地 Next.js 运行工作台
-scripts/               批量运行与 Pages 快照导出
-trajectories/          本地运行轨迹（默认不提交具体任务数据）
-docs/                  GitHub Pages 静态展示和公开快照
-tests/                 Python 单元测试
+workspace/<run_id>/solution.py
+workspace/<run_id>/test_cases.json
+workspace/<run_id>/test_solution.py
+trajectories/<run_id>/trajectory.json
+trajectories/<run_id>/review.json
 ```
+
+本地测试通过只表示通过当前输入输出用例，不保证通过在线判题隐藏测试。
+
+## V2 持久化经验记忆
+
+项目已加入可选的轨迹经验记忆：验证成功的运行会提炼 Strategy、Recovery、Optimization 经验，调用硅基流动 Embeddings API 建立向量索引，并保存到本地 SQLite。新任务开始前进行 task/subtask 多粒度检索，pytest 失败后进行 Recovery 检索，最多把少量筛选后的经验作为参考注入编程模型。详细设计见 [`doc/MEMORY_V2.md`](doc/MEMORY_V2.md)。
+
+Embedding 固定使用 `Qwen/Qwen3-Embedding-8B`。可在 `.env` 中设置 `SILICONFLOW_EMBEDDING_API_KEY`；未设置时回退到 `OPENAI_API_KEY`，Base URL 仍为 `https://api.siliconflow.cn/v1`。记忆库目录 `memory_store/` 已被 Git 忽略。
 
 ## 验证
 
@@ -129,4 +131,4 @@ cd frontend
 npm run build
 ```
 
-本地测试只验证当前输入输出用例，不能替代线上题目的隐藏测试。静态 Pages 只展示已导出的快照，不会在访问者浏览器中执行任意 Python 代码。
+需求和逐文件架构说明位于 `doc/`。
