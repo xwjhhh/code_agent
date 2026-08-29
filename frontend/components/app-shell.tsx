@@ -2,15 +2,35 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, ChevronRight, Clock3, LayoutDashboard, Plus, TerminalSquare } from "lucide-react";
+import { Activity, BrainCircuit, ChevronRight, Clock3, LayoutDashboard, Plus, TerminalSquare } from "lucide-react";
 import { useEffect, useState } from "react";
-import { checkApi } from "@/lib/api";
+import { ACTIVE_RUN_STORAGE_KEY, checkApi } from "@/lib/api";
 
 export function AppShell({ children, breadcrumb = "控制台" }: { children: React.ReactNode; breadcrumb?: string }) {
   const pathname = usePathname();
   const [connected, setConnected] = useState(false);
+  const [rememberedRunId, setRememberedRunId] = useState<string | null>(null);
   const runMatch = pathname.match(/^\/(?:run|history)\/([^/]+)/);
-  const currentRunId = runMatch?.[1];
+  const routeRunId = runMatch?.[1];
+  const currentRunId = routeRunId ?? rememberedRunId;
+
+  useEffect(() => {
+    let storedRunId: string | null = null;
+    try {
+      storedRunId = window.localStorage.getItem(ACTIVE_RUN_STORAGE_KEY);
+    } catch {
+      storedRunId = null;
+    }
+    if (storedRunId) setRememberedRunId(storedRunId);
+    if (routeRunId) {
+      try {
+        window.localStorage.setItem(ACTIVE_RUN_STORAGE_KEY, routeRunId);
+      } catch {
+        // Storage can be unavailable in privacy-restricted browser contexts.
+      }
+      setRememberedRunId(routeRunId);
+    }
+  }, [routeRunId]);
 
   useEffect(() => {
     let active = true;
@@ -34,6 +54,7 @@ export function AppShell({ children, breadcrumb = "控制台" }: { children: Rea
           <Link href="/" className={"nav-item " + (pathname === "/" ? "active" : "")}><LayoutDashboard /><span>控制台</span></Link>
           <Link href="/task/new" className={"nav-item " + (pathname.startsWith("/task/new") ? "active" : "")}><Plus /><span>新建任务</span></Link>
           <Link href="/history" className={"nav-item " + (pathname.startsWith("/history") ? "active" : "")}><Clock3 /><span>历史运行</span></Link>
+          <Link href="/memory" className={"nav-item " + (pathname.startsWith("/memory") ? "active" : "")}><BrainCircuit /><span>记忆图谱</span></Link>
         </nav>
         <div className="nav-label" style={{ marginTop: 25 }}>运行时</div>
         <nav className="nav-list">

@@ -10,7 +10,7 @@ import {
   Wrench,
   Zap,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { MemoryCategory, MemoryNode, RunEvent, RunMemory } from "@/lib/api";
 
 type GraphMemory = MemoryNode & { phase: "task" | "recovery" | "learned" };
@@ -21,9 +21,9 @@ const GRAPH_HEIGHT = 330;
 const CENTER: Point = { x: GRAPH_WIDTH / 2, y: GRAPH_HEIGHT / 2 };
 
 const categoryMeta: Record<MemoryCategory, { label: string; Icon: typeof Compass }> = {
-  strategy: { label: "Strategy", Icon: Compass },
-  recovery: { label: "Recovery", Icon: Wrench },
-  optimization: { label: "Optimization", Icon: Zap },
+  strategy: { label: "策略经验", Icon: Compass },
+  recovery: { label: "恢复经验", Icon: Wrench },
+  optimization: { label: "优化经验", Icon: Zap },
 };
 
 function asMemory(value: unknown, phase: GraphMemory["phase"]): GraphMemory | null {
@@ -131,7 +131,7 @@ export function MemoryGraph({ task, memory, events }: { task: string; memory?: R
 
   return <div className="memory-view">
     <div className="memory-header">
-      <div className="trace-title-row"><span className="trace-title">Memory Graph</span><span className="trace-count">{graph.memories.length} 条经验</span></div>
+      <div className="trace-title-row"><span className="trace-title">记忆图谱</span><span className="trace-count">{graph.memories.length} 条经验</span></div>
       <div className="memory-status-line">
         {status === "retrieval" && <><Sparkles className="spin" /> 正在回忆相关经验</>}
         {status === "recovery" && <><Wrench /> 失败恢复经验已聚焦</>}
@@ -140,12 +140,12 @@ export function MemoryGraph({ task, memory, events }: { task: string; memory?: R
       </div>
     </div>
 
-    <div className="memory-legend" aria-label="Memory 图例">
+    <div className="memory-legend" aria-label="记忆图例">
       {(Object.keys(categoryMeta) as MemoryCategory[]).map((category) => {
         const Icon = categoryMeta[category].Icon;
         return <span key={category}><Icon /> {categoryMeta[category].label}</span>;
       })}
-      <span><i className="memory-line solid" /> 同一经验</span>
+      <span><i className="memory-line solid" /> 同一运行经验</span>
       <span><i className="memory-line dotted" /> 相似关系</span>
     </div>
 
@@ -179,13 +179,13 @@ export function MemoryGraph({ task, memory, events }: { task: string; memory?: R
           return <button
             key={item.id}
             type="button"
-            title={`${categoryMeta[item.category].label} · ${item.granularity === "task" ? "Task" : "Subtask"}`}
+            title={`${categoryMeta[item.category].label} · ${item.granularity === "task" ? "任务级" : "子任务级"}`}
             className={`memory-node ${item.granularity === "task" ? "task-level" : "subtask-level"} ${isRecovery ? "recovery-node" : ""} ${isNew ? "learning-node" : ""} ${selectedId === item.id ? "selected" : ""} ${graph.retrievalActive ? "retrieval-node" : ""} ${graph.recoveryVisible && !isRecovery ? "memory-faded" : ""}`}
             style={{ left: `${(points[index].x / GRAPH_WIDTH) * 100}%`, top: `${(points[index].y / GRAPH_HEIGHT) * 100}%` }}
             onClick={() => setSelectedId(item.id)}
           >
             <Icon className="memory-category-icon" />
-            <span>{memoryLabel(item)}</span>
+          <span>{memoryLabel(item)}</span>
           </button>;
         })}
       </div>
@@ -193,19 +193,24 @@ export function MemoryGraph({ task, memory, events }: { task: string; memory?: R
     </>}
 
     <div className="memory-footer">
-      <span><i className="memory-size-sample large" /> Task level</span>
-      <span><i className="memory-size-sample small" /> Subtask level</span>
+      <span><i className="memory-size-sample large" /> 任务级</span>
+      <span><i className="memory-size-sample small" /> 子任务级</span>
       {graph.hasLearning && <span className="memory-learned-note"><Lightbulb /> 已记录新经验</span>}
     </div>
   </div>;
 }
 
 function MemoryInspection({ memory, onClose }: { memory: GraphMemory; onClose: () => void }) {
-  const [showSteps, setShowSteps] = useState(false);
+  const [showSteps, setShowSteps] = useState(true);
+  const detailRef = useRef<HTMLDivElement>(null);
   const Icon = categoryIcon(memory.category);
+  useEffect(() => {
+    if (!showSteps) return;
+    requestAnimationFrame(() => detailRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
+  }, [showSteps]);
   return <div className="memory-inspection">
     <div className="memory-inspection-head">
-      <div className="memory-inspection-title"><Icon /><span>{categoryMeta[memory.category].label} · {memory.granularity === "task" ? "Task" : "Subtask"}</span></div>
+      <div className="memory-inspection-title"><Icon /><span>{categoryMeta[memory.category].label} · {memory.granularity === "task" ? "任务级" : "子任务级"}</span></div>
       <button type="button" className="memory-close" onClick={onClose} title="关闭详情">×</button>
     </div>
     <strong>{memory.content || memory.trigger || "未命名经验"}</strong>
@@ -213,10 +218,10 @@ function MemoryInspection({ memory, onClose }: { memory: GraphMemory; onClose: (
       {typeof memory.similarity === "number" && <span>相似度 {(memory.similarity * 100).toFixed(0)}%</span>}
       {memory.source_run_id && <span>来源 {memory.source_run_id.slice(-10)}</span>}
     </div>
-    <button type="button" className="memory-detail-toggle" onClick={() => setShowSteps((value) => !value)}>
+    <button type="button" className="memory-detail-toggle" aria-expanded={showSteps} onClick={() => setShowSteps((value) => !value)}>
       {showSteps ? "收起详情" : "查看详情"}<ChevronDown className={showSteps ? "open" : ""} />
     </button>
-    {showSteps && <div className="memory-detail-body">
+    {showSteps && <div className="memory-detail-body" ref={detailRef}>
       {memory.trigger && <p><b>适用条件</b>{memory.trigger}</p>}
       {memory.purpose && <p><b>目的</b>{memory.purpose}</p>}
       {!!memory.steps?.length && <p><b>行动步骤</b>{memory.steps.join("；")}</p>}

@@ -28,7 +28,7 @@ class ExperienceExtractor:
             [
                 {
                     "role": "system",
-                    "content": "You distill verified coding-agent execution into concise reusable procedural memories. Return JSON only.",
+                    "content": "You distill verified coding-agent execution into concise reusable procedural memories. Return JSON only. All natural-language values must be written in Simplified Chinese. Keep category and granularity as the exact lowercase English enum values.",
                 },
                 {
                     "role": "user",
@@ -51,24 +51,24 @@ Final solution:
 {solution[:10000]}
 ```
 
-Return exactly this JSON object:
+Return exactly this JSON object. The values of trigger, content, purpose, steps, negative_example, problem_family, algorithm_tags, and constraints must be concise Simplified Chinese (do not write these fields in English):
 {{"memories": [
   {{
     "category": "strategy|recovery|optimization",
     "granularity": "task|subtask",
-    "trigger": "when this applies, without sample-specific values",
-    "content": "reusable actionable knowledge",
-    "purpose": "what the agent should achieve",
-    "steps": ["concrete action 1", "concrete action 2"],
-    "negative_example": "what not to do, or null",
-    "problem_family": ["..."],
-    "algorithm_tags": ["..."],
-    "constraints": ["..."],
+    "trigger": "适用条件（不要包含样例专属值）",
+    "content": "可复用、可执行的知识",
+    "purpose": "希望达成的目标",
+    "steps": ["具体行动 1", "具体行动 2"],
+    "negative_example": "需要避免的做法，或 null",
+    "problem_family": ["问题类型"],
+    "algorithm_tags": ["算法标签"],
+    "constraints": ["约束条件"],
     "priority": 1
   }}
 ]}}
 
-Rules: do not copy source code, task names, sample values, variable names, file paths, or raw trajectory narration. Keep only experiences that state when they apply and what action to take. A recovery memory must describe a failure signal and successful repair. Do not produce generic advice such as 'consider edge cases'.""",
+Rules: do not copy source code, task names, sample values, variable names, file paths, or raw trajectory narration. Keep only experiences that state when they apply and what action to take. A recovery memory must describe a failure signal and successful repair. Do not produce generic advice such as 'consider edge cases'. Use Simplified Chinese even when the problem statement or reviewer result is in English.""",
                 },
             ]
         )

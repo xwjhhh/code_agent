@@ -13,7 +13,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { TerminalPanel } from "@/components/terminal-panel";
 import { TestPanel } from "@/components/test-panel";
 import { TraceTimeline } from "@/components/trace-timeline";
-import { getRun, getRunFiles, runEventsUrl, type ApiRun, type RunEvent, type TestCase } from "@/lib/api";
+import { getRun, getRunFiles, rememberActiveRun, runEventsUrl, type ApiRun, type RunEvent, type TestCase } from "@/lib/api";
 import type { RunStatus } from "@/lib/data";
 import { RUN_EVENT_TYPES, terminalLines, toTraceEvent } from "@/lib/trace";
 
@@ -54,8 +54,22 @@ export function RunWorkspace() {
   const [memory, setMemory] = useState<ApiRun["memory"]>();
 
   useEffect(() => {
+    if (!runId) return;
     let source: EventSource | undefined;
     let stopped = false;
+    rememberActiveRun(runId);
+    setStatus("running");
+    setTestStatus("running");
+    setTask("正在读取题目...");
+    setModel("模型连接中...");
+    setFiles(emptyFiles);
+    setEvents([]);
+    setTestCases([]);
+    setTestSource("manual");
+    setLastTestOutput("");
+    setReview("");
+    setReviewLoading(false);
+    setError("");
 
     const refreshFiles = async () => {
       const nextFiles = await getRunFiles(runId);
@@ -198,10 +212,10 @@ export function RunWorkspace() {
       <div className="workspace-right workspace-inspector">
         <div className="inspector-tabs" role="tablist" aria-label="运行信息">
           <button type="button" role="tab" aria-selected={inspectorTab === "memory"} className={inspectorTab === "memory" ? "active" : ""} onClick={() => setInspectorTab("memory")}>
-            Memory
+            记忆
           </button>
           <button type="button" role="tab" aria-selected={inspectorTab === "trace"} className={inspectorTab === "trace" ? "active" : ""} onClick={() => setInspectorTab("trace")}>
-            Trace
+            轨迹
           </button>
         </div>
         <div className="inspector-content">

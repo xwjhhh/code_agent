@@ -55,10 +55,10 @@ const eventLabels: Record<string, string> = {
 
 export function toTraceEvent(event: RunEvent, index: number): TraceEvent {
   const { type, data } = event;
-  const rawOutput = data.output ?? data.error ?? data.command ?? data.content ?? "";
+  const rawOutput = data.output || data.error || data.exception_info || data.command || data.content || "";
   const output = typeof rawOutput === "string" ? rawOutput : JSON.stringify(rawOutput, null, 2);
   const failed = type === "test_failed" || type === "model_error" || type === "run_error";
-  const done = ["test_cases_ready", "file_changed", "test_passed", "agent_submitted", "agent_finished", "review_finished"].includes(type);
+  const done = ["test_cases_ready", "file_changed", "test_passed", "agent_submitted", "agent_finished", "review_finished", "run_finished"].includes(type);
 
   let summary = output.split("\n")[0].slice(0, 80);
   if (type === "test_cases_ready") {
@@ -114,6 +114,9 @@ export function terminalLines(events: RunEvent[]): string[] {
     }
     if (event.type === "command_finished" && typeof event.data.output === "string" && event.data.output) {
       lines.push(event.data.output);
+    }
+    if (event.type === "command_finished" && typeof event.data.exception_info === "string" && event.data.exception_info) {
+      lines.push(`[error] ${event.data.exception_info}`);
     }
     if ((event.type === "model_error" || event.type === "run_error") && typeof event.data.error === "string") {
       lines.push(event.data.error);

@@ -40,6 +40,14 @@ export type RunMemory = {
   task_retrieval_error?: string;
   learning_error?: string;
 };
+export type MemoryGraphEdge = { source: string; target: string; kind: "solid" | "dotted"; similarity?: number };
+export type MemoryGraphPayload = {
+  enabled: boolean;
+  count: number;
+  embedding_model?: string;
+  nodes: MemoryNode[];
+  edges: MemoryGraphEdge[];
+};
 export type ApiRun = {
   run_id: string;
   task: string;
@@ -57,6 +65,16 @@ export type ApiRun = {
 };
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+export const ACTIVE_RUN_STORAGE_KEY = "code-agent:active-run";
+
+export function rememberActiveRun(runId: string) {
+  if (typeof window === "undefined" || !runId) return;
+  try {
+    window.localStorage.setItem(ACTIVE_RUN_STORAGE_KEY, runId);
+  } catch {
+    // Storage can be unavailable in privacy-restricted browser contexts.
+  }
+}
 
 export async function createRun(payload: { task: string; model: string; max_steps: number; timeout: number; test_cases: ManualCase[]; test_case_source: "manual" | "generated" }) {
   const response = await fetch(`${API_BASE}/api/runs`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -80,6 +98,12 @@ export async function listRuns() {
   const response = await fetch(`${API_BASE}/api/runs`, { cache: "no-store" });
   if (!response.ok) throw new Error("读取运行列表失败");
   return response.json() as Promise<ApiRun[]>;
+}
+
+export async function getMemoryGraph(limit = 200) {
+  const response = await fetch(`${API_BASE}/api/memories/graph?limit=${limit}`, { cache: "no-store" });
+  if (!response.ok) throw new Error("读取记忆图谱失败");
+  return response.json() as Promise<MemoryGraphPayload>;
 }
 
 export async function generateTestCases(payload: { task: string; model: string; count?: number }) {

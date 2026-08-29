@@ -52,18 +52,20 @@ class MemoryNode:
         return data
 
     def build_embedding_text(self) -> str:
-        avoid = self.negative_example or "None"
+        # Keep the embedded document bilingual at the structural level while
+        # preserving the original Chinese memory text verbatim.
+        avoid = self.negative_example or "无"
         return "\n".join(
             [
-                f"Memory Type: {self.category}",
-                f"Granularity: {self.granularity}",
-                f"Problem Family: {', '.join(self.problem_family) or 'general'}",
-                f"Algorithm Tags: {', '.join(self.algorithm_tags) or 'none'}",
-                f"Trigger: {self.trigger}",
-                f"Constraints: {', '.join(self.constraints) or 'none'}",
-                f"Reusable Knowledge: {self.content}",
-                f"Action Steps: {'; '.join(self.steps) or 'none'}",
-                f"Avoid: {avoid}",
+                f"记忆类型: {self.category}",
+                f"记忆层级: {self.granularity}",
+                f"问题类型: {', '.join(self.problem_family) or '通用'}",
+                f"算法标签: {', '.join(self.algorithm_tags) or '无'}",
+                f"适用条件: {self.trigger}",
+                f"约束条件: {', '.join(self.constraints) or '无'}",
+                f"可复用知识: {self.content}",
+                f"行动步骤: {'；'.join(self.steps) or '无'}",
+                f"需要避免: {avoid}",
             ]
         )
 

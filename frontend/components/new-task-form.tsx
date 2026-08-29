@@ -5,7 +5,7 @@ import { ArrowRight, Bot, Check, FileCode2, FlaskConical, Info, Play, Plus, Sett
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { createRun, generateTestCases, type ManualCase } from "@/lib/api";
+import { createRun, generateTestCases, rememberActiveRun, type ManualCase } from "@/lib/api";
 
 export function NewTaskForm() {
   const router = useRouter();
@@ -44,6 +44,7 @@ export function NewTaskForm() {
     setSubmitting(true); setError("");
     try {
       const result = await createRun({ task, model, max_steps: maxSteps, timeout, test_cases: cases, test_case_source: testSource });
+      rememberActiveRun(result.run_id);
       router.push(`/run/${result.run_id}`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "创建运行失败，请确认后端已启动。");

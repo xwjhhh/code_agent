@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from code_agent.agents import DefaultAgent
 from code_agent.environments import LocalEnvironment
-from code_agent.memory import MemoryManager, build_memory_manager
+from code_agent.memory import MemoryManager, build_memory_manager, cosine_similarity
 from code_agent.models import PRIMARY_MODEL_NAME, LitellmModel, resolve_api_key, validate_model_name
 from code_agent.reviewer import Reviewer
 from code_agent.run.main import create_run_id
@@ -106,6 +106,85 @@ RUNS: dict[str, RunState] = {}
 RUNS_LOCK = threading.Lock()
 
 
+def _load_persisted_runs() -> None:
+    """Restore completed runs so a backend restart does not hide history."""
+    trajectory_root = PROJECT_ROOT / "trajectories"
+    if not trajectory_root.is_dir():
+        return
+    restored: dict[str, RunState] = {}
+    for run_dir in trajectory_root.iterdir():
+        if not run_dir.is_dir():
+            continue
+        trajectory_path = run_dir / "trajectory.json"
+        if not trajectory_path.is_file():
+            continue
+        try:
+            payload = json.loads(trajectory_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, dict) or not isinstance(payload.get("result"), dict):
+            continue
+
+        result = payload["result"]
+        task = str(payload.get("task", "")).strip()
+        if not task:
+            continue
+        model_payload = payload.get("model", {})
+        model_config = model_payload.get("model", {}) if isinstance(model_payload, dict) else {}
+        model_name = "unknown"
+        if isinstance(model_config, dict) and model_config.get("model_name"):
+            model_name = str(model_config["model_name"])
+        elif isinstance(model_payload, dict) and model_payload.get("model_name"):
+            model_name = str(model_payload["model_name"])
+
+        workspace_value = result.get("workspace")
+        if not isinstance(workspace_value, str) or not workspace_value:
+            environment_payload = payload.get("environment", {})
+            environment = environment_payload.get("environment", {}) if isinstance(environment_payload, dict) else {}
+            workspace_value = environment.get("cwd") if isinstance(environment, dict) else None
+        workspace = Path(workspace_value) if isinstance(workspace_value, str) and workspace_value else PROJECT_ROOT / "workspace" / run_dir.name
+
+        review: dict[str, Any] | None = None
+        raw_review = payload.get("review")
+        if isinstance(raw_review, dict):
+            review = raw_review
+        else:
+            review_path = run_dir / "review.json"
+            if review_path.is_file():
+                try:
+                    loaded_review = json.loads(review_path.read_text(encoding="utf-8"))
+                    if isinstance(loaded_review, dict):
+                        review = loaded_review
+                except (OSError, json.JSONDecodeError):
+                    pass
+
+        test_cases = payload.get("test_cases", [])
+        if not isinstance(test_cases, list):
+            test_cases = []
+        state = RunState(
+            run_id=run_dir.name,
+            task=task,
+            model_name=model_name,
+            workspace=workspace,
+            storage=RunStorage(run_dir),
+            created_at=str(payload.get("created_at") or datetime.fromtimestamp(trajectory_path.stat().st_mtime, timezone.utc).isoformat()),
+            events=[event for event in payload.get("events", []) if isinstance(event, dict)],
+            done=True,
+            result=result,
+            review=review,
+            error=str(payload.get("error")) if payload.get("error") else None,
+            test_cases=[case for case in test_cases if isinstance(case, dict)],
+            test_case_source=str(payload.get("test_case_source", "manual")),
+            memory=payload.get("memory", {}) if isinstance(payload.get("memory"), dict) else {},
+        )
+        restored[state.run_id] = state
+    with RUNS_LOCK:
+        RUNS.update(restored)
+
+
+_load_persisted_runs()
+
+
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "code-agent"}
@@ -142,6 +221,69 @@ def list_memories(limit: int = 100) -> dict[str, Any]:
         return {"enabled": False, "count": 0, "items": []}
     memories = manager.list_memories(max(1, min(limit, 500)))
     return {"enabled": True, "count": manager.store.count(), "items": [node.to_dict() for node in memories]}
+
+
+@app.get("/api/memories/graph")
+def memory_graph(limit: int = 200) -> dict[str, Any]:
+    """Return display-ready memory nodes and sparse, typed relationships.
+
+    Embedding vectors stay server-side. The API computes source-run structure
+    edges and a maximum of three cosine neighbors per task-level node.
+    """
+    config = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
+    manager = build_memory_manager(_NoopTextModel(), config, PROJECT_ROOT)
+    if manager is None:
+        return {"enabled": False, "count": 0, "nodes": [], "edges": []}
+
+    memories = manager.list_memories(max(1, min(limit, 500)))
+    edges: list[dict[str, Any]] = []
+    edge_keys: set[tuple[str, str]] = set()
+
+    def add_edge(source: str, target: str, kind: str, similarity: float | None = None) -> None:
+        if source == target:
+            return
+        key = tuple(sorted((source, target)))
+        if key in edge_keys:
+            return
+        edge_keys.add(key)
+        edge: dict[str, Any] = {"source": source, "target": target, "kind": kind}
+        if similarity is not None:
+            edge["similarity"] = round(similarity, 6)
+        edges.append(edge)
+
+    # A source run is the only grouping relation available in the current schema.
+    by_source: dict[str, list[MemoryNode]] = {}
+    for node in memories:
+        if node.source_run_id:
+            by_source.setdefault(node.source_run_id, []).append(node)
+    for group in by_source.values():
+        anchor = group[0]
+        for node in group[1:]:
+            add_edge(anchor.id, node.id, "solid")
+
+    # Keep the similarity graph sparse: each task memory participates in <= 3 edges.
+    task_nodes = [node for node in memories if node.granularity == "task"]
+    pair_scores: list[tuple[float, MemoryNode, MemoryNode]] = []
+    for index, left in enumerate(task_nodes):
+        for right in task_nodes[index + 1:]:
+            similarity = cosine_similarity(left.embedding, right.embedding)
+            if similarity >= float(config.get("memory", {}).get("min_similarity", 0.35)):
+                pair_scores.append((similarity, left, right))
+    degrees: dict[str, int] = {node.id: 0 for node in task_nodes}
+    for similarity, left, right in sorted(pair_scores, key=lambda item: item[0], reverse=True):
+        if degrees[left.id] >= 3 or degrees[right.id] >= 3:
+            continue
+        add_edge(left.id, right.id, "dotted", similarity)
+        degrees[left.id] += 1
+        degrees[right.id] += 1
+
+    return {
+        "enabled": True,
+        "count": manager.store.count(),
+        "embedding_model": manager.embedder.config.model,
+        "nodes": [node.to_dict() for node in memories],
+        "edges": edges,
+    }
 
 
 @app.post("/api/test-cases/generate")
@@ -214,6 +356,7 @@ def stream_events(
 def _run_agent(state: RunState, request: RunRequest) -> None:
     config = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
     submitted_cases = [case.model_dump() for case in request.test_cases]
+    agent: DefaultAgent | None = None
     try:
         model = _build_model(request.model, config)
         try:
@@ -260,9 +403,9 @@ def _run_agent(state: RunState, request: RunRequest) -> None:
                 state.review = {"status": "error", "local_verification": "passed", "content": f"Reviewer 执行失败：{error}"}
             state.storage.save_review(state.review)
             state.emit("review_finished", {"step": state.result["model_calls"], "review": state.review})
-        state.storage.save_trajectory(state.task, agent.serialize(review=state.review, memory=state.memory))
+        _save_run_snapshot(state, agent)
         _learn_memory(memory_manager, state, agent)
-        state.storage.save_trajectory(state.task, agent.serialize(review=state.review, memory=state.memory))
+        _save_run_snapshot(state, agent)
     except Exception as error:  # The event stream must expose failures to the UI.
         state.error = str(error)
         state.emit("run_error", {"error": state.error})
@@ -279,10 +422,32 @@ def _run_agent(state: RunState, request: RunRequest) -> None:
         with state.condition:
             state.done = True
             state.condition.notify_all()
+        if agent is not None:
+            _save_run_snapshot(state, agent)
 
 
-def _build_model(model_name: str, config: dict[str, Any]) -> LitellmModel:
+def _save_run_snapshot(state: RunState, agent: DefaultAgent) -> None:
+    """Persist the completed run and its observability data for restart recovery."""
+    state.storage.save_trajectory(
+        state.task,
+        agent.serialize(
+            run_id=state.run_id,
+            created_at=state.created_at,
+            events=list(state.events),
+            test_cases=list(state.test_cases),
+            test_case_source=state.test_case_source,
+            error=state.error,
+            review=state.review,
+            memory=state.memory,
+        ),
+    )
+
+
+def _build_model(model_name: str, config: dict[str, Any], timeout: int | None = None) -> LitellmModel:
     model_kwargs = dict(config["model"].get("model_kwargs", {}))
+    # Bound provider calls as well as shell commands so a stalled model cannot
+    # leave a run in a permanent "running" state.
+    model_kwargs.setdefault("timeout", max(1, timeout or 120))
     api_base = os.getenv("OPENAI_API_BASE") or os.getenv("OPENAI_BASE_URL")
     if api_base:
         model_kwargs["api_base"] = api_base

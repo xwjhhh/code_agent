@@ -23,7 +23,7 @@ class QueryAnalyzer:
                 [
                     {
                         "role": "system",
-                        "content": "You analyze algorithm problems for a reusable experience-memory retriever. Return JSON only.",
+                        "content": "You analyze algorithm problems for a reusable experience-memory retriever. Return JSON only. Write task_query and subtask_queries in concise Simplified Chinese; keep problem_family and algorithm_tags as short stable tags.",
                     },
                     {
                         "role": "user",
@@ -32,15 +32,15 @@ class QueryAnalyzer:
 Problem:
 {task[:12000]}
 
-Return exactly one JSON object:
+Return exactly one JSON object. The query fields must be written in Simplified Chinese so they match the Chinese memories saved by the system:
 {{
-  "task_query": "a concise description of the overall problem structure",
-  "subtask_queries": ["up to three concrete algorithm, implementation, validation, or input-output concerns"],
+  "task_query": "用简体中文描述整体问题结构",
+  "subtask_queries": ["最多三个具体的算法、实现、校验或输入输出关注点（使用简体中文）"],
   "problem_family": ["array", "graph", "string", ...],
   "algorithm_tags": ["sliding-window", "dijkstra", ...]
 }}
 
-Do not solve the problem. Do not include sample-specific values.""",
+Do not solve the problem. Do not include sample-specific values. Keep the two query fields in Simplified Chinese; stable metadata tags may remain short English identifiers for matching.""",
                     },
                 ]
             )

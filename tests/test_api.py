@@ -65,6 +65,14 @@ def test_only_glm_52_model_is_accepted(monkeypatch):
     assert model.config.model_kwargs["api_base"] == "https://api.siliconflow.cn/v1"
 
 
+def test_model_requests_have_a_default_timeout():
+    config = {"model": {"max_retries": 3, "model_kwargs": {}}}
+
+    model = _build_model("openai/zai-org/GLM-5.2", config)
+
+    assert model.config.model_kwargs["timeout"] == 120
+
+
 def test_other_model_is_rejected():
     config = {"model": {"max_retries": 3, "model_kwargs": {"drop_params": True}}}
 
