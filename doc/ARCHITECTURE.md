@@ -7,7 +7,7 @@
     |
     +-- 人工填写输入/输出 ----------+
     |                               |
-    +-- GLM-5.2 生成输入/输出 -------+
+    +-- DeepSeek-V4-Flash 生成输入/输出 -------+
                                     v
                              test_cases.json
                                     |
@@ -123,7 +123,7 @@ src/code_agent/
 
 FastAPI 桥接层。接收浏览器提交的题目、模型、运行参数和测试用例，启动后台 Agent，并通过 SSE 返回真实执行事件。
 
-- `POST /api/test-cases/generate`：调用 GLM-5.2 生成测试用例。
+- `POST /api/test-cases/generate`：调用 DeepSeek-V4-Flash 生成测试用例。
 - `POST /api/runs`：创建工作区并启动 Agent。
 - `GET /api/runs`：返回当前进程内的运行列表。
 - `GET /api/runs/{id}`：返回任务、测试、结果、评审、Memory 状态和事件。
@@ -137,7 +137,7 @@ FastAPI 桥接层。接收浏览器提交的题目、模型、运行参数和测
 
 ### `src/code_agent/models/litellm_model.py`
 
-模型适配层。输入是 messages，输出是标准 assistant message 和解析后的 Bash action。项目固定使用硅基流动 `openai/zai-org/GLM-5.2`；LiteLLM 只负责 API 调用，不负责 Agent 循环、工具执行或完成判断。`query()` 使用原生 tool calling，`query_text()` 用于测试生成、Reviewer 和 Memory 文本任务。
+模型适配层。输入是 messages，输出是标准 assistant message 和解析后的 Bash action。项目固定使用硅基流动 `openai/deepseek-ai/DeepSeek-V4-Flash`；LiteLLM 只负责 API 调用，不负责 Agent 循环、工具执行或完成判断。`query()` 使用原生 tool calling，`query_text()` 用于测试生成、Reviewer 和 Memory 文本任务。
 
 ### `src/code_agent/models/utils/actions.py`
 
@@ -168,7 +168,7 @@ Agent 控制核心。它保存 messages、调用模型、执行 Bash、回传 ob
 - `store.py`：负责 SQLite 建表、增删查和本地余弦相似度搜索。
 - `query_analyzer.py`：把新题目改写为 task/subtask 检索查询，并提取题型和算法标签。
 - `extractor.py`：从已验证运行的题目、轨迹、题解、pytest 输出和 Reviewer 结果中提炼结构化经验。
-- `reranker.py`：使用 GLM-5.2 从向量召回候选中筛选少量高价值经验。
+- `reranker.py`：使用 DeepSeek-V4-Flash 从向量召回候选中筛选少量高价值经验。
 - `formatter.py`：将选中的经验格式化为注入编程模型上下文的参考文本。
 - `consolidator.py`：按向量相似度抑制近重复经验。
 - `manager.py`：统筹任务检索、pytest 失败后的 Recovery 检索、经验学习和事件通知。
@@ -182,7 +182,7 @@ Agent 控制核心。它保存 messages、调用模型、执行 Bash、回传 ob
 
 ### `src/code_agent/config/default.yaml`
 
-保存 Agent 系统提示词、任务模板、调用上限、环境超时、GLM-5.2 默认参数和 Memory 配置。提示词要求模型先读 `test_cases.json`，只修改 `solution.py` 并按固定命令测试。
+保存 Agent 系统提示词、任务模板、调用上限、环境超时、DeepSeek-V4-Flash 默认参数和 Memory 配置。提示词要求模型先读 `test_cases.json`，只修改 `solution.py` 并按固定命令测试。
 
 ### `src/code_agent/exceptions.py`
 

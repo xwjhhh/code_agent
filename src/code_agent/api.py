@@ -42,25 +42,29 @@ class TestCaseInput(BaseModel):
 
 class RunRequest(BaseModel):
     task: str = Field(min_length=1, description="算法题目")
-    model: str = Field(default=PRIMARY_MODEL_NAME, min_length=1, description="固定使用的 GLM-5.2 模型名")
+    model: str = Field(default=PRIMARY_MODEL_NAME, min_length=1, description="固定使用的 DeepSeek V4 Flash 模型名")
     max_steps: int = Field(default=20, ge=1, le=100)
     timeout: int = Field(default=120, ge=1, le=600)
     test_cases: list[TestCaseInput] = Field(default_factory=list)
     test_case_source: str = Field(default="manual", pattern="^(manual|generated)$")
+    # Batch runs can skip the model-backed retrieval pass while retaining
+    # post-verification memory extraction and persistence.
+    memory_retrieval: bool = Field(default=True, description="是否在运行前检索历史经验")
+    review_enabled: bool = Field(default=True, description="是否执行完成后的模型评审")
 
     @field_validator("model")
     @classmethod
-    def only_glm_52(cls, value: str) -> str:
+    def only_deepseek_v4_flash(cls, value: str) -> str:
         return validate_model_name(value)
 
 class GenerateTestsRequest(BaseModel):
     task: str = Field(min_length=1, description="算法题目")
-    model: str = Field(default=PRIMARY_MODEL_NAME, min_length=1, description="固定使用的 GLM-5.2 模型名")
+    model: str = Field(default=PRIMARY_MODEL_NAME, min_length=1, description="固定使用的 DeepSeek V4 Flash 模型名")
     count: int = Field(default=6, ge=1, le=20)
 
     @field_validator("model")
     @classmethod
-    def only_glm_52(cls, value: str) -> str:
+    def only_deepseek_v4_flash(cls, value: str) -> str:
         return validate_model_name(value)
 
 @dataclass
@@ -377,7 +381,13 @@ def _run_agent(state: RunState, request: RunRequest) -> None:
         save_test_files(state.workspace, state.task, cases, source)
         state.emit("test_cases_ready", {"source": source, "cases": cases})
         task = task_with_test_file(state.task, len(cases))
-        initial_memory_context = _retrieve_task_memory(memory_manager, state, state.task)
+        if request.memory_retrieval:
+            initial_memory_context = _retrieve_task_memory(memory_manager, state, state.task)
+            recovery_context_provider = _recovery_context_provider(memory_manager, state)
+        else:
+            state.memory["retrieval_skipped"] = True
+            initial_memory_context = ""
+            recovery_context_provider = None
         environment = LocalEnvironment(
             state.workspace,
             timeout=request.timeout,
@@ -392,10 +402,10 @@ def _run_agent(state: RunState, request: RunRequest) -> None:
             output_path=state.storage.trajectory_path,
             event_callback=state.emit,
             memory_context=initial_memory_context,
-            recovery_context_provider=_recovery_context_provider(memory_manager, state),
+            recovery_context_provider=recovery_context_provider,
         )
         state.result = agent.run(task)
-        if state.result["status"] == "success" and state.result["verified"]:
+        if request.review_enabled and state.result["status"] == "success" and state.result["verified"]:
             state.emit("review_started", {"step": state.result["model_calls"]})
             try:
                 state.review = Reviewer(model).review(task, state.result)

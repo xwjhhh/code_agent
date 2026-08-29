@@ -30,7 +30,7 @@ environment:
   bash_path: null
 
 model:
-  model_name: openai/zai-org/GLM-5.2
+  model_name: openai/deepseek-ai/DeepSeek-V4-Flash
   max_retries: 3
   model_kwargs:
     drop_params: true

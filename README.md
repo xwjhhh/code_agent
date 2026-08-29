@@ -32,19 +32,19 @@
 python -m pip install -e .
 ```
 
-硅基流动凭据只放在 Windows 环境变量和未入库的 `.env` 中。假设系统变量名为 `glm_api` 和 `deepseek_api`，项目根目录的 `.env` 写为：
+硅基流动凭据只放在 Windows 环境变量和未入库的 `.env` 中。建议将硅基流动 API Key 保存为 `SILICONFLOW_API_KEY`，项目根目录的 `.env` 写为：
 
 ```text
-OPENAI_API_KEY=${GLM_API}
-SILICONFLOW_DEEPSEEK_API_KEY=${DEEPSEEK_API}
+OPENAI_API_KEY=${SILICONFLOW_API_KEY}
+SILICONFLOW_EMBEDDING_API_KEY=${SILICONFLOW_API_KEY}
 OPENAI_API_BASE=https://api.siliconflow.cn/v1
-CODE_AGENT_MODEL=openai/zai-org/GLM-5.2
+CODE_AGENT_MODEL=openai/deepseek-ai/DeepSeek-V4-Flash
 CODE_AGENT_BASH_PATH=C:\Program Files\Git\bin\bash.exe
 ```
 
-Windows 环境变量查找不区分大小写，所以系统设置中的 `glm_api` 和 `deepseek_api` 可分别由 `.env` 通过 `${GLM_API}` 与 `${DEEPSEEK_API}` 引用。不要把真实 Key 写入仓库或前端代码。
+不要把真实 Key 写入仓库或前端代码。DeepSeek V4 Flash 通过硅基流动的 OpenAI 兼容接口调用。
 
-项目固定使用硅基流动的 `GLM-5.2` 作为唯一对话模型，负责任务分析、Bash 工具调用、测试生成、Reviewer 和记忆分析。
+项目固定使用硅基流动的 `DeepSeek-V4-Flash` 作为唯一对话模型，负责任务分析、Bash 工具调用、测试生成、Reviewer 和记忆分析。
 
 ## 启动 Web 应用
 
@@ -94,13 +94,13 @@ python scripts/export_showcase_data.py
 ## 命令行运行
 
 ```powershell
-code-agent --task-file problem.txt --model openai/zai-org/GLM-5.2
+code-agent --task-file problem.txt --model openai/deepseek-ai/DeepSeek-V4-Flash
 ```
 
 也可以覆盖 Git Bash 路径：
 
 ```powershell
-code-agent --task-file problem.txt --model openai/zai-org/GLM-5.2 --bash-path "C:\Program Files\Git\bin\bash.exe"
+code-agent --task-file problem.txt --model openai/deepseek-ai/DeepSeek-V4-Flash --bash-path "C:\Program Files\Git\bin\bash.exe"
 ```
 
 CLI 会先调用模型生成 `test_cases.json`，然后运行与 Web 相同的编程闭环。

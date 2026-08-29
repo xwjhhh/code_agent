@@ -37,7 +37,7 @@ POST https://api.siliconflow.cn/v1/embeddings
 Authorization: Bearer <key>
 ```
 
-项目固定使用 `Qwen/Qwen3-Embedding-8B`。它支持最长 32768 token，且可以返回 64 到 4096 维向量；当前请求不指定 `dimensions`，由服务返回默认维度。请求使用文档规定的 `model`、`input` 和 `encoding_format: float` 字段。批量文本会在一次请求中发送，返回向量按 `index` 排序。Embedding Key 优先读取 `SILICONFLOW_EMBEDDING_API_KEY`，缺失时回退到 `OPENAI_API_KEY`。`GLM-5.2` 是对话模型，不能作为 Embeddings 模型发送。
+项目固定使用 `Qwen/Qwen3-Embedding-8B`。它支持最长 32768 token，且可以返回 64 到 4096 维向量；当前请求不指定 `dimensions`，由服务返回默认维度。请求使用文档规定的 `model`、`input` 和 `encoding_format: float` 字段。批量文本会在一次请求中发送，返回向量按 `index` 排序。Embedding Key 优先读取 `SILICONFLOW_EMBEDDING_API_KEY`，缺失时回退到 `OPENAI_API_KEY`。`DeepSeek-V4-Flash` 是对话模型，不能作为 Embeddings 模型发送。
 
 ## 读取路径
 

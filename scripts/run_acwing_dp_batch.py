@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TASKS_PATH = ROOT / "scripts" / "acwing_dp_tasks.json"
 RESULTS_PATH = ROOT / "scripts" / "acwing_dp_run_results.json"
 API_ROOT = "http://127.0.0.1:8001"
-MODEL = "openai/zai-org/GLM-5.2"
+MODEL = "openai/deepseek-ai/DeepSeek-V4-Flash"
 MAX_STEPS = 50
 TIMEOUT = 120
 POLL_SECONDS = 4
@@ -58,6 +58,7 @@ def summarize(task: dict, state: dict) -> dict:
         "acwing_id": task["acwing_id"],
         "difficulty": task["difficulty"],
         "title": task["title"],
+        "model": MODEL,
         "run_id": state.get("run_id"),
         "status": state.get("status"),
         "verified": bool(result.get("verified")),
@@ -77,6 +78,8 @@ def run_task(index: int, task: dict) -> dict:
         "timeout": TIMEOUT,
         "test_cases": task["test_cases"],
         "test_case_source": "manual",
+        "memory_retrieval": False,
+        "review_enabled": False,
     }
     print(f"[{index:02d}/30] AcWing {task['acwing_id']} {task['title']} ...", flush=True)
     try:
@@ -88,6 +91,7 @@ def run_task(index: int, task: dict) -> dict:
             "acwing_id": task["acwing_id"],
             "difficulty": task["difficulty"],
             "title": task["title"],
+            "model": MODEL,
             "run_id": None,
             "status": "client_error",
             "verified": False,
@@ -108,7 +112,15 @@ def main() -> int:
         loaded = json.loads(RESULTS_PATH.read_text(encoding="utf-8"))
         if isinstance(loaded, list):
             results = [item for item in loaded if isinstance(item, dict)]
-    completed_ids = {item.get("acwing_id") for item in results}
+    # Old result files predate the model field. They are intentionally retried
+    # so a newly selected model gets a complete, comparable batch run.
+    completed_ids = {
+        item.get("acwing_id")
+        for item in results
+        if item.get("model") == MODEL
+        and item.get("result_status") == "success"
+        and item.get("verified") is True
+    }
     pending = [
         (index, task)
         for index, task in enumerate(tasks, start=1)
@@ -124,6 +136,7 @@ def main() -> int:
         futures = [executor.submit(run_task, index, task) for index, task in pending]
         for future in as_completed(futures):
             item = future.result()
+            results = [existing for existing in results if existing.get("acwing_id") != item.get("acwing_id")]
             results.append(item)
             RESULTS_PATH.write_text(json.dumps(results, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             print(

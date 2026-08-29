@@ -1,7 +1,599 @@
 {
-  "generated_at": "2026-08-29T07:25:37.013204+00:00",
-  "count": 54,
+  "generated_at": "2026-08-29T13:29:50.620581+00:00",
+  "count": 91,
   "items": [
+    {
+      "run_id": "20260829-211418-acwing-514-dp-0-c4d8e2",
+      "task": "【AcWing 514，DP-困难】小鸟初始高度为 0，每次可将高度增加 x，或不操作而下降 y；经过 n 个位置，每个位置有允许高度区间 [l_i,r_i]，超出即失败。输入 n x y 及 n 行 l r，求到达终点的最少上升操作次数，无法到达输出 -1。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-08-29T13:14:18.645679+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-211157-acwing-648-dp-f-50463f",
+      "task": "【AcWing 648，DP-困难】虚拟兔子数量按斐波那契递推：f(0)=0、f(1)=1、f(n)=f(n-1)+f(n-2)。输入 n 和模数 p，输出 f(n) mod p；n 可能很大，应使用快速倍增或矩阵快速幂。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 10,
+      "created_at": "2026-08-29T13:11:57.934542+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.05s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-211133-acwing-337-dp-n-6a27f9",
+      "task": "【AcWing 337，DP-困难】将按顺序到达的任务划分成连续批次。输入 n、a、b、c 及 n 个正整数 x，设前缀和 S，定义 dp[i]=max_{j<i}(dp[j]+a(S[i]-S[j])^2+b(S[i]-S[j])+c)。输出 dp[n]，需用斜率优化。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 3,
+      "created_at": "2026-08-29T13:11:33.979666+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Connection error."
+    },
+    {
+      "run_id": "20260829-211037-acwing-301-dp-k-d92b18",
+      "task": "【AcWing 301，DP-困难】给定整数序列，选择一个非空连续子段，长度不超过 k，使元素和最大。输入 n k 及序列，输出最大和；要求用单调队列优化前缀和 DP。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-08-29T13:10:37.699717+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-210315-acwing-526-dp-n-667035",
+      "task": "【AcWing 526，DP-困难】平面上有 n 只猪，坐标均为正数。一只鸟沿经过原点的向下开口抛物线飞行，可消灭曲线上的所有猪；求消灭全部猪所需最少鸟数。输入 n m（m 为无关的上限参数），随后 n 行 x y；输出最少鸟数。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 10,
+      "created_at": "2026-08-29T13:03:15.809779+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-205745-acwing-736-dp-s-af17a3",
+      "task": "【AcWing 736，DP-困难】每块石头有吃掉耗时 s、初始能量 e、每单位时间损失 l。按任意顺序吃石头，获得 max(0,e-l*t) 能量，求最大总能量。输入 n 及 n 行 s e l。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 12,
+      "created_at": "2026-08-29T12:57:45.932764+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-205613-acwing-559-dp-n-248dc8",
+      "task": "【AcWing 559，DP-困难】给定字符串，允许在任意位置插入字符，求变成回文串所需的最少插入次数。输入长度 n 和字符串，输出最少次数。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 5,
+      "created_at": "2026-08-29T12:56:13.701313+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Connection error."
+    },
+    {
+      "run_id": "20260829-205609-acwing-334-dp-n-d2c437",
+      "task": "【AcWing 334，DP-困难】给定 n 天价格和最多 k 次完整交易（一次买入加一次卖出），同一时间只能持有一股，求最大利润。输入 n k 及价格序列，输出最大利润。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 9,
+      "created_at": "2026-08-29T12:56:09.561504+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-205357-acwing-10-dp-v-65cfd6",
+      "task": "【AcWing 10，DP-困难】物品构成树形依赖：每行体积 v、价值 w、父编号 p，p=-1 为主件，选附件必须先选父件。输入 n m 及物品，求容量内最大价值。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-08-29T12:53:57.050852+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-205357-acwing-6-dp-n-2f713e",
+      "task": "【AcWing 6，DP-困难】多重背包的大规模版本。输入 n m 及 n 行体积 v、价值 w、数量 s，每种物品最多选 s 件；输出最大价值。请使用单调队列等优化处理大容量。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 9,
+      "created_at": "2026-08-29T12:53:57.036762+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-205224-acwing-294-dp-n-8c674d",
+      "task": "【AcWing 294，DP-中等】n 行 m 列山地地图，P 为平原、H 为山地。炮之间同一行至少间隔两格，且连续三行同列不能放炮；山地不能放炮。输入地图，求最多炮数。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 9,
+      "created_at": "2026-08-29T12:52:24.575413+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-205100-acwing-293-dp-1x2-0c7102",
+      "task": "【AcWing 293，DP-中等】用 1x2 小方块完全覆盖 n 行 m 列棋盘，方块可旋转。多组输入，以 0 0 结束；每组输出铺法数量。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 9,
+      "created_at": "2026-08-29T12:51:00.283392+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-204947-acwing-277-dp-n-1b41af",
+      "task": "【AcWing 277，DP-中等】在 n 行 m 列方格中，两个人同时从左上走到右下，只能向右或向下，不能重复领取同一格的数字（起点终点只计一次），求领取总和最大值。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-08-29T12:49:47.914378+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.05s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-204815-acwing-898-dp-n-5334dd",
+      "task": "【AcWing 898，DP-中等】给定 n 个整数，求严格递增子序列长度。输入规模很大，要求使用 O(n log n) 的贪心维护 tails 方法。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 9,
+      "created_at": "2026-08-29T12:48:15.524513+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-204442-acwing-12-dp-n-23c8fd",
+      "task": "【AcWing 12，DP-中等】n 件 01 物品和容量 m，输出字典序最小的最优方案：按物品编号升序输出被选物品编号，空方案输出空行。输入 n m 及 v_i w_i。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 3,
+      "created_at": "2026-08-29T12:44:42.542904+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Connection error."
+    },
+    {
+      "run_id": "20260829-204246-acwing-11-dp-n-714ed4",
+      "task": "【AcWing 11，DP-中等】n 件 01 物品和容量 m，求达到最大价值的不同选取方案数，答案对 1e9+7 取模。输入 n m 及 v_i w_i，输出方案数。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-08-29T12:42:46.055149+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-204205-acwing-9-dp-n-31bf96",
+      "task": "【AcWing 9，DP-中等】物品分成 n 组，每组最多选一件。输入 n m，随后每组先给出组内数量，再给出若干体积价值对；输出容量 m 内最大价值。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-08-29T12:42:05.917857+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-203135-acwing-5-dp-n-a86891",
+      "task": "【AcWing 5，DP-中等】每种物品有数量上限，输入 n m 及 n 行 v_i w_i s_i，求最大价值。数据范围较大，需使用二进制拆分或等价优化。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 4,
+      "created_at": "2026-08-29T12:31:35.108481+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Connection error."
+    },
+    {
+      "run_id": "20260829-203135-acwing-8-dp-v-de9ed3",
+      "task": "【AcWing 8，DP-中等】每件物品占用体积 v 和重量 c，价值 w，每件最多一次。输入 n 背包体积上限 m、重量上限 k，随后 n 行 v w c；求最大价值。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 4,
+      "created_at": "2026-08-29T12:31:35.108481+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Connection error."
+    },
+    {
+      "run_id": "20260829-202539-acwing-9-dp-n-f027cc",
+      "task": "【AcWing 9，DP-中等】物品分成 n 组，每组最多选一件。输入 n m，随后每组先给出组内数量，再给出若干体积价值对；输出容量 m 内最大价值。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 9,
+      "created_at": "2026-08-29T12:25:39.993058+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": "completed",
+        "content": "### 1. 算法思路\n\n题目是分组背包：共有 `n` 组，每组内最多选择一件物品。\n\n代码使用一维 DP 数组：\n- `dp[j]` 表示容量为 `j` 时能获得的最大价值；\n- 初始化全为 `0`，代表“什么都不选”时价值为 `0`。\n\n对每一组物品：\n1. 先读取该组所有物品的体积 `v` 和价值 `w`；\n2. 然后从容量 `m` 倒序遍历到 `0`；\n3. 对于当前容量 `j`，先认为“不选本组任何物品”，即保持 `dp[j]` 不变；\n4. 再遍历本组内所有物品，如果 `j >= v`，尝试用“上一组状态下 `dp[j-v]` 加上本组物品价值 `w`”来更新；\n5. 取最大值后写回 `dp[j]`。\n\n关键点：容量采用从大到小倒序遍历，且更新 `dp[j]` 时使用的 `dp[j-v]`（`j-v < j`）还未被本组物品更新，因此不会出现在同一组内重复选择多件物品的情况，符合“每组最多选一件”的限制。\n\n### 2. 时间与空间复杂度\n\n- 时间复杂度：`O(m × ∑k_i)`，其中 `∑k_i` 是所有组内物品总数，等价于 `O(m × 总物品数)`。每个物品都会在每一层容量上被尝试一次。\n- 空间复杂度：`O(m)`，仅使用一个长度为 `m+1` 的一维数组。\n\n### 3. 边界情况\n\n- 如果所有物品体积都大于容量 `m`，`dp` 始终保持初始值 `0`，输出 `0`，测试用例“不能选满”覆盖了这一点。\n- 如果某组内数量为 `0`，`items` 为空，该组不会更新 `dp`，程序正常处理。\n- 如果某物品体积为 `0`，在倒序遍历下，同一组内不会因重复选择而累加价值；若组内有多个体积为 `0` 的物品，只会选择价值最大的那一个，符合题意。\n- 当 `n = 0` 或 `m = 0` 时，代码也能正常返回 `0`。\n\n### 4. 测试覆盖\n\n本地测试用例提供 2 个案例：\n1. “三组选择”：常规分组背包，验证多组之间组合选择及容量限制；\n2. “不能选满”：所有物品体积均超过容量，验证无法放入时输出 `0`。\n\n上述用例覆盖了主要功能和典型边界情况。本地执行结果：`2 passed in 0.04s`，说明本地验证通过。但这不代表隐藏的在线评测用例一定全部通过，仅表示当前实现对该本地测试集是正确的。\n\n### 5. 潜在风险与代码质量\n\n- 代码依赖输入格式严格合法。使用 `split()` 解析可以容忍多余换行和空格，但如果输入数据不完整（如某组缺少物品数或缺少体积价值对），会出现下标越界；题目约定下输入是合法的，因此风险可控。\n- `dp` 初始值为 `0`，假定所有物品价值非负。若题目允许负数价值，则“不选”可能不是最优，但 AcWing 分组背包的常规约束中价值均为非负整数。\n- 代码没有显式类型注解和函数注释，但逻辑清晰、结构简洁，是分组背包的标准写法。\n- 使用手动比较代替 `max()`，在循环频繁执行时略微减少函数调用开销。\n- 总体而言，该实现正确、高效，符合分组背包的经典 DP 解法。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-201505-acwing-4-dp-s-67a32f",
+      "task": "【AcWing 4，DP-简单】每种物品有数量上限 s_i，其他条件同 01 背包。输入 n m，随后 n 行 v_i w_i s_i；输出最大价值。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 9,
+      "created_at": "2026-08-29T12:15:05.383918+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": "completed",
+        "content": "## 1. 算法思路\n\n当前 `solution.py` 的核心逻辑是：\n\n```python\nfor j in range(m, v - 1, -1):\n    cand = dp[j - v] + w\n    if cand > dp[j]:\n        dp[j] = cand\n```\n\n这实际上是一维 **01 背包** 的更新方式：每个物品最多被选择一次，逆序遍历是为了避免同一物品被重复使用。\n\n但题目是 **多重背包**：每种物品有数量上限 `s_i`，可以选 `0, 1, ..., s_i` 件。正确做法需要枚举每个物品的使用数量 `k`：\n\n\\[\ndp[j] = \\max_{0 \\le k \\le \\min(s_i, \\lfloor j / v_i \\rfloor)} dp[j - k v_i] + k w_i\n\\]\n\n当前代码完全没有利用 `s_i`，只是把 `s_i == 0` 的跳过，其它情况一律当作只能选 1 件。因此它没有实现题目要求的多重背包。\n\n---\n\n## 2. 时间复杂度与空间复杂度\n\n- 当前代码时间复杂度为 `O(n * m)`，空间复杂度为 `O(m)`。\n- 但这个复杂度不是多重背包的复杂度，因为它根本没有处理数量限制。\n- 如果按朴素多重背包实现，需要 `O(n * m * s)`；\n- 用二进制拆分可以做到 `O(n * m * log s)`；\n- 用单调队列优化可以做到 `O(n * m)`。\n\n所以当前复杂度看起来“很优”，但这是因为算法错误地退化成 01 背包。\n\n---\n\n## 3. 边界情况\n\n代码对以下情况是基本安全的：\n\n- 输入为空：返回 `\"0\"`；\n- `n = 0` 或 `m = 0`：返回 `dp[m]`，即 `0`；\n- `s_i <= 0`：跳过该物品；\n- `v_i > m`：内层循环不执行，不会更新。\n\n但存在关键错误边界：\n\n- 当 `s_i > 1`，且容量允许放多件同一物品时，结果错误。\n\n例如：\n\n```\n1 6\n3 10 2\n```\n\n正确答案是放 2 件：\n\n\\[\n2 \\times 10 = 20\n\\]\n\n但当前代码只会输出 `10`，因为它把数量 2 忽略成了只能选 1 件。\n\n---\n\n## 4. 测试覆盖\n\n本地测试结果是“2 passed in 0.04s”，即提供的 2 个用例都通过了。\n\n但这两个用例不足以验证多重背包逻辑：\n\n- 第 1 个用例中，虽然第 1 个物品 `s=2`，但最优解只选第 2、3 个物品，未用到“取多件”的能力；\n- 第 2 个用例中，所有物品都放不下，输出 `0`。\n\n因此这两个用例无法区分“01 背包”和“多重背包”，测试通过不能说明算法正确。隐藏评测如果包含需要重复取同一物品的用例，当前代码很可能无法通过。\n\n---\n\n## 5. 潜在风险与代码质量\n\n最大风险是 **语义错误**：题目要求多重背包，代码却实现了 01 背包。这会静默地产生错误答案，且不会报错。\n\n代码风格本身比较简洁：\n\n- 使用 `iter(data)` 解析输入，可读性尚可；\n- 使用 `dp[j - v] + w` 比较更新，写法清晰；\n- 但对 `s_i` 的处理具有误导性：\n\n```python\nif s <= 0:\n    continue\n```\n\n这个逻辑只过滤了 `s_i <= 0`，并没有对 `s_i > 1` 做任何处理，容易让人误以为已经处理了数量限制。\n\n建议改为真正的多重背包实现，例如：\n\n- 朴素枚举件数：\n  ```python\n  for j in range(m, -1, -1):\n      for k in range(1, min(s, j // v) + 1):\n          dp[j] = max(dp[j], dp[j - k * v] + k * w)\n  ```\n\n或使用二进制拆分、单调队列优化。\n\n综上：本地验证已通过，但仅针对 2 个样例；该实现不满足题目“每种物品有数量上限 s_i”的核心要求，存在明显正确性风险。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-201505-acwing-5-dp-n-5e4c7d",
+      "task": "【AcWing 5，DP-中等】每种物品有数量上限，输入 n m 及 n 行 v_i w_i s_i，求最大价值。数据范围较大，需使用二进制拆分或等价优化。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 4,
+      "created_at": "2026-08-29T12:15:05.383918+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Connection error."
+    },
+    {
+      "run_id": "20260829-194137-acwing-8-dp-v-4dc7d0",
+      "task": "【AcWing 8，DP-中等】每件物品占用体积 v 和重量 c，价值 w，每件最多一次。输入 n 背包体积上限 m、重量上限 k，随后 n 行 v w c；求最大价值。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 4,
+      "created_at": "2026-08-29T11:41:37.503581+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Connection error."
+    },
+    {
+      "run_id": "20260829-192922-acwing-7-dp-v-f8102d",
+      "task": "【AcWing 7，DP-中等】每行 v w s：s=-1 表示 01 背包，s=0 表示完全背包，s>0 表示最多 s 件。输入 n m 及物品，输出最大价值。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 9,
+      "created_at": "2026-08-29T11:29:22.656163+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.03s\n",
+      "review": {
+        "status": "completed",
+        "content": "### 1. 算法思路\n\n采用一维动态规划数组 `dp[0..m]`，初始全 0，表示容量为 `j` 时能获得的最大价值。\n\n对每个物品按 `s` 的取值分别处理：\n\n- `s == -1`：01 背包，容量从 `m` 向 `v` 逆序更新，避免同一物品被重复选取；\n- `s == 0`：完全背包，容量从 `v` 向 `m` 正序更新，使同一物品可以被多次选取；\n- `s > 0`：多重背包，使用二进制拆分将 `s` 拆分为若干组（`1, 2, 4, ..., 剩余部分`），每组视为一个 01 背包物品，再逆序更新。\n\n二进制拆分保证任意 `0..s` 件物品都可以用这些组的组合表示，从而将多重背包转化为 `O(log s)` 个 01 背包子问题。\n\n### 2. 时间与空间复杂度\n\n- 时间复杂度：  \n  设背包容量为 `m`。每个 01 或完全背包物品更新一次为 `O(m)`；每个多重背包物品被拆成 `O(log s)` 个组，每组更新一次为 `O(m)`。  \n  总时间复杂度为 `O(m * (n_01 + n_complete + Σ log s_i))`，最坏情况下近似 `O(n * m)`（当所有 `s` 都很小时）或 `O(m * n * log s_max)`（当 `s` 很大时）。  \n  这是混合背包的标准二进制优化复杂度，在给定数据范围内是可行的。\n\n- 空间复杂度：  \n  `O(m)`，仅使用一个长度为 `m+1` 的数组。\n\n### 3. 边界情况\n\n- 空输入：`input_text.strip()` 无内容时直接返回 `\"0\"`，正确。\n- `n = 0` 或 `m = 0`：`dp[m]` 保持 0，输出 0，正确。\n- 物品体积 `v > m`：  \n  01 背包的逆序循环条件 `range(m, v - 1, -1)` 为空，完全背包的 `range(v, m + 1)` 也为空，因此该物品不会影响结果，符合预期。\n- 多重背包 `s` 为任意正整数：二进制拆分会正确处理，例如 `s = 1` 时只产生一个组，`s = 3` 时拆为 `1, 2`，`s = 5` 时拆为 `1, 2, 2` 或等价剩余，逻辑正确。\n- 题目约定 `s` 只有 `-1`、`0`、`>0` 三种取值，代码按此分支处理。\n\n### 4. 测试覆盖\n\n本地使用给定的 `test_cases.json` 执行 `pytest`，两个用例均通过：\n\n- 混合背包用例输出 `8`，验证了三种背包类型混合时的正确性；\n- 全 01 背包用例输出 `11`，验证了多件 01 物品的组合。\n\n但测试覆盖仍然不足：\n\n- 没有单独测试“完全背包”用例；\n- 没有测试多重背包的边界值（如 `s = 1`、`s = 2`、`s = 3`、`s = 4`、`s = 5` 等）来验证二进制拆分细节；\n- 没有测试大量物品或大容量时的性能；\n- 没有测试 `n = 0`、`m = 0`、空输入等边界情况；\n- 没有测试体积 `v` 大于容量 `m` 的情况。\n\n本地验证仅说明给定用例通过，不能断言完全覆盖所有裁判测试。\n\n### 5. 潜在风险与代码质量\n\n潜在风险：\n\n- 输入解析直接使用固定下标读三个整数，若输入格式不符合规定（例如缺少某些 token）会触发 `IndexError` 或 `ValueError`，但题目输入约定严格，可接受。\n- 若出现 `s < -1` 的未约定值，代码会进入 `else` 分支，因 `cnt` 为负，`while cnt > 0` 不执行，相当于忽略该物品。这不是错误，但缺少显式防御。\n- 对于 `v = 0` 且 `w > 0` 的情况，完全背包会产生不合理的“无限价值”，但此类数据通常不被背包问题允许，且题目未提及 `v = 0` 的约束，不过实际测试一般不会出现。\n\n代码质量：\n\n- 逻辑清晰，分支结构直观，二进制拆分写法简洁正确。\n- 一维数组滚动更新，空间效率良好。\n- 变量名如 `nv`、`tw` 足够表达含义，但缺少函数注释和对输入格式的说明。\n- 对于正式提交，可以考虑增加输入校验或注释，但对当前题目而言不影响正确性。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-192216-acwing-5-dp-n-6f2082",
+      "task": "【AcWing 5，DP-中等】每种物品有数量上限，输入 n m 及 n 行 v_i w_i s_i，求最大价值。数据范围较大，需使用二进制拆分或等价优化。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 9,
+      "created_at": "2026-08-29T11:22:16.894058+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Connection error."
+    },
+    {
+      "run_id": "20260829-191811-acwing-903-dp-n-777ce0",
+      "task": "【AcWing 903，DP-简单】给定 n 行 m 列高度矩阵，只能从高处滑向上下左右相邻的更低位置，求最长滑雪路线包含的格子数。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 11,
+      "created_at": "2026-08-29T11:18:11.742509+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": "completed",
+        "content": "## 1. 算法思路\n\n该解法使用**按高度升序的动态规划**：\n\n- 将每个格子表示为 `(高度, 行, 列)`。\n- 按高度从小到大排序所有格子。\n- 对于任意一个格子，题目要求只能从**更高的格子**滑到它，因此它的最优值只依赖于所有高度更低的相邻格子。\n- 由于按高度升序处理，当处理到当前格子时，所有高度严格更低的格子都已经被计算完毕，直接读取其 `dp` 值即可。\n- 转移方程：\n\n\\[\ndp[i][j] = 1 + \\max\\{dp[ni][nj] \\mid (ni,nj) \\text{ 与 } (i,j) \\text{ 相邻且 } grid[ni][nj] < grid[i][j]\\}\n\\]\n\n- 如果不存在更低的相邻格子，则 `max` 取 0，`dp[i][j] = 1`。\n- 整个过程维护全局最大值 `ans`，最终返回 `ans`。\n\n该思路本质上是将“有向无环图”的最长路径问题，通过高度排序转化为线性 DP，逻辑正确。\n\n## 2. 时间复杂度和空间复杂度\n\n设总格子数为：\n\n\\[\nN = n \\times m\n\\]\n\n- **时间复杂度**：主要耗时在排序 `cells.sort()`，为 \\(O(N \\log N)\\)；遍历每个格子并检查 4 个邻居，为 \\(O(4N) = O(N)\\)。总时间复杂度为 \\(O(N \\log N)\\)。\n- **空间复杂度**：存储了 `grid`、`cells`、`dp`，均为 \\(O(N)\\)，因此总空间复杂度为 \\(O(N)\\)。\n\n## 3. 边界情况\n\n- **单格矩阵**：例如 `1 1` 时，`dp[0][0] = 1`，`ans = 1`，正确。\n- **所有格子高度相同**：不存在严格更低的邻居，所有 `dp` 均为 1，最长路径为 1，正确。\n- **只有一行或一列**：相邻方向减少到 2 个，但代码中通过边界判断处理，仍能正确计算。\n- **高度存在负数或较大整数**：使用 `int(next(it))` 解析，排序按数值大小，不依赖高度范围，正确。\n- **重复高度**：相等高度不能滑过去，代码只使用 `grid[ni][nj] < h`，因此相等高度的格子之间不会形成依赖，即使排序中相等高度顺序不定，也不影响结果。\n\n## 4. 测试覆盖情况\n\n本地测试基于 `test_cases.json` 中的 2 个用例：\n\n- `二维下降`：验证了多步下降路径的计算。\n- `单格`：验证了最小规模输入。\n\n本地执行结果为：\n\n```text\n2 passed in 0.04s\n```\n\n本地验证已通过。但该测试用例覆盖较少，未覆盖所有相等高度、单行/单列、大矩阵、负高度等情况，因此不能保证隐藏在线评测用例全部通过。\n\n## 5. 潜在风险与代码质量\n\n### 潜在风险\n\n- 代码假设输入格式一定合法且完整，如果 `input_text` 为空或 token 不足，`next(it)` 会抛出异常。在竞赛题目中通常输入保证合法，因此可接受。\n- 排序时使用完整元组 `(height, i, j)`，相同高度的格子会进一步按坐标排序，这不会影响正确性，但相比只按高度排序会略微增加排序比较开销。\n- 当矩阵较大时，`cells` 列表和 `grid`、`dp` 同时存在，内存占用约为 3 个 \\(O(N)\\) 结构，需注意内存限制。\n\n### 代码质量\n\n- 思路清晰，`dirs` 定义标准，转移逻辑简洁。\n- 使用 `iter(tokens)` 配合 `next` 读取输入，代码紧凑。\n- `dp` 初始化为 1，并在遍历过程中更新，符合最长路径的定义。\n- 变量命名直观，`ans` 表示最终答案，`best` 表示当前格子能利用的最大子结果。\n- 整体代码无多余逻辑，适合作为标准 DP 解法。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-190146-acwing-902-dp-n-b78102",
+      "task": "【AcWing 902，DP-简单】将正整数 n 拆成若干个正整数之和，忽略顺序，求划分方案数，答案对 1e9+7 取模。输入 n，输出方案数。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-08-29T11:01:46.004547+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "review": {
+        "status": "completed",
+        "content": "## 1. Algorithm approach\n\n这是一个典型的“整数划分”问题，要求忽略顺序，因此可以等价看作“用面值为 1 到 n 的硬币，每种硬币可无限使用，组合出总金额 n”的方案数。\n\n代码使用一维 DP：\n\n- `dp[t]` 表示在已经考虑某些整数部分后，凑出总和 `t` 的方案数。\n- 初始化 `dp[0] = 1`，表示总和为 0 时只有一种方案：不选任何部分。\n- 外层循环 `part` 从 1 到 n，表示当前允许使用的正整数部分。\n- 内层循环 `total` 从 `part` 到 n：\n  - `dp[total] += dp[total - part]`\n\n由于外层是“数字种类”，内层是“总金额”，同一个 `part` 可以重复使用，因此不会产生顺序不同的重复计数；同时因为按 `part` 从小到大枚举，最终统计的是忽略顺序的划分方案数。\n\n最后输出 `dp[n]`。\n\n## 2. Time and space complexity\n\n- 时间复杂度：\n  - 两层循环，外层 `n` 次，内层平均约 `(n - part + 1)` 次。\n  - 总复杂度为 `O(n^2)`。\n- 空间复杂度：\n  - 一维数组 `dp`，长度为 `n + 1`，因此为 `O(n)`。\n\n## 3. Boundary cases\n\n- `n = 1`：\n  - 只有一种划分：`1`\n  - 返回 `1`，符合预期。\n- `n = 5`：\n  - 划分为 7 种，返回 `7`，与测试用例一致。\n- `n = 0`：\n  - 当前代码会返回 `1`，即空划分方案数。\n  - 若题目明确要求只处理正整数 `n`，则输入不会为 0；如果允许 0，这个结果通常也是标准整数划分定义下的合理值。\n- `n < 0`：\n  - 当前代码会访问 `dp[0]` 时越界或得到空列表，但题目输入应为正整数，因此不属于有效范围。\n- 大 `n`：\n  - 由于复杂度是 `O(n^2)`，过大的 `n` 会导致超时；这是题目规模决定的风险。\n\n## 4. Test coverage\n\n本地 test_cases.json 中提供两个用例：\n\n1. `n = 5`，期望输出 `7`。\n2. `n = 1`，期望输出 `1`。\n\n本地运行结果为：\n\n```text\n2 passed\n```\n\n覆盖了最小正整数输入和一个常规样例，但测试数量较少，未覆盖较大 `n` 或 `n = 0` 等边界，因此只能说明本地验证通过，不能保证隐藏在线评测用例全部通过。\n\n## 5. Potential risks and code quality\n\n- 风险：\n  - `O(n^2)` 复杂度在 `n` 较大时可能超时。\n  - 若输入包含非法负整数，代码会报错；但题目输入格式限定为正整数，所以风险较低。\n  - 对每次加法取模，结果始终落在 `MOD` 范围内，避免大整数膨胀，逻辑正确。\n\n- 代码质量：\n  - 代码简洁清晰，符合要求。\n  - 函数签名 `solve(input_text: str) -> str` 符合题目要求。\n  - 使用 `strip()` 去除首尾空白和换行，能处理常见文本输入格式。\n  - `MOD = 10**9 + 7` 定义明确。\n  - 如果希望更健壮，可增加输入校验，但从题目约束看不是必需的。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-185600-acwing-901-dp-1-336fe4",
+      "task": "【AcWing 901，DP-简单】允许插入、删除、替换一个字符代价均为 1，求两个字符串的最小编辑距离。输入 n m 及两行字符串，输出距离。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 6,
+      "created_at": "2026-08-29T10:56:00.511091+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.03s\n",
+      "review": {
+        "status": "completed",
+        "content": "## 1. 算法思路\n\n该解法实现的是标准的 **Levenshtein 编辑距离** 动态规划：\n\n- 用 `prev[j]` 表示将 `a` 的前 `i-1` 个字符转换成 `b` 的前 `j` 个字符所需的最小编辑距离。\n- 初始化：`prev[j] = j`，表示从空字符串变成 `b[0:j]` 需要插入 `j` 个字符。\n- 外层循环枚举 `a` 的每个字符 `a[i-1]`：\n  - `cur[0] = i`，表示把 `a[0:i]` 变成空串需要删除 `i` 个字符。\n  - 内层循环枚举 `b` 的每个字符 `b[j-1]`：\n    - 若 `a[i-1] == b[j-1]`，替换代价为 `0`，否则为 `1`。\n    - 状态转移：\n\n      ```\n      cur[j] = min(\n          prev[j] + 1,       # 删除 a[i-1]\n          cur[j-1] + 1,      # 插入 b[j-1]\n          prev[j-1] + cost   # 替换或匹配\n      )\n      ```\n\n- 最终 `prev[m]` 即为整个 `a` 转换成整个 `b` 的最小编辑距离。\n\n题目中插入、删除、替换代价均为 `1`，与上述状态转移完全一致。\n\n## 2. 时间与空间复杂度\n\n- 时间复杂度：`O(n * m)`，其中 `n` 和 `m` 分别是两个字符串的长度。\n- 空间复杂度：`O(m)`，只保留上一行 DP 数组 `prev` 和当前行 `cur`，没有使用完整的 `(n+1) * (m+1)` 表格。\n\n## 3. 边界情况\n\n- `n == 0` 或 `m == 0`：DP 初始化可正确处理，结果分别为 `m` 和 `n`。\n- 两字符串完全相同：所有 `cost = 0`，结果为 `0`。\n- 空字符串参与计算：需要输入中存在对应的空字符串行，当前读取方式能处理。\n- 字符串长度与输入的 `n`、`m` 不一致时，代码不会校验，但题目保证输入合法，因此不是问题。\n\n## 4. 测试覆盖\n\n本地测试文件 `test_cases.json` 中有两个用例：\n\n1. `abc` -> `adc`，期望输出 `1`，覆盖替换操作。\n2. `abc` -> `abde`，期望输出 `2`，覆盖插入和删除操作。\n\n这两个用例均通过，本地 `pytest` 输出：\n\n```text\n..                                                                       [100%]\n2 passed in 0.03s\n```\n\n不过当前测试覆盖较简单，未包含：\n\n- 空字符串输入；\n- 两字符串完全相等；\n- 一方完全为空；\n- 全删除/全插入的情况；\n- 较长字符串、重复字符等边界压力场景。\n\n因此只能确认本地用例通过，不能据此断言所有隐藏在线评测用例都能通过。\n\n## 5. 潜在风险与代码质量\n\n- 输入解析使用了 `rstrip(\"\\n\").split(\"\\n\")`，在 Windows 风格 `\\r\\n` 输入下，字符串行末尾可能残留 `\\r`，导致字符比较错误。若评测环境统一使用 `\\n`，则没有问题；更稳妥的做法是使用 `splitlines()` 或先 `strip()`。\n- `n` 和 `m` 只用于循环次数，没有校验与字符串实际长度一致。题目保证输入合法，因此可以接受。\n- 空间上只保留了上一行，已经足够高效。\n- 代码结构清晰，`solve(input_text) -> str` 接口符合要求，逻辑简洁明了，没有不必要的复杂化。\n\n总体而言，该解法是标准且正确的编辑距离 DP 实现，对于题目给定的输入格式和本地测试用例可以正确通过。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-184200-acwing-900-dp-n-9cbe16",
+      "task": "【AcWing 900，DP-简单】给出 n 行数字三角形，从顶到底每次走到下一行相邻位置，求路径数字和最大值。输入 n 及三角形，输出最大和。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-08-29T10:42:00.464770+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.03s\n",
+      "review": {
+        "status": "completed",
+        "content": "## 1. 算法思路\n\n采用**自底向上的动态规划**，在原三角形数组上原地更新：\n\n- 先将输入文本按空白字符切分成 token 列表，读取 `n`，再按三角形行数依次读取每行的数字。\n- 从倒数第二行开始，向上逐行处理：\n  - 对第 `i` 行的每个位置 `j`，它能从下一行的 `triangle[i+1][j]` 或 `triangle[i+1][j+1]` 走到。\n  - 更新公式：  \n    `triangle[i][j] = triangle[i][j] + max(triangle[i+1][j], triangle[i+1][j+1])`\n- 最终 `triangle[0][0]` 就是从顶部到底部所有路径中的最大数字和。\n\n该方法是数字三角形的经典 DP 解法，正确性基于最优子结构：到达某个位置后，后续只需要选择下方相邻两个位置中的较大累计和。\n\n## 2. 时间与空间复杂度\n\n- 时间复杂度：`O(n^2)`，需要遍历三角形中所有 `n(n+1)/2` 个元素。\n- 空间复杂度：`O(n)` 用于存储三角形，DP 过程是原地修改，没有额外使用与 `n` 相关的辅助数组。\n\n如果严格区分输入存储，额外辅助空间为 `O(1)`；整体空间复杂度由三角形存储决定，为 `O(n^2)`。\n\n## 3. 边界情况\n\n- `n = 1`：循环 `range(n - 2, -1, -1)` 即 `range(-1, -1, -1)` 为空，直接返回 `triangle[0][0]`，可以正确处理负数。\n- 三角形中数字为负数时，`max` 取下一行两个值中较大的一个，仍能正确累计最大值。\n- 输入内容不足或多余：代码直接按 token 顺序解析，如果输入格式非法，会抛出 `StopIteration` 或 `IndexError`，当前解法没有做输入校验。\n\n## 4. 测试覆盖\n\n本地测试共 2 个用例：\n\n- 四层三角形：验证了常规多行路径选择，期望输出 `20`，测试通过。\n- 单点负数：验证了 `n = 1` 且值为负数的边界情况，期望输出 `-5`，测试通过。\n\n本地验证结果：`2 passed`。\n\n但这两个用例覆盖场景有限，未覆盖例如完全负数、极大值、随机多层三角形等更多情况；不能据此保证隐藏在线评测用例全部通过。\n\n## 5. 潜在风险与代码质量\n\n- 原地修改输入三角形：本函数接收字符串并重新构造 `triangle`，不影响外部传入的文本，原地修改自身列表是安全的。\n- 输入解析依赖空白分隔：对换行和空格均兼容，但无法处理非纯数字或缺失行的情况。\n- 缺少输入校验：如果 `input_text` 为空，返回空字符串；但如果 token 数量不足，会在 `next(it)` 处抛出异常。\n- 代码结构清晰，类型标注明确，`solve(input_text) -> str` 接口符合要求。\n- 返回值为字符串，符合题目输出格式要求。\n\n整体实现简洁、正确，适合当前题目要求。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-184016-acwing-899-dp-n-765047",
+      "task": "【AcWing 899，DP-简单】输入两个小写字符串，求最长公共子序列长度。第一行给出长度 n m，随后两行字符串；输出长度。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-08-29T10:40:16.235597+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.03s\n",
+      "review": {
+        "status": "completed",
+        "content": "## 1. 算法思路\n\n该解法使用**最长公共子序列（LCS）的标准动态规划**，并采用滚动数组将二维 DP 压缩为一维数组。\n\n状态定义（标准形式）：\n\n- `dp[i][j]` 表示 `a[0..i-1]` 与 `b[0..j-1]` 的最长公共子序列长度。\n\n状态转移：\n\n- 若 `a[i-1] == b[j-1]`，则 `dp[i][j] = dp[i-1][j-1] + 1`；\n- 否则 `dp[i][j] = max(dp[i-1][j], dp[i][j-1])`。\n\n代码中只用一维数组 `dp[j]`，并在外层循环枚举 `i` 时逐列更新。其中：\n\n- `prev` 在进入内层循环前保存 `dp[i-1][0]`，即 `0`；\n- 内层循环中，`temp = dp[j]` 保存更新前的 `dp[i-1][j]`；\n- 当 `a[i-1] == b[j-1]` 时，`prev` 恰好是上一轮外层循环（即 `i-1` 行）的 `dp[j-1]`，也就是 `dp[i-1][j-1]`；\n- 更新完当前 `dp[j]` 后，`prev = temp`，使下一个 `j` 的 `prev` 成为 `dp[i-1][j]`，保持正确性；\n- 不相等时，`dp[j]`（旧值 `dp[i-1][j]`）与 `dp[j-1]`（本轮已更新的 `dp[i][j-1]`）取最大值。\n\n最终 `dp[m]` 即为所求。\n\n## 2. 时间与空间复杂度\n\n- **时间复杂度**：双重循环遍历两个字符串的长度，为 `O(n * m)`。\n- **空间复杂度**：使用一维数组 `dp`，长度为 `m + 1`，为 `O(m)`。\n\n该方案在空间上比二维 DP 更优，适合题目“简单”难度下的输入规模。\n\n## 3. 边界情况\n\n- 当 `n = 0` 或 `m = 0` 时，外层或内层循环不执行，`dp[m]` 保持为 0，正确。\n- 当两个字符串完全相同时，LCS 为字符串长度本身，算法会正确累加。\n- 当两个字符串没有任何公共字符时，所有位置都走 `else` 分支，结果为 0。\n- 当输入文本为空字符串时，代码直接返回 `\"0\"`，是一种防御性处理。\n- 若输入中第二行或第三行缺失，代码会将对应字符串视为空；但这与题目描述的输入格式不符。若 `n > 0` 且 `a` 为空，循环访问 `a[i-1]` 会引发 `IndexError`。由于题目保证输入格式，此风险不属于正确性问题。\n\n## 4. 测试覆盖\n\n本地测试使用 `test_cases.json` 中的两个用例：\n\n1. `abcde` 与 `ace`：预期结果为 3，验证典型 LCS 计算；\n2. `abc` 与 `xy`：预期结果为 0，验证无公共字符的情况。\n\n本地生成测试中，`pytest` 执行结果为 **2 passed**，即本地验证通过。\n\n但测试覆盖范围有限，缺少以下边界情况的验证：\n\n- `n` 或 `m` 为 0；\n- 一个字符串为空；\n- 两个字符串完全相同；\n- 只包含单个字符且相同的字符串；\n- 较长字符串下的性能和正确性。\n\n因此可以认为该方案通过了现有示例，但**不能保证隐藏的在线评测用例全部通过**（不过从算法正确性看，隐藏用例应当能够通过）。\n\n## 5. 潜在风险与代码质量\n\n**潜在风险：**\n\n- 输入的健壮性不足：代码假设 `lines[1]` 和 `lines[2]` 一定存在，且其长度与 `n`、`m` 一致。如果输入不符合规范，可能产生索引越界。不过题目给定格式是权威的，该假设合理。\n- `input_text.strip()` 会去除字符串首尾空白。由于题目限定为小写字母，不会影响字符内容；但如果未来字符集扩展，可能造成意外。\n\n**代码质量：**\n\n- 使用滚动数组优化，思路正确，代码简洁。\n- `prev` 和 `temp` 的命名含义不够明确，但配合注释可以理解。\n- 注释说明了 `dp[j]` 的语义，但可以更详细地解释 `prev` 与 `temp` 在滚动过程中的作用。\n- 空输入返回 `\"0\"` 的防御逻辑与正常输入格式无关，但无害。\n- 总体代码结构清晰，符合 `solve(input_text) -> str` 的接口要求。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-182832-acwing-897-dp-n-5b9cc8",
+      "task": "【AcWing 897，DP-简单】给定长度 n 的整数序列，求严格递增子序列的最大长度。输入 n 和序列，输出长度。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 19,
+      "created_at": "2026-08-29T10:28:32.378297+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.03s\n",
+      "review": {
+        "status": "completed",
+        "content": "## 1. 算法思路\n\n该解法使用经典的“维护 tails 数组 + 二分查找”的 LIS 算法：\n\n- `tails` 保存当前已构造出的递增子序列的“末尾元素的最小可能值”，其长度即为当前已知的最长严格递增子序列长度。\n- 对于每个元素 `x`，用 `bisect_left(tails, x)` 找到第一个 **大于等于** `x` 的位置 `pos`。\n  - 若 `pos == len(tails)`，说明 `x` 可以接在当前所有尾部后面，使 LIS 长度增加，追加 `x`。\n  - 否则，用 `x` 替换 `tails[pos]`，因为“以长度为 `pos+1` 的递增子序列结尾的最小值”可以变得更小或保持不变（若相等则不变）。\n- 使用 `bisect_left` 而不是 `bisect_right`，保证替换时不会把与 `x` 相等的元素往前覆盖，从而正确处理 **严格递增** 的要求。\n\n最后输出 `len(tails)` 即为最长严格递增子序列长度。\n\n## 2. 时间与空间复杂度\n\n- 时间复杂度：`O(n log n)`，其中 `n` 为序列长度。每个元素执行一次二分查找，二分查找复杂度为 `O(log n)`。\n- 空间复杂度：`O(n)`，因为 `tails` 最长可能达到 `n`。\n\n## 3. 边界情况\n\n- 空输入或 `tokens` 为空：直接返回 `\"0\"`。\n- `n = 0`：`nums` 为空，循环不执行，返回 `\"0\"`。\n- 序列全相等：`bisect_left` 始终返回 0，`tails` 长度恒为 1，符合严格递增要求。\n- 序列严格递增：每次 `pos == len(tails)`，`tails` 不断追加，最终长度等于 `n`。\n- 序列严格递减：每个元素替换 `tails[0]`，长度始终为 1。\n- 单个元素：返回 1。\n- 负数与较大整数：Python `int` 均可正常处理，且比较逻辑不受影响。\n\n## 4. 测试覆盖\n\n提供的两个本地测试用例：\n\n- “经典序列”：`8\\n10 9 2 5 3 7 101 18`，期望输出 `4`，覆盖了典型 LIS 与严格递增逻辑。\n- “全相等”：`4\\n2 2 2 2`，期望输出 `1`，验证了严格递增的正确性（相等元素不能递增）。\n\n本地测试结果为 `2 passed`，说明实现与权威输入输出一致。\n\n但测试覆盖仍有限，未包含空输入、`n=0`、全递减、单元素、负数等边界情况。这些场景逻辑上可正确处理，但缺少自动化用例。\n\n## 5. 潜在风险与代码质量\n\n潜在风险：\n\n- 若输入格式非法（如 `tokens[0]` 非整数、`nums` 数量不足），程序会抛异常。题目保证输入有效，因此风险可忽略。\n- 函数内部使用 `import bisect`，虽不影响功能（Python 会缓存模块），但一般建议将导入放到文件顶部，使代码更清晰、符合常规风格。\n- 若输入文本包含多余数据（如多个测试用例），程序只会解析第一组，但题目输入为单组数据，当前处理符合要求。\n- 代码未显式检查 `n` 与实际提供的元素数量是否一致，但按题意输入规范，不会出现问题。\n\n代码质量总体良好：\n\n- 逻辑简洁清晰，正确使用 `bisect_left` 实现严格递增 LIS。\n- 函数签名 `solve(input_text: str) -> str` 符合要求。\n- 返回结果是去除换行的纯数字字符串，与测试比较逻辑兼容。\n- 可维护性较好；若将 `import bisect` 提至文件顶部，并补充注释说明算法，可读性会更好。\n\n**结论**：本地验证已通过，但无法保证在其它隐藏在线评测用例上必然通过（逻辑上是正确的，不过仍需以实际评测为准）。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-182106-acwing-79-dp-n-eeb48b",
+      "task": "【AcWing 79，DP-简单】给定 n 天股价，每天最多买卖一次且只能持有一股，最多完成一次买入和一次卖出。输入 n 及 n 个价格，输出最大利润；无法获利输出 0。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 6,
+      "created_at": "2026-08-29T10:21:06.110371+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.03s\n",
+      "review": {
+        "status": "completed",
+        "content": "### 1. Algorithm approach\n\n该算法采用**一次遍历 + 动态更新**的思路解决“最多一次买入和一次卖出”的最大利润问题。\n\n- 用一个变量 `min_price` 记录遍历过程中遇到的最低价格，即当前为止最佳的买入价格。\n- 用一个变量 `max_profit` 记录当前为止能够获得的最大利润。\n- 每遍历到一个新价格 `price`，计算若以 `min_price` 买入、以 `price` 卖出的利润 `profit = price - min_price`，并更新 `max_profit`。\n- 如果当前 `price` 比 `min_price` 更低，则更新 `min_price`，因为未来更高的价格配合更低的买入价可能产生更大利润。\n\n该算法本质上是动态规划思想的一种简化实现：最优卖出日的利润由「当日价格 - 此前最低价格」决定，只需在扫描过程中不断维护最小值和最大利润。\n\n### 2. Time and space complexity\n\n- **时间复杂度：** O(n)，其中 `n` 为给定天数。只需一次遍历价格数组。\n- **空间复杂度：** O(n)（因为代码将价格列表 `prices` 完整存储）。若忽略输入存储，算法的核心状态仅需两个变量（`min_price`、`max_profit`），可达到 O(1) 的辅助空间；但当前实现因存储 `prices` 列表而占用 O(n) 空间。\n\n### 3. Boundary cases\n\n- **输入为空：** 直接返回 `\"0\"`。\n- **n < 2：** 不足两个交易日，无法完成一次完整的买入和卖出，返回 `\"0\"`。\n- **价格单调下降：** 如 `[5, 4, 3, 2, 1]`，最大利润始终为 0，最终返回 `\"0\"`，符合题意。\n- **价格全部相等：** 利润恒为 0，算法会正确返回 `\"0\"`。\n- **最低价出现在最后一天：** 算法会在遍历时更新 `min_price`，但不再产生新的利润，最终结果仍为之前记录的最大利润。\n- **潜在风险：** 代码直接使用 `tokens[1:1+n]` 构建价格列表，没有校验实际输入中价格数量是否足够。如果输入的 `n` 大于实际提供的价格个数，切片长度会不足，访问 `prices[0]` 或遍历时会引发 `IndexError`。标准题面通常保证输入格式正确，但作为健壮性设计，可增加长度校验或按实际 token 数量处理。\n\n### 4. Test coverage\n\n本地测试使用 `test_cases.json` 中的两个权威用例：\n\n- 用例“先低后高”：`6\\n7 1 5 3 6 4`，正确输出 `\"5\"`。\n- 用例“单调下降”：`5\\n5 4 3 2 1`，正确输出 `\"0\"`。\n\n本地运行结果为 `2 passed`，说明当前实现完全符合给定测试用例的输入输出要求。\n\n但测试覆盖仍有限：\n\n- 未覆盖 `n=0`、`n=1` 的空/单日输入。\n- 未覆盖价格全部相等的情况。\n- 未覆盖最大利润出现在价格序列最后一天的情况。\n- 未覆盖输入中 `n` 与价格数量不一致的异常情况。\n\n### 5. Potential risks and code quality\n\n**潜在风险：**\n\n1. **输入健壮性不足：** 对 `tokens` 数量未做防御性检查。若 `n` 与实际价格数量不匹配，可能引发 `IndexError` 或静默忽略多余价格。\n2. **空间使用：** 虽然题目允许，但实际可边读边算，无需保存完整价格列表；当前列表存储会使空间复杂度变为 O(n)。不过对本题规模通常无影响。\n3. **负数价格：** 题目未说明价格是否为正数，若价格可能为负，算法仍可正常工作，因为其逻辑不依赖价格正负。\n4. **整数溢出：** Python 的整数无上限，不会溢出。\n\n**代码质量：**\n\n- 函数签名符合要求：`solve(input_text: str) -> str`。\n- 逻辑清晰、简洁，核心循环只用三个变量，易读易维护。\n- 返回类型始终为字符串，输出格式正确。\n- 缺少必要的输入校验和防御性编码，但考虑到测试输入保证规范，当前实现可接受。\n\n整体而言，该解法正确、高效，能满足题目要求。只可确认本地测试通过，不能保证隐藏在线评测用例一定全部通过。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-182106-acwing-4-dp-s-ece479",
+      "task": "【AcWing 4，DP-简单】每种物品有数量上限 s_i，其他条件同 01 背包。输入 n m，随后 n 行 v_i w_i s_i；输出最大价值。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 6,
+      "created_at": "2026-08-29T10:21:06.109372+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Connection error."
+    },
+    {
+      "run_id": "20260829-170740-acwing-79-dp-n-dff6c4",
+      "task": "【AcWing 79，DP-简单】给定 n 天股价，每天最多买卖一次且只能持有一股，最多完成一次买入和一次卖出。输入 n 及 n 个价格，输出最大利润；无法获利输出 0。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 6,
+      "created_at": "2026-08-29T09:07:40.558211+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.03s\n",
+      "review": {
+        "status": "completed",
+        "content": "### 1. Algorithm approach\n\n该解法使用经典的「一次遍历」动态规划/贪心思想：\n\n- 用 `min_price` 记录到当前天为止出现过的最低价格，代表最优的买入价格；\n- 用 `max_profit` 记录截至当前天能获得的最大利润；\n- 从第 2 天开始遍历每个价格：\n  1. 先尝试用当天价格卖出：`profit = price - min_price`，并更新 `max_profit`；\n  2. 再用当天价格更新 `min_price = min(min_price, price)`。\n\n由于先计算卖出利润、再更新最低价，因此保证卖出发生在买入之后，满足“最多一次买入和一次卖出”的约束。\n\n### 2. Time and space complexity\n\n- 时间复杂度：O(n)，只需遍历一次价格数组，每个元素处理常数次。\n- 空间复杂度：O(n)，因为代码将全部价格存入 `prices` 列表。如果改为边读输入边更新变量，辅助空间可以降到 O(1)。\n\n### 3. Boundary cases\n\n- 空输入：直接返回 `\"0\"`。\n- `n < 2`：包括 `n = 0` 和 `n = 1`，无法完成一次完整的买入卖出，返回 `\"0\"`。\n- 价格持续下跌：如 `5 4 3 2 1`，每天利润都不大于 `0`，最终 `max_profit` 保持 `0`。\n- 所有价格相同：所有利润为 `0`，返回 `\"0\"`。\n- 最高价出现在最低价之后：能正确计算最大利润。\n- 输入包含多余空格或换行：`split()` 可以正常切分。\n\n### 4. Test coverage\n\n- 本地测试读取并遵循了 `test_cases.json` 的权威输入输出。\n- 两个测试用例：\n  - 先低后高：`6\\n7 1 5 3 6 4` -> `5`，覆盖正常获利场景；\n  - 单调下降：`5\\n5 4 3 2 1` -> `0`，覆盖无法获利场景。\n- 本地运行结果为 `2 passed`，即本地验证已通过。\n- 但测试用例未覆盖 `n=0/1`、空输入、价格相等、输入格式异常等边界情况，建议后续补充更多测试。\n\n### 5. Potential risks and code quality\n\n- **输入健壮性**：如果 `tokens` 非空但价格数量少于 `n`，`next(it)` 会抛出 `StopIteration`；如果价格数量多于 `n`，多余部分会被忽略。在线评测输入通常合法，因此风险较低，但缺少显式校验。\n- **空间可优化**：当前先把所有价格存入列表，再遍历。对于大数据量来说不必要，可以直接从 `tokens` 中边读边处理，将空间复杂度降为 O(1)。\n- **代码简洁性**：整体逻辑清晰、可读性好，符合 `solve(input_text: str) -> str` 接口要求。\n- **异常行为**：输入包含非数字时 `int()` 会抛出 `ValueError`，这属于正常行为。\n- 不能保证隐藏在线评测用例全部通过，只能说本地测试已通过。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-165922-acwing-4-dp-s-7e04a6",
+      "task": "【AcWing 4，DP-简单】每种物品有数量上限 s_i，其他条件同 01 背包。输入 n m，随后 n 行 v_i w_i s_i；输出最大价值。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 3,
+      "created_at": "2026-08-29T08:59:22.211948+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Connection error."
+    },
+    {
+      "run_id": "20260829-164254-acwing-3-dp-n-690d47",
+      "task": "【AcWing 3，DP-简单】有 n 种物品和容量为 m 的背包，每种物品可无限次选择。输入 n m，随后每行体积 v 和价值 w；求最大总价值。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-08-29T08:42:54.026516+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.03s\n",
+      "review": {
+        "status": "completed",
+        "content": "## 1. 算法思路\n\n该解法使用一维动态规划数组 `dp[c]` 表示容量为 `c` 时能获得的最大总价值。\n\n对每种物品 `(v, w)`，若体积 `v` 不超过背包容量 `m`，则正序遍历容量 `c` 从 `v` 到 `m`：\n\n```python\nfor c in range(v, m + 1):\n    if dp[c - v] + w > dp[c]:\n        dp[c] = dp[c - v] + w\n```\n\n正序遍历的含义是：当计算 `dp[c]` 时，`dp[c - v]` 可能已经在本轮更新过，即已经考虑了当前物品被多次放入的情况。因此这一循环能让每种物品被无限次选择，符合完全背包问题的要求。\n\n最终 `dp[m]` 即为容量为 `m` 时能获得的最大总价值。\n\n## 2. 时间与空间复杂度\n\n- 时间复杂度：`O(n * m)`，其中 `n` 是物品种数，`m` 是背包容量。对于每个物品，需要遍历 `m - v + 1` 个容量状态，总体为 `O(n * m)` 级别。\n- 空间复杂度：`O(m)`，仅使用一个长度为 `m + 1` 的一维数组。\n\n## 3. 边界情况\n\n- **输入为空**：`solve` 直接返回 `\"0\"`，避免后续索引错误。\n- **物品体积大于背包容量**：通过 `if v > m: continue` 跳过该物品，避免内层循环范围为空或越界。\n- **容量为 0**：`dp` 长度为 1，所有物品都会因 `v > 0` 被跳过（若 `v = 0` 则理论上可无限放入，但实际题目中体积一般为正整数），最终返回 `\"0\"`。\n- **物品数量为 0**：`items` 为空，`dp` 全为 0，返回 `\"0\"`。\n- **价值可能很大**：Python 的整数无溢出问题。\n\n## 4. 测试覆盖\n\n本地测试使用的 `test_cases.json` 包含两个用例：\n\n1. **重复选择**：`n=2, m=4`，物品 1 体积 1 价值 2，物品 2 体积 3 价值 4。正确答案为 8，即选择 4 个物品 1，验证了可无限次选择同种物品的逻辑。\n2. **容量不足**：`n=1, m=2`，物品体积 3 价值 9，所有物品体积超过容量，答案为 0，验证了体积超过容量时物品被忽略的逻辑。\n\n这两个用例覆盖了完全背包的核心场景和基本边界，但未覆盖：\n- 多个物品组合且需要部分选择的情况。\n- 物品体积为 0 或负数的异常输入（题目约束中一般不会出现）。\n- 更大的 `n` 和 `m` 规模下的性能表现。\n\n## 5. 潜在风险与代码质量\n\n- **输入格式假设**：代码假定输入严格符合“第一行两个整数，随后每行两个整数”的格式。若输入中存在多余空白字符或格式异常，可能引发 `ValueError` 或 `IndexError`。不过题目输入规范通常能保证格式正确。\n- **体积非正整数风险**：若 `v <= 0`，内层循环会从 `v` 开始，可能导致无限循环或异常行为；但实际竞赛题目中体积通常为正整数，风险较低。\n- **负数价值**：若 `w` 为负数，`if dp[c - v] + w > dp[c]` 不会更新，结果保持为 0，这是合理的（不选负价值物品）。\n- **代码简洁性**：实现清晰，符合完全背包的标准写法。使用 `if` 更新而不是 `max`，可读性稍差但效率略高；也可以写成 `dp[c] = max(dp[c], dp[c - v] + w)`，二者等价。\n- **测试文件绑定**：代码未直接读取 `test_cases.json`，而是通过 `solution.solve()` 暴露接口，符合要求。但 `test_solution.py` 的本地测试与工作目录绑定，若文件缺失或格式不符会导致测试失败。\n\n本地验证已通过（2 个测试全部通过），但未在隐藏的在线评测环境中验证，不能保证通过所有可能的边界测试或大数据规模测试。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260829-164254-acwing-2-dp-n-0bd6de",
+      "task": "【AcWing 2，DP-简单】有 n 件物品和容量为 m 的背包。第 i 件物品体积 v_i、价值 w_i，每件最多选一次。求不超过容量时的最大总价值。输入第一行 n m，随后 n 行 v_i w_i；输出最大价值。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 19,
+      "created_at": "2026-08-29T08:42:54.020296+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.03s\n",
+      "review": {
+        "status": "completed",
+        "content": "## 1. 算法思路\n\n该解法采用动态规划解决 0-1 背包问题。使用一维数组 `dp[j]` 表示容量为 `j` 时能获得的最大总价值。\n\n- 初始化 `dp = [0] * (m + 1)`。\n- 对每件物品，读取体积 `v` 和价值 `w`。\n- 若 `v > m`，该物品无法放入任何背包，直接跳过。\n- 否则，按容量从大到小倒序遍历 `j = m` 到 `v`，更新：\n  \\[\n  dp[j] = \\max(dp[j], dp[j - v] + w)\n  \\]\n- 倒序遍历保证每个物品最多被选一次，这是 0-1 背包与完全背包的关键区别。\n\n最终 `dp[m]` 即为不超过容量 `m` 时的最大总价值。\n\n## 2. 时间和空间复杂度\n\n- 时间复杂度：\\(O(n \\times m)\\)，其中 `n` 为物品数量，`m` 为背包容量。每个物品需要遍历一次容量区间。\n- 空间复杂度：\\(O(m)\\)，因为只使用了一个长度为 `m+1` 的动态规划数组。\n\n## 3. 边界情况\n\n- **空输入**：`input_text.strip()` 为空时返回 `\"0\"`，可以处理。\n- **容量为 0**：即使有物品，由于所有体积通常为正整数，无法放入，返回 `0`。\n- **物品体积大于容量**：直接跳过，不影响结果。\n- **物品数量为 0**：循环不执行，返回 `dp[m] = 0`。\n- **输入含多余空格或换行**：使用 `.split()` 解析，能容忍空白字符的差异。\n\n需要注意：若物品体积或价值允许非正整数（如 `v=0` 或负价值），当前实现可能不完全符合严格 0-1 背包语义，但本题中体积和价值均为正整数，因此不存在该问题。\n\n## 4. 测试覆盖\n\n本地测试已通过，共两个用例：\n\n1. **基础背包**：`n=3, m=4`，物品为 `(1,2)、(2,4)、(3,4)`，输出 `6`，符合预期。\n2. **空容量**：`n=2, m=0`，输出 `0`，符合预期。\n\n这两个用例验证了基本动态规划流程和容量为 0 的边界情况，但未覆盖物品数量为 0、物品体积大于容量、大数据量等场景。测试覆盖有限，但现有用例均通过。\n\n## 5. 潜在风险和代码质量\n\n- **风险**：\n  - 输入解析依赖 `idx` 递增，若输入不完整或多余内容，可能引发 `IndexError`。在线评测输入通常保证格式合法，因此风险较低。\n  - 当 `m` 非常大时，`dp` 数组会占用较多内存，但这是 0-1 背包一维解法的正常空间开销。\n  - 若未来出现 `v=0` 或负价值的情况，当前实现需要额外处理，但题目背景不涉及。\n- **代码质量**：\n  - 代码结构清晰，核心逻辑简洁。\n  - `from typing import List` 被导入但未使用，属于轻微冗余，可移除。\n  - 循环中使用 `range(m, v - 1, -1)` 和 `if candidate > dp[j]` 的写法效率与可读性良好。\n  - 返回时使用 `str(dp[m])`，格式正确。\n\n综上所述，该解决方案逻辑正确，能够通过本地测试和常规在线评测数据；但不应保证未经验证的隐藏测试一定通过。"
+      },
+      "error": null
+    },
     {
       "run_id": "20260829-152222-acwing-514-dp-0-b4ef82",
       "task": "【AcWing 514，DP-困难】小鸟初始高度为 0，每次可将高度增加 x，或不操作而下降 y；经过 n 个位置，每个位置有允许高度区间 [l_i,r_i]，超出即失败。输入 n x y 及 n 行 l r，求到达终点的最少上升操作次数，无法到达输出 -1。",

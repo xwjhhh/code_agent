@@ -8,11 +8,17 @@ from typing import Any
 from code_agent.exceptions import ModelError
 from code_agent.models.utils.actions import BASH_TOOL, format_observation_messages, parse_tool_calls
 
-PRIMARY_MODEL_NAME = "openai/zai-org/GLM-5.2"
+# SiliconFlow exposes DeepSeek V4 Flash through its OpenAI-compatible API.
+PRIMARY_MODEL_NAME = "openai/deepseek-ai/DeepSeek-V4-Flash"
 
 def resolve_api_key(model_name: str | None = None) -> str | None:
-    """Return the single SiliconFlow key used by GLM-5.2 calls."""
-    return os.getenv("OPENAI_API_KEY")
+    """Return the key used by the configured OpenAI-compatible endpoint."""
+    return (
+        os.getenv("SILICONFLOW_API_KEY")
+        or os.getenv("OPENAI_API_KEY")
+        or os.getenv("SILICONFLOW_DEEPSEEK_API_KEY")
+        or os.getenv("DEEPSEEK_API_KEY")
+    )
 
 
 def validate_model_name(model_name: str) -> str:

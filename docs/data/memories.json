@@ -1,8 +1,941 @@
 {
-  "generated_at": "2026-08-29T07:25:37.040376+00:00",
-  "count": 12,
+  "generated_at": "2026-08-29T13:29:50.758402+00:00",
+  "count": 41,
   "embedding_model": "Qwen/Qwen3-Embedding-8B",
   "nodes": [
+    {
+      "id": "8ad888b71c3a489eb174e383ceee3242",
+      "category": "strategy",
+      "granularity": "task",
+      "trigger": "题目限制每种物品最多可选 s_i 件，其他条件同 01 背包时",
+      "content": "多重背包需要按件数枚举更新，不能把每类物品当成一个只能选一次的 01 物品；对每个容量用 k=1..min(s_i, 容量//v_i) 取最大，或使用二进制拆分/单调队列优化",
+      "purpose": "正确计算在数量上限下的最大价值",
+      "steps": [
+        "读取 v、w、s 后先处理 s<=0 的物品",
+        "对每个容量 j 从大到小遍历",
+        "枚举该物品件数 k，并比较 dp[j] 与 dp[j-k*v]+k*w",
+        "输出 dp[m]"
+      ],
+      "negative_example": "忽略 s 的具体数值，只按每种物品最多选一次更新",
+      "problem_family": [
+        "多重背包",
+        "动态规划"
+      ],
+      "algorithm_tags": [
+        "动态规划",
+        "背包DP"
+      ],
+      "constraints": [
+        "适合朴素 O(n*m*s) 或可优化的多重背包场景"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-201505-acwing-4-dp-s-67a32f",
+      "source_verified": true,
+      "created_at": "2026-08-29T12:22:53.198907+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "7c0bd33ebd35481da1c8160ce09bfe4e",
+      "category": "recovery",
+      "granularity": "task",
+      "trigger": "本地测试全部通过，但实现未使用题目给出的数量上限，且样例最优解不需要重复选同一物品",
+      "content": "通过不代表实现正确；必须确认关键约束已被代码实际使用，并补充能强制触发该约束的用例来验证",
+      "purpose": "识别并修复被弱测试掩盖的语义错误",
+      "steps": [
+        "查看代码是否读取并使用了 s_i 的值参与状态转移",
+        "构造一个单物品 v 很小、s>1、容量足够放 s 件的用例，期望结果是 s*w",
+        "运行该用例，若结果不等于 s*w 则说明退化成 01 背包",
+        "改为枚举件数的多重背包实现后重新测试"
+      ],
+      "negative_example": "仅凭现有样例全过就判定实现正确",
+      "problem_family": [
+        "测试设计",
+        "代码审查"
+      ],
+      "algorithm_tags": [
+        "多重背包",
+        "边界测试"
+      ],
+      "constraints": [
+        "适用于核心约束未被样例覆盖的场景"
+      ],
+      "priority": 2,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-201505-acwing-4-dp-s-67a32f",
+      "source_verified": true,
+      "created_at": "2026-08-29T12:22:53.198907+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "3eca3fdb65cb42f78a299ee22c4eb302",
+      "category": "optimization",
+      "granularity": "subtask",
+      "trigger": "多重背包中单个物品数量上限 s_i 很大，朴素逐件枚举会超时",
+      "content": "用二进制拆分把同种物品分成 1、2、4、... 及剩余件数的若干组，每组变成一件代价 k*v、价值 k*w 的 01 物品，再按 01 背包逆序更新",
+      "purpose": "把复杂度从 O(n*m*s) 降到 O(n*m*log s)",
+      "steps": [
+        "对每种物品的 s 进行二进制分解",
+        "对每个分解出的件数 k 执行一次逆序 01 背包更新",
+        "最终输出 dp[m]"
+      ],
+      "negative_example": "对每个物品都枚举 1 到 s 的所有件数导致超时",
+      "problem_family": [
+        "多重背包",
+        "动态规划优化"
+      ],
+      "algorithm_tags": [
+        "二进制拆分",
+        "背包DP"
+      ],
+      "constraints": [
+        "s_i 较大但 m 可接受时使用"
+      ],
+      "priority": 3,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-201505-acwing-4-dp-s-67a32f",
+      "source_verified": true,
+      "created_at": "2026-08-29T12:22:53.198907+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "4d5c2486b9134c97a1b1d7b9802404e0",
+      "category": "strategy",
+      "granularity": "task",
+      "trigger": "给定二维高度矩阵，只能从高处滑向相邻更低处，求最长滑行路线包含的格子数",
+      "content": "将所有格子按高度从小到大排序，把二维下降路径转化为线性DP：当前格子的最长路径只依赖高度严格更低的相邻格子，低处先算，高处再算，转移取更低相邻格子的最长路径值加一，并维护全局最大值。",
+      "purpose": "正确高效求解网格最长下降路径",
+      "steps": [
+        "把所有格子按高度从小到大排序",
+        "初始化每个格子的路径长度为1",
+        "依次处理格子，检查四个相邻格子；若相邻格子高度更低，则用其已经算出的路径值更新当前值",
+        "将当前格子的路径值加1后更新全局最大值"
+      ],
+      "negative_example": "不要按高度从大到小处理，否则高处先算时低处依赖尚未就绪，导致结果偏小",
+      "problem_family": [
+        "二维网格最长下降路径",
+        "有向无环图最长路径"
+      ],
+      "algorithm_tags": [
+        "动态规划",
+        "拓扑序DP",
+        "排序"
+      ],
+      "constraints": [
+        "移动仅限上下左右相邻格",
+        "只能滑向高度严格更低的格子",
+        "答案为最长路径包含的格子数"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-191811-acwing-903-dp-n-777ce0",
+      "source_verified": true,
+      "created_at": "2026-08-29T11:28:33.479674+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "4eff6ade7f7f4efa9be76b3c1c3dc195",
+      "category": "recovery",
+      "granularity": "subtask",
+      "trigger": "按高度排序做此类DP时使用了降序排序，普通测试用例输出错误或断言失败",
+      "content": "识别到依赖方向搞反：较高格子的路径值需要较低相邻格子的结果，降序会让低处结果晚于高处出现。修复方法是改为按高度升序排序，让低处先计算，再递推高处。",
+      "purpose": "修复排序方向与DP依赖方向不一致导致的错误",
+      "steps": [
+        "运行测试确认出现错误结果",
+        "检查排序顺序是否与依赖方向一致",
+        "把从高到低处理改为从低到高处理",
+        "重新运行测试确认通过"
+      ],
+      "negative_example": "不要只修改转移条件而不修正处理顺序，否则问题依旧",
+      "problem_family": [
+        "二维网格下降路径",
+        "拓扑排序DP"
+      ],
+      "algorithm_tags": [
+        "动态规划",
+        "排序方向修复"
+      ],
+      "constraints": [
+        "转移依赖只从低高度指向高高度",
+        "排序顺序必须与依赖顺序一致"
+      ],
+      "priority": 2,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-191811-acwing-903-dp-n-777ce0",
+      "source_verified": true,
+      "created_at": "2026-08-29T11:28:33.479674+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "24a574748c8440f5b85d96fa8e942d55",
+      "category": "optimization",
+      "granularity": "task",
+      "trigger": "网格规模较大，用递归或枚举所有路径可能超时或爆栈，且要求最长下降/上升路径",
+      "content": "把每个格子看作节点，相邻且高度严格递减或递增的格子之间连边，得到有向无环图；用按高度排序代替记忆化搜索，可避免递归深度限制，并利用严格高度差天然保证无环。",
+      "purpose": "避免深递归并获得稳定可控的时间复杂度",
+      "steps": [
+        "将所有格子按高度排序作为处理顺序",
+        "按顺序计算每个格子的最长路径值",
+        "只使用高度严格满足递减或递增关系的邻居进行转移",
+        "维护全局最大值作为最终答案"
+      ],
+      "negative_example": "不要对每个起点做深度优先搜索枚举全部路径，也不要把相等高度的格子当作可转移边",
+      "problem_family": [
+        "二维网格最长路径",
+        "DAG最长路"
+      ],
+      "algorithm_tags": [
+        "动态规划",
+        "拓扑排序",
+        "排序优化"
+      ],
+      "constraints": [
+        "高度严格不等才能转移",
+        "总格子数为N时排序时间复杂度为O(N log N)",
+        "适合无环单调依赖关系"
+      ],
+      "priority": 3,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-191811-acwing-903-dp-n-777ce0",
+      "source_verified": true,
+      "created_at": "2026-08-29T11:28:33.479674+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "e66cfbe96a784556b9b64e6c84368f82",
+      "category": "strategy",
+      "granularity": "subtask",
+      "trigger": "处理二维动态规划且状态转移只依赖上方和左上方相邻状态时",
+      "content": "可用滚动数组将二维DP压缩为一维，额外保存上一行的左上角值来保证转移正确。",
+      "purpose": "将空间复杂度从O(n*m)优化到O(m)。",
+      "steps": [
+        "仅维护一行长度等于较短字符串长度加一的数组，代表当前处理行的各列值。",
+        "在开始新的一行前，记录该行第一个位置的初始值，通常为0。",
+        "遍历每一列时，先暂存数组当前列的旧值，该旧值代表上一行同一列的值。",
+        "若两字符相等，用暂存的左上角值加1更新当前列；否则取当前列旧值和上一列新值的较大者。",
+        "更新完成后，将暂存值作为下一列的左上角值。"
+      ],
+      "negative_example": "直接在原数组上覆盖而不暂存旧值，导致字符相等分支引用了已经被当前行修改的值，产生错误。",
+      "problem_family": [
+        "动态规划"
+      ],
+      "algorithm_tags": [
+        "滚动数组",
+        "最长公共子序列"
+      ],
+      "constraints": [
+        "状态转移只依赖上方和左上方"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-184016-acwing-899-dp-n-765047",
+      "source_verified": true,
+      "created_at": "2026-08-29T11:01:31.345591+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "d7c7fb93e4af47c293608fc573f63c4e",
+      "category": "strategy",
+      "granularity": "task",
+      "trigger": "实现按行读取字符串输入的求解函数，且输入可能为空或缺少部分行。",
+      "content": "解析输入时采用防御性写法：先整体去首尾空白并按行拆分；若没有任何行则返回默认值；后续每一行若缺失则视为空字符串。",
+      "purpose": "避免非规范输入导致索引越界崩溃。",
+      "steps": [
+        "对输入文本先去除首尾空白，再按换行符拆分为行列表。",
+        "若行列表为空，直接返回一个合理的默认结果。",
+        "取第一个行解析长度参数；对后续行，判断是否存在，不存在则使用空字符串。",
+        "这样做不会影响规范输入的正确性。"
+      ],
+      "negative_example": "直接使用固定索引访问行列表，例如取第三行，当输入只有两行时抛异常。",
+      "problem_family": [
+        "字符串输入解析"
+      ],
+      "algorithm_tags": [
+        "输入健壮性"
+      ],
+      "constraints": [
+        "题目保证规范输入，但防御性处理无害"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-184016-acwing-899-dp-n-765047",
+      "source_verified": true,
+      "created_at": "2026-08-29T11:01:31.345591+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "86cd56d4c7354344b78f295cfa070ad1",
+      "category": "strategy",
+      "granularity": "task",
+      "trigger": "为算法题设计本地测试用例时，需要确保核心逻辑分支都被覆盖。",
+      "content": "除题目示例外，至少加入这些边界用例：没有任何公共字符、完全相同的长串、单字符且相同、其中一个字符串为空、长度不等的串。",
+      "purpose": "提高测试覆盖率，降低隐藏用例失败风险。",
+      "steps": [
+        "根据状态转移方程列出所有独立分支以及循环边界。",
+        "为每个分支构造最小测试用例，如空串、单字符相同、无公共字符等。",
+        "用参数化测试框架运行这些用例。"
+      ],
+      "negative_example": "只依赖题目给出的两个示例，未覆盖空串和全相等的情况，可能遗漏滚动数组边界错误。",
+      "problem_family": [
+        "测试设计"
+      ],
+      "algorithm_tags": [
+        "边界测试",
+        "参数化测试"
+      ],
+      "constraints": [
+        "时间复杂度允许时多跑几个用例没有坏处"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-184016-acwing-899-dp-n-765047",
+      "source_verified": true,
+      "created_at": "2026-08-29T11:01:31.345591+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "e118ab6b9437440698596c5d09d96843",
+      "category": "recovery",
+      "granularity": "subtask",
+      "trigger": "在利用滚动数组实现LCS时，发现同一列的值被错误地多次累加，导致答案偏大。",
+      "content": "这是因为在更新某列时，直接使用了已经被当前行更新过的同列值，而丢失了上一行的旧值；正确的做法是在更新前保存该列旧值，并在相等分支中将其作为左上角来源。",
+      "purpose": "修复滚动数组实现中丢失上一行状态导致的错误。",
+      "steps": [
+        "注意到状态转移中‘字符相等’需要取上一行左上角的值，而不是当前行已更新的值。",
+        "在每一列计算前，先将这一列在数组中的旧值保存。",
+        "若字符相等，用这个旧值对应的左上角概念加1来更新；否则比较旧值和当前行上一列的新值。",
+        "更新完成后，把保存的旧值作为下一列的左上角。"
+      ],
+      "negative_example": "在相等分支写‘当前值等于当前值加1’，由于当前值在本轮已被覆盖，导致累加次数多于实际相等次数。",
+      "problem_family": [
+        "动态规划"
+      ],
+      "algorithm_tags": [
+        "滚动数组",
+        "调试"
+      ],
+      "constraints": [
+        "仅适用于状态依赖左上的场景"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-184016-acwing-899-dp-n-765047",
+      "source_verified": true,
+      "created_at": "2026-08-29T11:01:31.345591+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "0b4915167e3042089bf2438d5e8b316e",
+      "category": "optimization",
+      "granularity": "subtask",
+      "trigger": "LCS问题中两个字符串长度差异很大时，希望进一步减少空间占用。",
+      "content": "应始终以较短的字符串作为一维数组的维度，将较长字符串放在外层循环，使空间复杂度为O(min(n,m))。",
+      "purpose": "降低内存占用至最小可行。",
+      "steps": [
+        "先比较两个字符串长度，必要时交换，使后续列数为较短长度。",
+        "建立长度等于短串长度加一的数组。",
+        "外层循环遍历长串的每个字符，内层循环遍历短串每个字符，逻辑不变。"
+      ],
+      "negative_example": "固定用第一个字符串作为列维度，即使第一个字符串远长于第二个，导致空间浪费。",
+      "problem_family": [
+        "动态规划"
+      ],
+      "algorithm_tags": [
+        "空间优化",
+        "最长公共子序列"
+      ],
+      "constraints": [
+        "需要保持状态定义和转移不变"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-184016-acwing-899-dp-n-765047",
+      "source_verified": true,
+      "created_at": "2026-08-29T11:01:31.345591+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "671aaef037b14199ab7201c16645e1be",
+      "category": "strategy",
+      "granularity": "task",
+      "trigger": "使用Python编写判题或测试环境下的算法函数时，需要输出可比较的字符串结果。",
+      "content": "将整个解题逻辑封装为接收完整输入文本、返回结果字符串的函数，这样便于用pytest进行参数化测试和在线评测调用。",
+      "purpose": "使代码易测试、易复用。",
+      "steps": [
+        "定义函数，参数是完整输入字符串，返回值是结果字符串。",
+        "函数内部完成解析、计算、格式化，不要打印。",
+        "测试时用统一函数比较实际输出与期望输出。"
+      ],
+      "negative_example": "在函数内部直接print结果而不是return，导致测试脚本无法获得返回值。",
+      "problem_family": [
+        "编程题接口"
+      ],
+      "algorithm_tags": [
+        "函数封装",
+        "pytest"
+      ],
+      "constraints": [
+        "题目接口要求提交函数或程序时，此模式通用"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-184016-acwing-899-dp-n-765047",
+      "source_verified": true,
+      "created_at": "2026-08-29T11:01:31.345591+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "a408a100f2f5406b89de4dbf7f660e25",
+      "category": "strategy",
+      "granularity": "task",
+      "trigger": "给定三角形结构，从顶部到底部每次只能走到下一行相邻位置，求路径累计和的最值。",
+      "content": "采用自底向上的动态规划：从倒数第二行开始向上，每个位置累加下一行两个相邻位置的较大累计值，最终顶部位置就是全局最优解。",
+      "purpose": "用一次递推得到所有路径的最优累计和，避免贪心选择丢失全局最优。",
+      "steps": [
+        "将输入按空白符拆分，先读总行数，再按每行所需数字数量构造三角形。",
+        "从倒数第二行开始向上遍历每个位置，当前位置加上下一行两个相邻位置中的较大值。",
+        "返回三角形顶部位置的结果。"
+      ],
+      "negative_example": "从顶部开始每次都选较大的相邻数字，贪心路径可能不是全局最优。",
+      "problem_family": [
+        "数字三角形",
+        "路径最值动态规划"
+      ],
+      "algorithm_tags": [
+        "动态规划",
+        "自底向上",
+        "原地更新"
+      ],
+      "constraints": [
+        "总行数较大时平方级时间仍可接受",
+        "允许原地修改解析后的三角形数据"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-184200-acwing-900-dp-n-9cbe16",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:55:27.087992+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "bf485ec7f6a84e908b04950cced01322",
+      "category": "strategy",
+      "granularity": "subtask",
+      "trigger": "多行三角形输入中每行数字个数等于行号，且可能存在多余空格或不同换行符。",
+      "content": "使用按空白符整体切分的方法解析输入，先读总行数，再依次读取每行指定数量的数字。",
+      "purpose": "兼容不同的空白字符和行尾格式，减少输入解析错误。",
+      "steps": [
+        "将整个输入文本按空白符切分为令牌序列。",
+        "从序列中读取总行数。",
+        "循环读取每行所需数量的数字，构造成三角形。"
+      ],
+      "negative_example": "按换行逐行解析并假设每行恰好对应三角形的一行，遇到空行或额外空格时会失败。",
+      "problem_family": [
+        "输入解析",
+        "数字三角形"
+      ],
+      "algorithm_tags": [
+        "字符串处理",
+        "流式解析"
+      ],
+      "constraints": [
+        "输入由纯数字和空白符组成",
+        "每行数字个数与行号一致"
+      ],
+      "priority": 2,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-184200-acwing-900-dp-n-9cbe16",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:55:27.087992+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "41e3929c2c1c469a8b37423e2289bea9",
+      "category": "optimization",
+      "granularity": "subtask",
+      "trigger": "动态规划状态转移只依赖下一层相邻两个位置，且不再需要保留未更新的原始三角形数据。",
+      "content": "直接在已解析的三角形数据上原地累加，不额外创建同规模的二维状态表。",
+      "purpose": "将额外辅助空间降到常数级，整体空间只由输入存储决定。",
+      "steps": [
+        "解析输入得到三角形后，把底层视为初始状态。",
+        "从倒数第二层开始，用下一层两个相邻位置的较大累计值更新当前层。",
+        "当前层更新后不再需要原始值，因此可以直接覆盖。"
+      ],
+      "negative_example": "另开一张同规模的二维表记录每个位置的累计和，导致额外空间为平方级。",
+      "problem_family": [
+        "动态规划",
+        "空间优化"
+      ],
+      "algorithm_tags": [
+        "原地更新",
+        "空间优化"
+      ],
+      "constraints": [
+        "状态转移只依赖下一层",
+        "允许修改解析后的数据"
+      ],
+      "priority": 3,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-184200-acwing-900-dp-n-9cbe16",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:55:27.087992+00:00",
+      "retrieval_count": 1
+    },
+    {
+      "id": "5444562e671d47afb7c0300bb50a1d38",
+      "category": "strategy",
+      "granularity": "subtask",
+      "trigger": "三角形可能只有一行，且数字可能为负数。",
+      "content": "单行时不会进入向上递推循环，直接返回唯一位置的值；负数通过比较下一行两个相邻候选值中的较大者参与累加。",
+      "purpose": "正确处理单行输入和负数值，保证返回全局最大路径和。",
+      "steps": [
+        "读取并构造三角形后，先判断是否只有一行。",
+        "若只有一行，直接将该行的唯一值作为答案。",
+        "多行数据即便全为负数，也始终选择两个候选值中的较大者，不做非负过滤。"
+      ],
+      "negative_example": "累加前把负数替换成零，会改变路径选择并得到错误结果。",
+      "problem_family": [
+        "数字三角形",
+        "边界条件处理"
+      ],
+      "algorithm_tags": [
+        "动态规划",
+        "边界处理"
+      ],
+      "constraints": [
+        "三角形数字可能为负",
+        "总行数至少为 1"
+      ],
+      "priority": 4,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-184200-acwing-900-dp-n-9cbe16",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:55:27.087992+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "fae1acbc5f624baca7d2455f5dad5974",
+      "category": "recovery",
+      "granularity": "subtask",
+      "trigger": "竞赛题的字符串入口可能收到空文本，空文本上继续读取令牌会触发迭代结束异常。",
+      "content": "入口对输入文本按空白符切分后先做空判断；切分结果为空时直接返回空字符串，避免在空序列上读取令牌。",
+      "purpose": "将空输入转化为可预期的返回，而不是抛出底层迭代异常。",
+      "steps": [
+        "将输入文本按空白符切分。",
+        "若切分结果没有任何令牌，直接返回空字符串。",
+        "否则按顺序读取总行数和各层数字。"
+      ],
+      "negative_example": "不对空文本检查，直接在空的令牌序列上取第一个值，导致运行时异常。",
+      "problem_family": [
+        "输入处理",
+        "健壮性"
+      ],
+      "algorithm_tags": [
+        "防御性编程",
+        "输入校验"
+      ],
+      "constraints": [
+        "仅在输入为空时返回空字符串",
+        "非空但格式错误的输入仍暴露错误"
+      ],
+      "priority": 5,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-184200-acwing-900-dp-n-9cbe16",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:55:27.087992+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "fa82077c9fa14b2a8bb21319313b0d65",
+      "category": "strategy",
+      "granularity": "subtask",
+      "trigger": "需要把函数计算结果与期望输出比较，输出可能为整数且平台对换行符敏感。",
+      "content": "比较前将实际结果和期望结果都转为字符串，统一换行符并去掉末尾换行，再做精确比对。",
+      "purpose": "避免由整数与字符串类型差异或换行符差异导致的误判。",
+      "steps": [
+        "把实际结果转为字符串。",
+        "将字符串中的换行统一为标准换行符。",
+        "去掉末尾换行后与同样处理过的期望输出比较。"
+      ],
+      "negative_example": "直接比较原始输出字符串，未处理换行符差异或末尾换行，导致正确结果被判为不匹配。",
+      "problem_family": [
+        "输出验证",
+        "自动化测试"
+      ],
+      "algorithm_tags": [
+        "输出规范化",
+        "测试比较"
+      ],
+      "constraints": [
+        "期望输出与返回结果都表示同一语义",
+        "比较前不做截断或容错"
+      ],
+      "priority": 5,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-184200-acwing-900-dp-n-9cbe16",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:55:27.087992+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "aacddb170910441e9e1822819aa50335",
+      "category": "strategy",
+      "granularity": "task",
+      "trigger": "需要求整数序列的最长严格递增子序列长度，且序列规模较大或要求高效解法",
+      "content": "使用贪心表加二分：表中第 i 位保存长度为 i+1 的递增子序列的最小末尾元素；遇到新元素时，定位第一个不小于它的位置，若超出当前长度则追加，否则替换该位置。最终表长度即最长长度。",
+      "purpose": "在 O(n log n) 时间内求出严格递增 LIS 长度，避免 O(n^2) 动态规划超时",
+      "steps": [
+        "初始化空列表作为尾部最小元素表",
+        "遍历每个元素，用二分查找定位第一个不小于当前元素的位置",
+        "若位置等于当前长度则追加，否则用当前元素替换该位置",
+        "返回表长度作为答案"
+      ],
+      "negative_example": "对每个元素扫描全部已有尾部来更新长度，导致二次复杂度",
+      "problem_family": [
+        "最长递增子序列",
+        "序列动态规划"
+      ],
+      "algorithm_tags": [
+        "二分查找",
+        "贪心",
+        "LIS"
+      ],
+      "constraints": [
+        "严格递增",
+        "整数序列",
+        "较大规模时需保持 O(n log n)"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-182832-acwing-897-dp-n-5b9cc8",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:39:59.515715+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "97961aac8ec244a9a930f0a80b34f1e0",
+      "category": "strategy",
+      "granularity": "subtask",
+      "trigger": "用贪心表和二分实现最长严格递增子序列时，需要区分严格递增与不下降",
+      "content": "严格递增要求相等元素不能作为新的更长尾部；应插入到第一个不小于当前元素的位置。若定位到第一个大于当前元素的位置，相等元素会被追加，使全相等序列得到错误长度。",
+      "purpose": "保证相等元素不进入递增子序列，使输出符合严格递增题意",
+      "steps": [
+        "二分查找时选择第一个不小于当前元素的位置",
+        "若已有相等元素，用当前元素替换该位置而不是追加",
+        "若使用第一个大于当前元素的位置，需额外判断相等值并避免追加"
+      ],
+      "negative_example": "对全相等序列使用第一个大于当前元素的位置，得到大于 1 的错误长度",
+      "problem_family": [
+        "最长递增子序列"
+      ],
+      "algorithm_tags": [
+        "二分查找",
+        "严格递增"
+      ],
+      "constraints": [
+        "相等元素不能组成递增",
+        "需正确处理重复值"
+      ],
+      "priority": 2,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-182832-acwing-897-dp-n-5b9cc8",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:39:59.515715+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "cdb43c5ee57c472792b4fe3b73133bb1",
+      "category": "optimization",
+      "granularity": "subtask",
+      "trigger": "提交包含标准库二分等导入的 Python 算法题解时",
+      "content": "导入语句应放在文件顶部而非函数内部；虽然重复导入会被缓存，但顶部导入更符合常规代码风格，也让解法逻辑更清晰。",
+      "purpose": "提升代码可读性与可维护性，满足代码评审风格要求",
+      "steps": [
+        "在文件开头集中导入所需标准库",
+        "函数内只保留算法逻辑",
+        "提交前检查导入位置是否符合常规风格"
+      ],
+      "negative_example": "在求解函数内部每次执行导入语句",
+      "problem_family": [
+        "Python 提交",
+        "代码规范"
+      ],
+      "algorithm_tags": [
+        "代码质量"
+      ],
+      "constraints": [
+        "标准库导入",
+        "单文件提交"
+      ],
+      "priority": 3,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-182832-acwing-897-dp-n-5b9cc8",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:39:59.515715+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "3e3a21396b5f4d13877f340b1806002a",
+      "category": "optimization",
+      "granularity": "subtask",
+      "trigger": "为最长递增子序列实现编写本地测试时",
+      "content": "除常规用例，应补充空文本、长度为零、所有元素相等、严格递减、只有一个元素、含负数等场景；这些场景的期望输出分别是 0、0、1、1、1、正常 LIS 长度。",
+      "purpose": "在提交前发现严格递增与空输入处理问题，降低隐藏测试失败风险",
+      "steps": [
+        "构造空文本用例并断言返回 0",
+        "构造长度为零与单元素用例",
+        "构造全相等与严格递减用例，验证相等元素不被追加",
+        "构造包含负数的普通用例，验证大小比较不受影响"
+      ],
+      "negative_example": "只使用两个常规用例就认为覆盖充分",
+      "problem_family": [
+        "边界测试",
+        "最长递增子序列"
+      ],
+      "algorithm_tags": [
+        "测试用例设计"
+      ],
+      "constraints": [
+        "输入为空白分隔的单组数据",
+        "输出为长度字符串"
+      ],
+      "priority": 2,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-182832-acwing-897-dp-n-5b9cc8",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:39:59.515715+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "7fdd45e677bc4d12b5ee32c360ba2c2f",
+      "category": "strategy",
+      "granularity": "task",
+      "trigger": "给定按时间顺序排列的价格序列，最多允许一次买入和一次卖出，求最大利润。",
+      "content": "一趟扫描维护已出现过的最低价格和当前最大利润。每遇到一个新价格，用该价格减去历史最低价得到潜在利润并更新最大利润；若当前价格本身更低，则用它替换历史最低价，因为更低的买入价可能在未来带来更大收益。",
+      "purpose": "在线性时间内解决最多一次买卖的股票问题，避免枚举所有买卖区间。",
+      "steps": [
+        "若输入为空或天数小于 2，直接返回 0。",
+        "将第一个价格作为历史最低价，最大利润初始化为 0。",
+        "从第二个价格开始逐个处理：计算当前价格与历史最低价的差，若大于当前最大利润则更新最大利润；若当前价格低于历史最低价，则更新历史最低价。",
+        "扫描结束后返回最大利润。"
+      ],
+      "negative_example": "不要先求出全局最高价和最低价再相减，因为卖出必须在买入之后，全局最值会破坏时间顺序。",
+      "problem_family": [
+        "股票买卖",
+        "最大差值",
+        "动态规划入门"
+      ],
+      "algorithm_tags": [
+        "一次遍历",
+        "历史最值维护",
+        "动态规划"
+      ],
+      "constraints": [
+        "最多一次买入和卖出",
+        "每天最多买卖一次且只能持有一股",
+        "价格序列按时间顺序给出"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-182106-acwing-79-dp-n-eeb48b",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:28:16.656528+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "1ea54cfc754d43e280fc3b8e3cee43e8",
+      "category": "strategy",
+      "granularity": "subtask",
+      "trigger": "当输入天数不足两个交易日，或价格序列持续下降时。",
+      "content": "两个交易日才可能完成一次买卖，因此天数小于 2 时直接判定利润为 0；对于持续下降或全部相等的序列，最大利润的初始值保持 0，扫描过程中不会出现正利润，最终返回 0。",
+      "purpose": "正确处理无法获利的边界输入。",
+      "steps": [
+        "读取天数后，先判断天数是否小于 2，是则直接返回 0。",
+        "将最大利润初始化为 0，而不是负无穷或第一个差值。",
+        "扫描完所有价格后返回该最大利润。"
+      ],
+      "negative_example": "不要把最大利润初始化为负值，也不要在下降序列中输出负利润。",
+      "problem_family": [
+        "边界条件",
+        "序列问题"
+      ],
+      "algorithm_tags": [
+        "边界处理",
+        "初始化"
+      ],
+      "constraints": [
+        "无法获利时输出 0"
+      ],
+      "priority": 2,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-182106-acwing-79-dp-n-eeb48b",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:28:16.656528+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "d340707cceb049f796bdc56e66980444",
+      "category": "optimization",
+      "granularity": "task",
+      "trigger": "输入是带数量前缀的空格分隔数字序列，且最终结果只依赖扫描过程中的历史最值。",
+      "content": "可以流式处理数字：先读取数量，再读取第一个数字作为历史最低价，之后每读一个数字立即更新利润和最低价，无需保存完整序列。",
+      "purpose": "将辅助空间从 O(n) 降为 O(1)。",
+      "steps": [
+        "读取数量后，先读取第一个数字并记为历史最低价。",
+        "继续逐个读取后续数字：每读一个就计算利润并更新当前最大利润，同时判断是否需要更新历史最低价。",
+        "全部读取完后返回结果。"
+      ],
+      "negative_example": "不要先把全部数字解析成列表保存，再对列表做扫描；这样会带来不必要的 O(n) 空间占用。",
+      "problem_family": [
+        "输入解析",
+        "空间优化"
+      ],
+      "algorithm_tags": [
+        "流式处理",
+        "O(1) 辅助空间"
+      ],
+      "constraints": [
+        "输入中数字数量与声明数量一致",
+        "只需要一个最终聚合结果"
+      ],
+      "priority": 2,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-182106-acwing-79-dp-n-eeb48b",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:28:16.656528+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "52552689e22c47cb9469ae1914be1a59",
+      "category": "recovery",
+      "granularity": "subtask",
+      "trigger": "按空格解析带数量前缀的序列时，声明数量大于实际剩余数字个数，导致访问第一个元素或取子序列时出现索引越界。",
+      "content": "在访问第一个数字或构造子序列前，先校验剩余数字个数是否达到声明数量；若不足，应按不可获利返回 0，或只按实际可用数字处理，避免越界。",
+      "purpose": "修复由畸形输入引发的索引越界问题。",
+      "steps": [
+        "用空格分割输入后，先计算除数量外剩余数字的个数。",
+        "若剩余数字个数小于声明数量，直接返回 0 或做容错处理。",
+        "若数字充足，则只取声明数量的前若干个数字继续计算。"
+      ],
+      "negative_example": "不要不检查长度就直接读取第一个数字或直接取前 n 个，否则在数量不足时会触发索引越界。",
+      "problem_family": [
+        "输入校验",
+        "健壮性"
+      ],
+      "algorithm_tags": [
+        "防御性编程",
+        "数组越界"
+      ],
+      "constraints": [
+        "标准测试通常保证数量一致",
+        "畸形输入下应优雅失败而非崩溃"
+      ],
+      "priority": 3,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-182106-acwing-79-dp-n-eeb48b",
+      "source_verified": true,
+      "created_at": "2026-08-29T10:28:16.656528+00:00",
+      "retrieval_count": 1
+    },
+    {
+      "id": "a3c033c852ff45f5ba67dd6fa748222f",
+      "category": "strategy",
+      "granularity": "task",
+      "trigger": "给定一个价格序列，要求最多进行一次买入和一次卖出，且卖出必须在买入之后，求最大利润",
+      "content": "用一次遍历维护两个状态：当前见过的最低价格，以及当前可能的最大利润。每读到一个新价格，先以它为卖出价更新最大利润，再将它用于更新最低价格，从而自然保证卖出发生在买入之后。",
+      "purpose": "在线性时间内求出单笔交易的最大利润，同时避免发生先卖后买的无效交易。",
+      "steps": [
+        "将第一个价格作为初始最低价格，最大利润初始化为0。",
+        "从第二个价格开始逐个处理。",
+        "对每个价格，先计算当前价格减最低价格的收益，并更新最大利润。",
+        "再用当前价格更新最低价格。",
+        "若序列长度小于2或最大利润无法为正，则返回0。"
+      ],
+      "negative_example": "先找出全局最高价和全局最低价后直接相减，可能选到买入日位于卖出日之后的无效交易。",
+      "problem_family": [
+        "股票买卖",
+        "一维序列极值"
+      ],
+      "algorithm_tags": [
+        "一次遍历",
+        "贪心"
+      ],
+      "constraints": [
+        "只能持有一股",
+        "最多一次买入和一次卖出",
+        "无利润输出0"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-170740-acwing-79-dp-n-dff6c4",
+      "source_verified": true,
+      "created_at": "2026-08-29T09:25:07.001268+00:00",
+      "retrieval_count": 1
+    },
+    {
+      "id": "aa5f0d57686c4810af6008c0b5bdf374",
+      "category": "optimization",
+      "granularity": "subtask",
+      "trigger": "输入文本以n开头且后续给出n个整数，解法只需从左到右处理一遍，不需要回头访问历史数据",
+      "content": "解析输入时不必先把全部数值存入列表，可以边读边更新当前最低价格和当前最大利润，使辅助空间从O(n)降至O(1)。",
+      "purpose": "在数据量较大时降低内存占用，同时保持函数接口不变。",
+      "steps": [
+        "读取n和第一个价格后立即初始化状态。",
+        "依次读取剩余价格，每读一个立即执行收益更新和最低价格更新。",
+        "多余输入令牌在合法输入前提下可忽略。"
+      ],
+      "negative_example": "先把所有价格完整保存在数组中，再从头遍历计算，造成不必要的额外空间。",
+      "problem_family": [
+        "输入处理",
+        "在线计算"
+      ],
+      "algorithm_tags": [
+        "空间优化",
+        "边读边算"
+      ],
+      "constraints": [
+        "输入是空格或换行分隔的整数",
+        "n为整数且输入合法"
+      ],
+      "priority": 2,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-170740-acwing-79-dp-n-dff6c4",
+      "source_verified": true,
+      "created_at": "2026-08-29T09:25:07.001268+00:00",
+      "retrieval_count": 1
+    },
+    {
+      "id": "4f232003777f4afdb601989cf4e9e6e1",
+      "category": "strategy",
+      "granularity": "subtask",
+      "trigger": "处理以纯文本形式传入的n和价格序列，需要返回字符串型结果，且需覆盖空输入和n极小的边界情况",
+      "content": "先按空白字符切分并判断输入是否为空；若n小于2，则无法完成一次完整的买入卖出，直接返回0。若价格个数不足n或多余n，在在线评测输入合法前提下可按不足时暴露异常、多余时忽略处理。",
+      "purpose": "保证空输入、n为0或1、价格全程不涨等边界情况不产生异常或错误结果。",
+      "steps": [
+        "对输入文本做空白切分，若切分后为空则返回0。",
+        "读取n；若n小于2，直接返回0。",
+        "继续读取n个价格并计算；价格不足n个时可返回0或让异常暴露，按评测约定决定。"
+      ],
+      "negative_example": "不检查空输入和n小于2的情况，直接取第一个价格作为初始值，导致空输入报错或单元素序列结果错误。",
+      "problem_family": [
+        "输入解析",
+        "边界条件"
+      ],
+      "algorithm_tags": [
+        "防御性编程",
+        "字符串解析"
+      ],
+      "constraints": [
+        "输出必须为字符串",
+        "在线评测输入通常合法"
+      ],
+      "priority": 3,
+      "quality_score": 0.85,
+      "source_run_id": "20260829-170740-acwing-79-dp-n-dff6c4",
+      "source_verified": true,
+      "created_at": "2026-08-29T09:25:07.001268+00:00",
+      "retrieval_count": 1
+    },
     {
       "id": "ffa4ff710f75447989535a20d883b042",
       "category": "strategy",
@@ -31,7 +964,7 @@
       "source_run_id": "20260829-142517-acwing-3-dp-n-6c3275",
       "source_verified": true,
       "created_at": "2026-08-29T06:31:57.558341+00:00",
-      "retrieval_count": 1
+      "retrieval_count": 9
     },
     {
       "id": "073cec797413499f84f3c19fbacc1c4a",
@@ -63,7 +996,7 @@
       "source_run_id": "20260829-142517-acwing-3-dp-n-6c3275",
       "source_verified": true,
       "created_at": "2026-08-29T06:31:57.558341+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "e18e6829d91d4cfcb28f29ded817fd6f",
@@ -92,7 +1025,7 @@
       "source_run_id": "20260829-142517-acwing-3-dp-n-6c3275",
       "source_verified": true,
       "created_at": "2026-08-29T06:31:57.558341+00:00",
-      "retrieval_count": 1
+      "retrieval_count": 8
     },
     {
       "id": "a9bdbb77c067435c8e8c2d050afa6ab7",
@@ -124,7 +1057,7 @@
       "source_run_id": "20260829-142517-acwing-3-dp-n-6c3275",
       "source_verified": true,
       "created_at": "2026-08-29T06:31:57.558186+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 4
     },
     {
       "id": "fbefa4cbdfed4e04800c16c2bea02c85",
@@ -153,7 +1086,7 @@
       "source_run_id": "20260829-142517-acwing-3-dp-n-6c3275",
       "source_verified": true,
       "created_at": "2026-08-29T06:31:57.558186+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 5
     },
     {
       "id": "ef15928c9e9d41f884279169d373be98",
@@ -184,7 +1117,7 @@
       "source_run_id": "20260829-142517-acwing-3-dp-n-6c3275",
       "source_verified": true,
       "created_at": "2026-08-29T06:31:57.558186+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "29c533ab68bb4841806c199c0c7d2ac2",
@@ -216,7 +1149,7 @@
       "source_run_id": "20260829-141840-acwing-2-dp-n-ad4dcb",
       "source_verified": true,
       "created_at": "2026-08-29T06:20:16.397325+00:00",
-      "retrieval_count": 1
+      "retrieval_count": 7
     },
     {
       "id": "8e92f290e80a41239c3f6243f61daadd",
@@ -246,7 +1179,7 @@
       "source_run_id": "20260829-141840-acwing-2-dp-n-ad4dcb",
       "source_verified": true,
       "created_at": "2026-08-29T06:20:16.397325+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 3
     },
     {
       "id": "0e1d7358f9fa47cf866d413857c11675",
@@ -276,7 +1209,7 @@
       "source_run_id": "20260829-141840-acwing-2-dp-n-ad4dcb",
       "source_verified": true,
       "created_at": "2026-08-29T06:20:16.397325+00:00",
-      "retrieval_count": 2
+      "retrieval_count": 12
     },
     {
       "id": "86c9141a4f694f4f9d6085da37c8dd01",
@@ -306,7 +1239,7 @@
       "source_run_id": "20260829-141840-acwing-2-dp-n-ad4dcb",
       "source_verified": true,
       "created_at": "2026-08-29T06:20:16.397325+00:00",
-      "retrieval_count": 1
+      "retrieval_count": 6
     },
     {
       "id": "36f453821d0a420bb691d03b3484f9f4",
@@ -335,7 +1268,7 @@
       "source_run_id": "20260829-141840-acwing-2-dp-n-ad4dcb",
       "source_verified": true,
       "created_at": "2026-08-29T06:20:16.397325+00:00",
-      "retrieval_count": 1
+      "retrieval_count": 9
     },
     {
       "id": "cc6cfd11bfa24fe693b4563b4ddaf852",
@@ -369,6 +1302,116 @@
     }
   ],
   "edges": [
+    {
+      "source": "8ad888b71c3a489eb174e383ceee3242",
+      "target": "7c0bd33ebd35481da1c8160ce09bfe4e",
+      "kind": "solid"
+    },
+    {
+      "source": "8ad888b71c3a489eb174e383ceee3242",
+      "target": "3eca3fdb65cb42f78a299ee22c4eb302",
+      "kind": "solid"
+    },
+    {
+      "source": "4d5c2486b9134c97a1b1d7b9802404e0",
+      "target": "4eff6ade7f7f4efa9be76b3c1c3dc195",
+      "kind": "solid"
+    },
+    {
+      "source": "4d5c2486b9134c97a1b1d7b9802404e0",
+      "target": "24a574748c8440f5b85d96fa8e942d55",
+      "kind": "solid"
+    },
+    {
+      "source": "d7c7fb93e4af47c293608fc573f63c4e",
+      "target": "e66cfbe96a784556b9b64e6c84368f82",
+      "kind": "solid"
+    },
+    {
+      "source": "d7c7fb93e4af47c293608fc573f63c4e",
+      "target": "86cd56d4c7354344b78f295cfa070ad1",
+      "kind": "solid"
+    },
+    {
+      "source": "d7c7fb93e4af47c293608fc573f63c4e",
+      "target": "e118ab6b9437440698596c5d09d96843",
+      "kind": "solid"
+    },
+    {
+      "source": "d7c7fb93e4af47c293608fc573f63c4e",
+      "target": "0b4915167e3042089bf2438d5e8b316e",
+      "kind": "solid"
+    },
+    {
+      "source": "d7c7fb93e4af47c293608fc573f63c4e",
+      "target": "671aaef037b14199ab7201c16645e1be",
+      "kind": "solid"
+    },
+    {
+      "source": "a408a100f2f5406b89de4dbf7f660e25",
+      "target": "bf485ec7f6a84e908b04950cced01322",
+      "kind": "solid"
+    },
+    {
+      "source": "a408a100f2f5406b89de4dbf7f660e25",
+      "target": "41e3929c2c1c469a8b37423e2289bea9",
+      "kind": "solid"
+    },
+    {
+      "source": "a408a100f2f5406b89de4dbf7f660e25",
+      "target": "5444562e671d47afb7c0300bb50a1d38",
+      "kind": "solid"
+    },
+    {
+      "source": "a408a100f2f5406b89de4dbf7f660e25",
+      "target": "fae1acbc5f624baca7d2455f5dad5974",
+      "kind": "solid"
+    },
+    {
+      "source": "a408a100f2f5406b89de4dbf7f660e25",
+      "target": "fa82077c9fa14b2a8bb21319313b0d65",
+      "kind": "solid"
+    },
+    {
+      "source": "aacddb170910441e9e1822819aa50335",
+      "target": "97961aac8ec244a9a930f0a80b34f1e0",
+      "kind": "solid"
+    },
+    {
+      "source": "aacddb170910441e9e1822819aa50335",
+      "target": "cdb43c5ee57c472792b4fe3b73133bb1",
+      "kind": "solid"
+    },
+    {
+      "source": "aacddb170910441e9e1822819aa50335",
+      "target": "3e3a21396b5f4d13877f340b1806002a",
+      "kind": "solid"
+    },
+    {
+      "source": "7fdd45e677bc4d12b5ee32c360ba2c2f",
+      "target": "1ea54cfc754d43e280fc3b8e3cee43e8",
+      "kind": "solid"
+    },
+    {
+      "source": "7fdd45e677bc4d12b5ee32c360ba2c2f",
+      "target": "d340707cceb049f796bdc56e66980444",
+      "kind": "solid"
+    },
+    {
+      "source": "7fdd45e677bc4d12b5ee32c360ba2c2f",
+      "target": "52552689e22c47cb9469ae1914be1a59",
+      "kind": "solid"
+    },
+    {
+      "source": "a3c033c852ff45f5ba67dd6fa748222f",
+      "target": "aa5f0d57686c4810af6008c0b5bdf374",
+      "kind": "solid"
+    },
+    {
+      "source": "a3c033c852ff45f5ba67dd6fa748222f",
+      "target": "4f232003777f4afdb601989cf4e9e6e1",
+      "kind": "solid"
+    },
     {
       "source": "073cec797413499f84f3c19fbacc1c4a",
       "target": "ffa4ff710f75447989535a20d883b042",
@@ -420,16 +1463,94 @@
       "kind": "solid"
     },
     {
+      "source": "7fdd45e677bc4d12b5ee32c360ba2c2f",
+      "target": "a3c033c852ff45f5ba67dd6fa748222f",
+      "kind": "dotted",
+      "similarity": 0.924
+    },
+    {
+      "source": "7c0bd33ebd35481da1c8160ce09bfe4e",
+      "target": "073cec797413499f84f3c19fbacc1c4a",
+      "kind": "dotted",
+      "similarity": 0.7887
+    },
+    {
       "source": "a9bdbb77c067435c8e8c2d050afa6ab7",
       "target": "29c533ab68bb4841806c199c0c7d2ac2",
       "kind": "dotted",
       "similarity": 0.7854
     },
     {
+      "source": "8ad888b71c3a489eb174e383ceee3242",
+      "target": "a9bdbb77c067435c8e8c2d050afa6ab7",
+      "kind": "dotted",
+      "similarity": 0.7487
+    },
+    {
       "source": "073cec797413499f84f3c19fbacc1c4a",
       "target": "29c533ab68bb4841806c199c0c7d2ac2",
       "kind": "dotted",
       "similarity": 0.7264
+    },
+    {
+      "source": "8ad888b71c3a489eb174e383ceee3242",
+      "target": "29c533ab68bb4841806c199c0c7d2ac2",
+      "kind": "dotted",
+      "similarity": 0.7112
+    },
+    {
+      "source": "d340707cceb049f796bdc56e66980444",
+      "target": "a3c033c852ff45f5ba67dd6fa748222f",
+      "kind": "dotted",
+      "similarity": 0.7058
+    },
+    {
+      "source": "7c0bd33ebd35481da1c8160ce09bfe4e",
+      "target": "86cd56d4c7354344b78f295cfa070ad1",
+      "kind": "dotted",
+      "similarity": 0.6854
+    },
+    {
+      "source": "24a574748c8440f5b85d96fa8e942d55",
+      "target": "aacddb170910441e9e1822819aa50335",
+      "kind": "dotted",
+      "similarity": 0.6024
+    },
+    {
+      "source": "4d5c2486b9134c97a1b1d7b9802404e0",
+      "target": "a408a100f2f5406b89de4dbf7f660e25",
+      "kind": "dotted",
+      "similarity": 0.589
+    },
+    {
+      "source": "24a574748c8440f5b85d96fa8e942d55",
+      "target": "a408a100f2f5406b89de4dbf7f660e25",
+      "kind": "dotted",
+      "similarity": 0.5831
+    },
+    {
+      "source": "86cd56d4c7354344b78f295cfa070ad1",
+      "target": "671aaef037b14199ab7201c16645e1be",
+      "kind": "dotted",
+      "similarity": 0.5625
+    },
+    {
+      "source": "a408a100f2f5406b89de4dbf7f660e25",
+      "target": "d340707cceb049f796bdc56e66980444",
+      "kind": "dotted",
+      "similarity": 0.5406
+    },
+    {
+      "source": "4d5c2486b9134c97a1b1d7b9802404e0",
+      "target": "aacddb170910441e9e1822819aa50335",
+      "kind": "dotted",
+      "similarity": 0.5391
+    },
+    {
+      "source": "aacddb170910441e9e1822819aa50335",
+      "target": "7fdd45e677bc4d12b5ee32c360ba2c2f",
+      "kind": "dotted",
+      "similarity": 0.4765
     }
   ]
 }

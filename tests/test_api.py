@@ -39,7 +39,7 @@ def test_test_file_is_described_to_coding_agent():
 
 
 def test_generate_test_cases_endpoint_uses_selected_model(monkeypatch):
-    model_name = "openai/zai-org/GLM-5.2"
+    model_name = "openai/deepseek-ai/DeepSeek-V4-Flash"
     monkeypatch.setattr(api_module, "_build_model", lambda selected_model, config: StaticTextModel())
 
     response = TestClient(app).post(
@@ -54,21 +54,22 @@ def test_generate_test_cases_endpoint_uses_selected_model(monkeypatch):
     assert payload["cases"][0]["input"] == "a1b2"
 
 
-def test_only_glm_52_model_is_accepted(monkeypatch):
-    monkeypatch.setenv("OPENAI_API_KEY", "glm-test-key")
+def test_only_deepseek_v4_flash_model_is_accepted(monkeypatch):
+    monkeypatch.delenv("SILICONFLOW_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "deepseek-test-key")
     monkeypatch.setenv("OPENAI_API_BASE", "https://api.siliconflow.cn/v1")
     config = {"model": {"max_retries": 3, "model_kwargs": {"drop_params": True}}}
 
-    model = _build_model("openai/zai-org/GLM-5.2", config)
+    model = _build_model("openai/deepseek-ai/DeepSeek-V4-Flash", config)
 
-    assert model.config.model_kwargs["api_key"] == "glm-test-key"
+    assert model.config.model_kwargs["api_key"] == "deepseek-test-key"
     assert model.config.model_kwargs["api_base"] == "https://api.siliconflow.cn/v1"
 
 
 def test_model_requests_have_a_default_timeout():
     config = {"model": {"max_retries": 3, "model_kwargs": {}}}
 
-    model = _build_model("openai/zai-org/GLM-5.2", config)
+    model = _build_model("openai/deepseek-ai/DeepSeek-V4-Flash", config)
 
     assert model.config.model_kwargs["timeout"] == 120
 
@@ -77,17 +78,17 @@ def test_other_model_is_rejected():
     config = {"model": {"max_retries": 3, "model_kwargs": {"drop_params": True}}}
 
     try:
-        _build_model("openai/deepseek-ai/DeepSeek-V4-Pro", config)
+        _build_model("openai/other-provider/Other", config)
     except ValueError as error:
-        assert "GLM-5.2" in str(error)
+        assert "DeepSeek-V4-Flash" in str(error)
     else:
-        raise AssertionError("Non-GLM model should be rejected")
+        raise AssertionError("Non-DeepSeek model should be rejected")
 
 
 def test_generate_test_cases_endpoint_rejects_other_model():
     response = TestClient(app).post(
         "/api/test-cases/generate",
-        json={"task": "字符移动", "model": "openai/deepseek-ai/DeepSeek-V4-Pro", "count": 2},
+        json={"task": "字符移动", "model": "openai/other-provider/Other", "count": 2},
     )
 
     assert response.status_code == 422
