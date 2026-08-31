@@ -18,6 +18,9 @@ export const RUN_EVENT_TYPES = [
   "review_finished",
   "memory_retrieval_started",
   "memory_retrieval_finished",
+  "memory_route_decided",
+  "memory_relevance_graded",
+  "memory_query_rewritten",
   "memory_context_injected",
   "memory_learning_started",
   "memory_learning_finished",
@@ -44,6 +47,9 @@ const eventLabels: Record<string, string> = {
   review_finished: "代码评审完成",
   memory_retrieval_started: "开始记忆检索",
   memory_retrieval_finished: "记忆检索完成",
+  memory_route_decided: "记忆路由决策",
+  memory_relevance_graded: "记忆相关性评估",
+  memory_query_rewritten: "重写记忆查询",
   memory_context_injected: "经验已注入模型",
   memory_learning_started: "开始提炼经验",
   memory_learning_finished: "经验已持久化",
@@ -84,6 +90,12 @@ export function toTraceEvent(event: RunEvent, index: number): TraceEvent {
     summary = `${data.phase === "recovery" ? "失败恢复" : "任务"}记忆检索中`;
   } else if (type === "memory_retrieval_finished") {
     summary = `召回 ${data.candidate_count ?? 0} 条候选，选中 ${Array.isArray(data.selected) ? data.selected.length : 0} 条`;
+  } else if (type === "memory_route_decided") {
+    summary = `${data.action === "skip" ? "跳过" : "开始检索"}：${String(data.reason ?? "")}`;
+  } else if (type === "memory_relevance_graded") {
+    summary = `${data.relevant ? "经验可使用" : "经验不适用"}：${String(data.reason ?? "")}`;
+  } else if (type === "memory_query_rewritten") {
+    summary = `第 ${data.attempt ?? 1} 次重写查询`;
   } else if (type === "memory_context_injected") {
     summary = `${data.phase === "recovery" ? "恢复" : "任务"}经验已加入模型上下文`;
   } else if (type === "memory_learning_started") {

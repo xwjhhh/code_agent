@@ -52,5 +52,8 @@ def build_memory_manager(
         selected_limit=memory.get("selected_limit", 4),
         min_similarity=memory.get("min_similarity", 0.35),
         rerank_with_llm=memory.get("rerank_with_llm", True),
+        route_with_llm=memory.get("route_with_llm", True),
+        grade_with_llm=memory.get("grade_with_llm", True),
+        max_query_rewrites=memory.get("max_query_rewrites", 2),
     )
     return MemoryManager(model, embedder, MemoryStore(database_path), manager_config, event_callback)

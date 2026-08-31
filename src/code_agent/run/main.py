@@ -155,7 +155,7 @@ def _retrieve_task_memory(memory_manager: Any, task: str) -> str:
     if memory_manager is None:
         return ""
     try:
-        return memory_manager.retrieve_for_task(task).context
+        return memory_manager.retrieve_agentic(task).context
     except Exception as error:
         print(f"Memory retrieval skipped: {error}")
         return ""

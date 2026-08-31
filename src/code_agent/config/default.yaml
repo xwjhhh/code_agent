@@ -48,3 +48,6 @@ memory:
   selected_limit: 4
   min_similarity: 0.35
   rerank_with_llm: true
+  route_with_llm: true
+  grade_with_llm: true
+  max_query_rewrites: 2

@@ -156,3 +156,79 @@ def test_empty_store_skips_model_and_embedding_calls(tmp_path: Path):
 
     assert retrieval.context == ""
     assert retrieval.selected == []
+
+
+class AgenticMemoryModel:
+    def __init__(self, grades: list[bool]):
+        self.grades = iter(grades)
+        self.calls: list[str] = []
+
+    def query_text(self, messages, **kwargs):
+        prompt = messages[-1]["content"]
+        self.calls.append(prompt)
+        if "判断是否需要检索" in prompt:
+            return json.dumps({"action": "retrieve", "query": "sliding window rewritten", "reason": "可能复用窗口维护经验"})
+        if "Analyze this programming problem" in prompt:
+            return json.dumps({
+                "task_query": "minimum window problem",
+                "subtask_queries": ["maintain a sliding window"],
+                "problem_family": ["array"],
+                "algorithm_tags": ["sliding-window"],
+            })
+        if "返回一个更具体" in prompt:
+            return json.dumps({"query": "sliding window invariant and boundary handling"})
+        if "召回经验" in prompt:
+            return json.dumps({"relevant": next(self.grades), "score": 0.9, "reason": "与当前问题的窗口约束一致"})
+        raise AssertionError(prompt)
+
+
+def test_agentic_retrieval_rewrites_when_grade_rejects(tmp_path: Path):
+    model = AgenticMemoryModel([False, True])
+    events: list[tuple[str, dict]] = []
+    manager = MemoryManager(
+        model,
+        FakeEmbedder(),
+        MemoryStore(tmp_path / "memory.sqlite3"),
+        MemoryManagerConfig(rerank_with_llm=False, min_similarity=0.0, max_query_rewrites=2),
+        event_callback=lambda event_type, data: events.append((event_type, data)),
+    )
+    memory = node()
+    manager.store.add(memory)
+
+    retrieval = manager.retrieve_agentic("find a minimum window in a positive array")
+
+    assert retrieval.grade_relevant is True
+    assert retrieval.rewrite_count == 1
+    assert retrieval.selected
+    assert any("返回一个更具体" in prompt for prompt in model.calls)
+    assert [event_type for event_type, _ in events].count("memory_route_decided") == 1
+    assert [event_type for event_type, _ in events].count("memory_relevance_graded") == 2
+    assert [event_type for event_type, _ in events].count("memory_query_rewritten") == 1
+
+
+def test_agentic_route_can_skip_non_retrieval(tmp_path: Path):
+    class SkipModel:
+        def query_text(self, messages, **kwargs):
+            return json.dumps({"action": "skip", "query": "", "reason": "无需历史经验"})
+
+    class FailingEmbedder:
+        config = SimpleNamespace(model="test")
+
+        def embed(self, texts):
+            raise AssertionError("skip route must not embed")
+
+    store = MemoryStore(tmp_path / "memory.sqlite3")
+    memory = node()
+    store.add(memory)
+    manager = MemoryManager(
+        SkipModel(),
+        FailingEmbedder(),
+        store,
+        MemoryManagerConfig(),
+    )
+
+    retrieval = manager.retrieve_agentic("write a hello world program")
+
+    assert retrieval.route_action == "skip"
+    assert retrieval.grade_relevant is None
+    assert retrieval.context == ""

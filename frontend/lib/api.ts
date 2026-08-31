@@ -30,9 +30,16 @@ export type MemoryRetrieval = {
   queries: { granularity: MemoryGranularity; category?: MemoryCategory | null; text: string }[];
   candidate_count: number;
   selected: MemoryNode[];
+  route_action?: "retrieve" | "skip" | null;
+  route_reason?: string;
+  grade_relevant?: boolean | null;
+  grade_reason?: string;
+  grade_score?: number | null;
+  rewrite_count?: number;
 };
 export type RunMemory = {
   enabled?: boolean;
+  retrieval_skipped?: boolean;
   task_retrieval?: MemoryRetrieval;
   recovery_retrievals?: MemoryRetrieval[];
   learned?: MemoryNode[];

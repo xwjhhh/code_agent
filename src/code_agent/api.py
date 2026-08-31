@@ -473,7 +473,7 @@ def _retrieve_task_memory(manager: MemoryManager | None, state: RunState, task: 
         return ""
     state.memory["enabled"] = True
     try:
-        retrieval = manager.retrieve_for_task(task)
+        retrieval = manager.retrieve_agentic(task)
     except Exception as error:
         state.emit("memory_error", {"phase": "task", "error": str(error)})
         state.memory["task_retrieval_error"] = str(error)

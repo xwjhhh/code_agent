@@ -5,6 +5,7 @@ from code_agent.memory.factory import build_memory_manager, resolve_embedding_ap
 from code_agent.memory.manager import MemoryManager, MemoryManagerConfig, MemoryRetrieval
 from code_agent.memory.schemas import MemoryNode, MemoryQuery, RetrievedMemory
 from code_agent.memory.store import MemoryStore, cosine_similarity
+from code_agent.memory.router import MemoryRelevance, MemoryRoute, MemoryRouter, MemoryRelevanceGrader
 
 __all__ = [
     "MemoryManager",
@@ -12,6 +13,10 @@ __all__ = [
     "MemoryNode",
     "MemoryQuery",
     "MemoryRetrieval",
+    "MemoryRoute",
+    "MemoryRelevance",
+    "MemoryRouter",
+    "MemoryRelevanceGrader",
     "MemoryStore",
     "RetrievedMemory",
     "SiliconFlowEmbeddingClient",
