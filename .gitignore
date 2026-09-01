@@ -19,3 +19,12 @@ trajectories/*
 
 memory_store/*
 !memory_store/.gitkeep
+
+# Local benchmark and debug outputs
+scripts/*_results.json
+scripts/*_result.json
+scripts/*_summary.json
+scripts/*.csv
+scripts/*.log
+dashboard-check.png
+memory_dump_ascii.txt
