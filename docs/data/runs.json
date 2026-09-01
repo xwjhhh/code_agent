@@ -1,7 +1,41 @@
 {
-  "generated_at": "2026-08-29T14:11:35.364353+00:00",
-  "count": 91,
+  "generated_at": "2026-09-01T07:29:11.359306+00:00",
+  "count": 93,
   "items": [
+    {
+      "run_id": "20260831-172447-128-nums-o-n-eb9abb",
+      "task": "128. 最长连续序列\n\n给定一个未排序的整数数组 nums ，找出数字连续的最长序列（不要求序列元素在原数组中连续）的长度。\n\n请你设计并实现时间复杂度为 O(n) 的算法解决此问题。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 4,
+      "created_at": "2026-08-31T09:24:47.799047+00:00",
+      "test_case_count": 6,
+      "last_test_output": "",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    nums = json.loads(input_text.strip())\n    num_set = set(nums)\n    best = 0\n    for n in num_set:\n        # Only start counting from the beginning of a sequence.\n        if n - 1 not in num_set:\n            length = 1\n            while n + length in num_set:\n                length += 1\n            best = max(best, length)\n    return str(best)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.Timeout: APITimeoutError - Request timed out. Error_str: Request timed out."
+    },
+    {
+      "run_id": "20260831-092710-n-n-922792",
+      "task": "??????,????????????????? n,????? n ????????;?????????",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-08-31T01:27:10.683928+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.04s\n",
+      "solution_code": "def solve(input_text: str) -> str:\n    \"\"\"Return the maximum sum of a contiguous non-empty subarray.\n\n    Input format:\n      first line: integer n\n      second line: n integers\n    \"\"\"\n    tokens = input_text.split()\n    if not tokens:\n        return \"\"\n    n = int(tokens[0])\n    nums = [int(x) for x in tokens[1:1 + n]]\n\n    best = nums[0]\n    cur = nums[0]\n    for x in nums[1:]:\n        cur = max(x, cur + x)\n        best = max(best, cur)\n    return str(best)\n",
+      "review": {
+        "status": "completed",
+        "content": "### 1. Algorithm approach\n\n该解法使用 **Kadane 算法**（动态规划）求解最大非空连续子数组和：\n\n- 用 `cur` 记录以当前位置结尾的最大子数组和；\n- 用 `best` 记录全局最大子数组和；\n- 遍历时，对每个元素 `x`，更新：\n  - `cur = max(x, cur + x)`：要么从当前元素重新开始，要么把当前元素接到之前的子数组后面；\n  - `best = max(best, cur)`：更新全局最优值。\n\n初始值均设为 `nums[0]`，保证子数组非空，且能正确处理所有元素均为负数的情况。\n\n### 2. Time and space complexity\n\n- **时间复杂度**：O(n)，只需一次线性遍历；\n- **空间复杂度**：O(1)，只使用了常数个额外变量（`best`、`cur` 和循环变量）。\n\n### 3. Boundary cases\n\n- **所有元素均为负数**：例如 `[-1, -2]`，返回 `-1`，符合“非空子数组”的要求；\n- **只有一个元素**：直接返回该元素；\n- **最大子数组位于数组中间**：Kadane 算法能正确捕获；\n- **输入为空文本**：`tokens` 为空时返回空字符串，但若 `n=0` 或 `tokens[0]` 存在而实际提供元素不足，会抛出 `IndexError`；\n- **n 与第二行元素数量不一致**：代码只读取前 `n` 个，忽略多余元素；若元素不足则报错。\n\n### 4. Test coverage\n\n本地测试用例仅两个：\n\n1. `\"1 2 3\"` → 输出 `6`，覆盖全正数情况；\n2. `\"10 -2 -3 5\"` → 输出 `10`，覆盖最优解为单个正数、中间存在负数拖累的情况。\n\n本地执行结果为：\n\n```\n..                                                                       [100%]\n2 passed in 0.04s\n```\n\n这表明给定的两个权威用例验证通过。但这两例未覆盖全负数、单元素、空输入等边界场景，因此不能据此推断所有隐藏测试均能通过。\n\n### 5. Potential risks and code quality\n\n- **未处理 `n=0` 或空数组**：若输入第一行为 `0`，代码会因 `nums[0]` 索引越界而崩溃。题目描述未明确说明 `n` 的最小值，但稳妥做法应在访问前检查 `nums` 是否为空。\n- **假设输入格式严格**：若第二行提供的整数少于 `n`，会抛出异常；若多余则被忽略，行为较为宽松。\n- **代码简洁清晰**：Kadane 算法实现标准，变量命名直观，返回类型为字符串，符合 `solve` 接口要求。\n- **鲁棒性建议**：可在 `nums` 为空时返回 `\"0\"`（若允许空子数组）或 `\"\"`（保持非空语义），但需与题目定义保持一致。\n\n总体而言，算法核心正确且高效，仅需注意输入异常的边界处理。"
+      },
+      "error": null
+    },
     {
       "run_id": "20260829-211418-acwing-514-dp-0-c4d8e2",
       "task": "【AcWing 514，DP-困难】小鸟初始高度为 0，每次可将高度增加 x，或不操作而下降 y；经过 n 个位置，每个位置有允许高度区间 [l_i,r_i]，超出即失败。输入 n x y 及 n 行 l r，求到达终点的最少上升操作次数，无法到达输出 -1。",

@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from code_agent.memory.consolidator import MemoryConsolidator
 from code_agent.memory.embedding import SiliconFlowEmbeddingClient
+from code_agent.memory.episodes import RecoveryEpisodeBuilder
 from code_agent.memory.extractor import ExperienceExtractor
 from code_agent.memory.formatter import format_memory_context
 from code_agent.memory.query_analyzer import QueryAnalyzer, TextModel
@@ -48,7 +49,7 @@ class MemoryRetrieval:
         return {
             "phase": self.phase,
             "queries": [
-                {"granularity": query.granularity, "category": query.category, "text": query.text}
+                {"category": query.category, "text": query.text}
                 for query in self.queries
             ],
             "candidate_count": len(self.candidates),
@@ -101,12 +102,15 @@ class MemoryManager:
         self.reranker = MemoryReranker(model)
         self.router = MemoryRouter(model)
         self.relevance_grader = MemoryRelevanceGrader(model)
-        self.consolidator = MemoryConsolidator(store)
+        # Vector search narrows the candidates; the same text model then makes
+        # the final semantic duplicate decision before anything is persisted.
+        self.consolidator = MemoryConsolidator(store, model=model)
         self.event_callback = event_callback
+        self.episode_builder = RecoveryEpisodeBuilder()
 
     def retrieve_agentic(self, task: str) -> MemoryRetrieval:
         """Route, retrieve, grade, and rewrite a task query a bounded number of times."""
-        if self.store.count() == 0:
+        if self.store.count(verified_only=True) == 0:
             route = MemoryRoute("skip", task, "记忆库为空，跳过检索")
             retrieval = MemoryRetrieval("task", [], [], [], route_action="skip", route_reason=route.reason)
             self._emit("memory_route_decided", phase="task", action=route.action, reason=route.reason)
@@ -166,7 +170,7 @@ class MemoryManager:
             query = rewritten
 
     def retrieve_for_task(self, task: str) -> MemoryRetrieval:
-        if self.store.count() == 0:
+        if self.store.count(verified_only=True) == 0:
             return MemoryRetrieval("task", [], [], [])
         self._emit("memory_retrieval_started", phase="task")
         queries = self.query_analyzer.analyze(task)
@@ -175,16 +179,13 @@ class MemoryManager:
         return retrieval
 
     def retrieve_for_failure(self, task: str, error: str, steps: list[dict[str, Any]]) -> MemoryRetrieval:
-        if self.store.count() == 0:
+        if self.store.count(verified_only=True) == 0:
             return MemoryRetrieval("recovery", [], [], [])
         self._emit("memory_retrieval_started", phase="recovery")
         recent = self._recent_actions(steps)
         text = f"Problem:\n{task[:8000]}\n\nPytest failure:\n{error[:5000]}\n\nRecent actions:\n{recent}"
-        queries = [
-            MemoryQuery("subtask", text, category="recovery"),
-            MemoryQuery("task", text, category="recovery"),
-        ]
-        retrieval = self._retrieve("recovery", task, queries)
+        queries = [MemoryQuery(text)]
+        retrieval = self._retrieve("recovery", task, queries, experience_type="failure")
         grade = self.relevance_grader.grade(task, retrieval.selected) if self.config.grade_with_llm else self._fallback_grade(retrieval.selected)
         self._emit(
             "memory_relevance_graded",
@@ -212,25 +213,57 @@ class MemoryManager:
         review: dict[str, Any] | None,
         source_run_id: str,
     ) -> list[MemoryNode]:
-        if not result.get("verified"):
-            return []
         self._emit("memory_learning_started", source_run_id=source_run_id)
-        candidates = self.extractor.extract(
-            task=task,
-            result=result,
-            review=review,
-            source_run_id=source_run_id,
-        )
+        candidates: list[MemoryNode] = []
+        # A final pass can support a success memory only when the reviewer did
+        # not identify an explicit semantic correctness defect.
+        if result.get("verified") and self._review_allows_success(review):
+            candidates.extend(
+                self.extractor.extract_success(
+                    task=task,
+                    result=result,
+                    review=review,
+                    source_run_id=source_run_id,
+                )
+            )
+        # Failure memories require a concrete failed-test -> edit -> pass
+        # episode. A failed final run, or a reviewer warning alone, is not enough.
+        episodes = self.episode_builder.build(result)
+        if episodes:
+            candidates.extend(
+                self.extractor.extract_failure(
+                    task=task,
+                    episodes=episodes,
+                    source_run_id=source_run_id,
+                )
+            )
+        if not candidates:
+            self._emit("memory_learning_finished", extracted_count=0, stored_count=0, memories=[])
+            return []
         for node in candidates:
             node.embedding_text = node.build_embedding_text()
-        vectors = self.embedder.embed([node.embedding_text for node in candidates]) if candidates else []
+            node.source_task = task
+        vectors = self.embedder.embed([node.embedding_text for node in candidates] + [task])
+        task_vector = vectors[-1]
         added: list[MemoryNode] = []
-        for node, vector in zip(candidates, vectors, strict=True):
+        for node, vector in zip(candidates, vectors[:-1], strict=True):
             node.embedding = vector
+            node.source_task_embedding = task_vector
             node.embedding_model = self.embedder.config.model
-            if not self.consolidator.is_duplicate(node):
-                self.store.add(node)
-                added.append(node)
+            duplicate = self.consolidator.is_duplicate(node)
+            judgment = self.consolidator.last_judgment
+            self._emit(
+                "memory_dedup_judged",
+                experience_type=node.experience_type,
+                duplicate=duplicate,
+                matched_id=judgment.matched_id if judgment else None,
+                reason=judgment.reason if judgment else "",
+                fallback=judgment.fallback if judgment else True,
+            )
+            if duplicate:
+                continue
+            self.store.add(node)
+            added.append(node)
         self._emit(
             "memory_learning_finished",
             extracted_count=len(candidates),
@@ -239,17 +272,27 @@ class MemoryManager:
         )
         return added
 
-    def list_memories(self, limit: int = 100) -> list[MemoryNode]:
-        return self.store.list(limit)
+    def list_memories(self, limit: int = 100, *, verified_only: bool = True) -> list[MemoryNode]:
+        return self.store.list(limit, verified_only=verified_only)
 
-    def _retrieve(self, phase: str, task: str, queries: list[MemoryQuery]) -> MemoryRetrieval:
+    def _retrieve(
+        self,
+        phase: str,
+        task: str,
+        queries: list[MemoryQuery],
+        *,
+        experience_type: str | None = None,
+    ) -> MemoryRetrieval:
         vectors = self.embedder.embed([query.text for query in queries])
+        task_vector = self.embedder.embed([task])[0] if task.strip() else None
         by_id: dict[str, RetrievedMemory] = {}
         for query, vector in zip(queries, vectors, strict=True):
             for match in self.store.search(
                 vector,
+                task_embedding=task_vector,
+                experience_type=experience_type,
                 category=query.category,
-                granularity=query.granularity,
+                verified_only=True,
                 limit=self.config.recall_limit_per_query,
                 min_similarity=self.config.min_similarity,
                 query_text=query.text,
@@ -268,6 +311,31 @@ class MemoryManager:
             selected = candidates[: self.config.selected_limit]
         self.store.record_retrievals(item.node.id for item in selected)
         return MemoryRetrieval(phase, queries, candidates, selected)
+
+    @staticmethod
+    def _review_allows_success(review: dict[str, Any] | None) -> bool:
+        """Reject explicit semantic defects while tolerating ordinary risk notes."""
+        if review is None:
+            return True
+        if review.get("status") not in {None, "completed"}:
+            return False
+        verdict = str(review.get("correctness", "")).strip().lower()
+        if verdict in {"unsound", "incorrect", "failure", "failed"}:
+            return False
+        content = str(review.get("content", "")).lower()
+        fatal_phrases = (
+            "不满足题目",
+            "没有实现题目",
+            "关键语义错误",
+            "存在关键错误",
+            "实际上是 0-1",
+            "实际上是0-1",
+            "不正确",
+            "does not implement",
+            "semantically incorrect",
+            "incorrect algorithm",
+        )
+        return not any(phrase in content for phrase in fatal_phrases)
 
     @staticmethod
     def _fallback_grade(selected: list[RetrievedMemory]) -> MemoryRelevance:

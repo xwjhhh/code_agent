@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, ChevronRight, Clock3, Cpu, FileCheck2, Plus, Sparkles } from "lucide-react";
+import { Activity, Check, ChevronRight, Clock3, Cpu, FileCheck2, FlaskConical, Plus, Sparkles, Workflow } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
@@ -40,16 +40,45 @@ export function Dashboard() {
     };
   }, [runs]);
 
+  const activeRun = runs.find((run) => {
+    const status = runStatus(run);
+    return status === "running" || status === "reviewing";
+  });
+  const completedRuns = runs.filter((run) => run.done).length;
+
   return (
     <AppShell>
       <main className="page">
-        <div className="page-header">
-          <div>
-            <div className="eyebrow">实时数据 / FastAPI</div>
-            <h1 className="page-title">智能体工作台</h1>
-            <p className="page-description">这里显示当前后端进程中的真实运行任务。</p>
+        <section className="dashboard-hero">
+          <div className="dashboard-hero-copy">
+            <h1 className="page-title">让 Agent 的每一步都可见</h1>
+            <div className="dashboard-hero-meta">
+              <span><i className={`status-dot ${connected ? "" : "red"}`} /> {connected ? "FastAPI 已连接" : "等待后端连接"}</span>
+              <span className="mono">{completedRuns} 次已完成运行</span>
+            </div>
           </div>
-          <Link className="primary-button" href="/task/new"><Plus /> 新建任务</Link>
+          <div className="dashboard-hero-side">
+            {activeRun ? <Link href={`/run/${activeRun.run_id}`} className="active-run-card">
+              <div className="active-run-top"><span className="eyebrow">CURRENT RUN</span><StatusBadge status={runStatus(activeRun)} /></div>
+              <strong>{activeRun.task.split("\n")[0].slice(0, 50)}</strong>
+              <span className="active-run-id">{activeRun.run_id}</span>
+              <div className="active-run-progress"><span style={{ width: `${Math.min(100, Math.max(12, activeRun.events.length * 9))}%` }} /></div>
+              <span className="active-run-link">打开实时工作区 <ChevronRight /></span>
+            </Link> : <div className="active-run-card empty">
+              <div className="active-run-icon"><Workflow /></div>
+              <strong>准备启动第一条任务</strong>
+              <span>运行后，这里会持续显示 Agent 的实时进度。</span>
+              <Link className="secondary-button" href="/task/new"><Plus /> 新建任务</Link>
+            </div>}
+          </div>
+        </section>
+
+        <div className="dashboard-flow" aria-label="Agent 工作流">
+          <FlowStep icon={<Activity />} label="Prepare" detail="题目与用例" state="done" />
+          <FlowStep icon={<Cpu />} label="Solve" detail="模型编程" state={activeRun ? "active" : "idle"} />
+          <FlowStep icon={<FlaskConical />} label="Verify" detail="pytest 验证" state="idle" />
+          <FlowStep icon={<Check />} label="Review" detail="质量评审" state="idle" />
+          <FlowStep icon={<Sparkles />} label="Learn" detail="沉淀记忆" state="idle" />
         </div>
 
         <div className="stats-grid">
@@ -104,12 +133,16 @@ function Metric({ label, value, color }: { label: string; value: string | number
   return <div className="stat-block"><div className="stat-label">{label}</div><div className="stat-value" style={color ? { color, fontSize: 16 } : undefined}>{value}</div></div>;
 }
 
+function FlowStep({ icon, label, detail, state }: { icon: React.ReactNode; label: string; detail: string; state: "done" | "active" | "idle" }) {
+  return <div className={`dashboard-flow-step ${state}`}><span className="dashboard-flow-icon">{icon}</span><span><b>{label}</b><small>{detail}</small></span></div>;
+}
+
 function RunRow({ run }: { run: ApiRun }) {
   const status = runStatus(run);
   const icon = status === "passed" ? <Check /> : status === "reviewing" ? <Sparkles /> : <Cpu />;
   const color = status === "passed" ? "green" : status === "failed" ? "red" : status === "reviewing" ? "yellow" : "";
   return (
-    <Link href={`/history/${run.run_id}`} className="run-row">
+    <Link href={`/run/${run.run_id}`} className="run-row">
       <div className="run-problem"><span className={`run-glyph ${color}`}>{icon}</span><span><span className="run-name">{run.task.split("\n")[0].slice(0, 52)}</span><span className="run-id">{run.run_id}</span></span></div>
       <div><StatusBadge status={status} /></div>
       <div className="table-cell">{run.model}</div>

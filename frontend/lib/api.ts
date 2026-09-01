@@ -2,11 +2,11 @@ export type ManualCase = { name?: string; input: string; expected_output: string
 export type TestCase = ManualCase & { name: string; source?: string };
 export type RunEvent = { sequence?: number; type: string; data: Record<string, unknown>; timestamp: string };
 export type MemoryCategory = "strategy" | "recovery" | "optimization";
-export type MemoryGranularity = "task" | "subtask";
+export type MemoryExperienceType = "success" | "failure";
 export type MemoryNode = {
   id: string;
   category: MemoryCategory;
-  granularity: MemoryGranularity;
+  experience_type?: MemoryExperienceType;
   trigger: string;
   content: string;
   purpose?: string;
@@ -19,15 +19,22 @@ export type MemoryNode = {
   quality_score?: number;
   source_run_id?: string;
   source_verified?: boolean;
+  source_task?: string;
+  evidence?: string[];
+  failure?: string;
+  fix?: string;
+  verification?: string;
   embedding_model?: string;
   created_at?: string;
   retrieval_count?: number;
   similarity?: number;
+  task_similarity?: number;
+  memory_similarity?: number;
   matched_query?: string;
 };
 export type MemoryRetrieval = {
   phase: "task" | "recovery";
-  queries: { granularity: MemoryGranularity; category?: MemoryCategory | null; text: string }[];
+  queries: { category?: MemoryCategory | null; text: string }[];
   candidate_count: number;
   selected: MemoryNode[];
   route_action?: "retrieve" | "skip" | null;
@@ -83,7 +90,7 @@ export function rememberActiveRun(runId: string) {
   }
 }
 
-export async function createRun(payload: { task: string; model: string; max_steps: number; timeout: number; test_cases: ManualCase[]; test_case_source: "manual" | "generated" }) {
+export async function createRun(payload: { task: string; model: string; max_steps: number; timeout: number; test_cases: ManualCase[]; test_case_source: "manual" | "generated"; memory_retrieval: boolean }) {
   const response = await fetch(`${API_BASE}/api/runs`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
   if (!response.ok) throw new Error(await response.text());
   return response.json() as Promise<{ run_id: string }>;

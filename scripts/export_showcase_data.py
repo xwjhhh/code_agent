@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from code_agent.memory.store import MemoryStore
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = PROJECT_ROOT / "docs" / "data"
@@ -71,14 +73,20 @@ def export_memories() -> dict[str, Any]:
     if not MEMORY_DB.is_file():
         return {"generated_at": now(), "count": 0, "embedding_model": None, "nodes": [], "edges": []}
 
+    # Run the same schema migration as the application so exports from a
+    # pre-V3 database do not depend on the removed granularity column.
+    MemoryStore(MEMORY_DB)
+
     with sqlite3.connect(MEMORY_DB) as connection:
         connection.row_factory = sqlite3.Row
         rows = connection.execute(
             """
-            SELECT id, category, granularity, trigger_text, content, purpose,
+            SELECT id, category, experience_type, trigger_text, content, purpose,
                    steps_json, negative_example, problem_family_json,
                    algorithm_tags_json, constraints_json, priority, quality_score,
-                   source_run_id, source_verified, embedding_model, embedding_json,
+                   source_run_id, source_verified, source_task, evidence_json,
+                   failure_text, fix_text, verification_text,
+                   embedding_model, embedding_json,
                    created_at, retrieval_count
             FROM memories
             ORDER BY created_at DESC
@@ -100,7 +108,7 @@ def export_memories() -> dict[str, Any]:
             {
                 "id": row["id"],
                 "category": row["category"],
-                "granularity": row["granularity"],
+                "experience_type": row["experience_type"],
                 "trigger": row["trigger_text"],
                 "content": row["content"],
                 "purpose": row["purpose"],
@@ -113,6 +121,11 @@ def export_memories() -> dict[str, Any]:
                 "quality_score": row["quality_score"],
                 "source_run_id": row["source_run_id"],
                 "source_verified": bool(row["source_verified"]),
+                "source_task": row["source_task"],
+                "evidence": safe_list(row["evidence_json"]),
+                "failure": row["failure_text"],
+                "fix": row["fix_text"],
+                "verification": row["verification_text"],
                 "created_at": row["created_at"],
                 "retrieval_count": row["retrieval_count"],
             }
@@ -139,19 +152,19 @@ def export_memories() -> dict[str, Any]:
         if source:
             by_source.setdefault(source, []).append(node)
     for group in by_source.values():
-        anchor = next((node for node in group if node["granularity"] == "task"), group[0])
+        anchor = group[0]
         for node in group:
             if node["id"] != anchor["id"]:
                 add_edge(anchor["id"], node["id"], "solid")
 
-    task_nodes = [node for node in nodes if node["granularity"] == "task"]
+    graph_nodes = nodes
     candidates: list[tuple[float, str, str]] = []
-    for index, left in enumerate(task_nodes):
-        for right in task_nodes[index + 1 :]:
+    for index, left in enumerate(graph_nodes):
+        for right in graph_nodes[index + 1 :]:
             similarity = cosine_similarity(vectors.get(left["id"], []), vectors.get(right["id"], []))
             if similarity >= 0.35:
                 candidates.append((similarity, left["id"], right["id"]))
-    degrees = {node["id"]: 0 for node in task_nodes}
+    degrees = {node["id"]: 0 for node in graph_nodes}
     for similarity, left_id, right_id in sorted(candidates, reverse=True):
         if degrees[left_id] >= 3 or degrees[right_id] >= 3:
             continue

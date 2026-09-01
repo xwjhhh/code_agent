@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  CheckCircle2,
   ChevronDown,
+  CircleAlert,
   Compass,
   GitBranch,
   Lightbulb,
@@ -10,8 +12,9 @@ import {
   Wrench,
   Zap,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { MemoryCategory, MemoryNode, RunEvent, RunMemory } from "@/lib/api";
+import { getMemoryGraph, type MemoryCategory, type MemoryExperienceType, type MemoryNode, type RunEvent, type RunMemory } from "@/lib/api";
 
 type GraphMemory = MemoryNode & { phase: "task" | "recovery" | "learned" };
 type Point = { x: number; y: number };
@@ -25,13 +28,21 @@ const categoryMeta: Record<MemoryCategory, { label: string; Icon: typeof Compass
   recovery: { label: "恢复经验", Icon: Wrench },
   optimization: { label: "优化经验", Icon: Zap },
 };
+const experienceMeta: Record<MemoryExperienceType, { label: string; Icon: typeof Compass }> = {
+  success: { label: "成功经验", Icon: CheckCircle2 },
+  failure: { label: "失败经验", Icon: CircleAlert },
+};
+
+function experienceTypeFor(memory: MemoryNode): MemoryExperienceType {
+  if (memory.experience_type === "failure" || memory.experience_type === "success") return memory.experience_type;
+  return memory.category === "recovery" ? "failure" : "success";
+}
 
 function asMemory(value: unknown, phase: GraphMemory["phase"]): GraphMemory | null {
   if (!value || typeof value !== "object") return null;
   const item = value as Partial<MemoryNode>;
   if (typeof item.id !== "string" || !item.id || !isCategory(item.category)) return null;
-  if (item.granularity !== "task" && item.granularity !== "subtask") return null;
-  return { ...item, category: item.category, granularity: item.granularity, phase } as GraphMemory;
+  return { ...item, category: item.category, phase } as GraphMemory;
 }
 
 function isCategory(value: unknown): value is MemoryCategory {
@@ -116,18 +127,29 @@ function nodePoint(index: number, total: number): Point {
   };
 }
 
-function categoryIcon(category: MemoryCategory) {
-  return categoryMeta[category].Icon;
+function experienceIcon(memory: MemoryNode) {
+  return experienceMeta[experienceTypeFor(memory)].Icon;
 }
 
 export function MemoryGraph({ task, memory, events }: { task: string; memory?: RunMemory; events: RunEvent[] }) {
   const graph = useMemo(() => buildGraphData(memory, events), [memory, events]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [globalMemoryCount, setGlobalMemoryCount] = useState<number | null>(null);
   const selected = graph.memories.find((item) => item.id === selectedId) ?? null;
   const title = task.split("\n")[0].trim().slice(0, 24) || "当前任务";
-  const taskMemories = graph.memories.filter((item) => item.granularity === "task");
   const status = graph.learningActive ? "learning" : graph.recoveryVisible ? "recovery" : graph.retrievalActive ? "retrieval" : "idle";
   const points = graph.memories.map((_, index) => nodePoint(index, graph.memories.length));
+
+  useEffect(() => {
+    if (graph.memories.length || memory?.enabled === false) return;
+    let active = true;
+    void getMemoryGraph(1).then((payload) => {
+      if (active) setGlobalMemoryCount(payload.count);
+    }).catch(() => {
+      if (active) setGlobalMemoryCount(null);
+    });
+    return () => { active = false; };
+  }, [graph.memories.length, memory?.enabled]);
 
   return <div className="memory-view">
     <div className="memory-header">
@@ -141,9 +163,9 @@ export function MemoryGraph({ task, memory, events }: { task: string; memory?: R
     </div>
 
     <div className="memory-legend" aria-label="记忆图例">
-      {(Object.keys(categoryMeta) as MemoryCategory[]).map((category) => {
-        const Icon = categoryMeta[category].Icon;
-        return <span key={category}><Icon /> {categoryMeta[category].label}</span>;
+      {(Object.keys(experienceMeta) as MemoryExperienceType[]).map((type) => {
+        const Icon = experienceMeta[type].Icon;
+        return <span key={type}><Icon /> {experienceMeta[type].label}</span>;
       })}
       <span><i className="memory-line solid" /> 同一运行经验</span>
       <span><i className="memory-line dotted" /> 相似关系</span>
@@ -153,16 +175,21 @@ export function MemoryGraph({ task, memory, events }: { task: string; memory?: R
       <GitBranch />
       <strong>记忆服务未启用</strong>
       <span>当前运行仍会正常完成，记忆只作为辅助上下文。</span>
+      <Link href="/memory" className="memory-empty-link">查看全部经验 <ChevronDown /></Link>
     </div> : !graph.memories.length ? <div className="memory-empty">
       <Lightbulb />
+      {globalMemoryCount !== null && <span className="memory-empty-context">经验库中已有 {globalMemoryCount} 条长期经验。</span>}
+      {memory?.retrieval_skipped && <span className="memory-empty-context">本次运行跳过了运行前检索，已积累的经验可在记忆图谱中查看。</span>}
+      {!memory?.retrieval_skipped && <span className="memory-empty-context">当前运行没有匹配的历史经验，已积累的经验可在记忆图谱中查看。</span>}
       <strong>还没有召回经验</strong>
       <span>完成一次本地验证和代码评审后，系统会留下第一条长期经验。</span>
+      <Link href="/memory" className="memory-empty-link">查看全部经验 <ChevronDown /></Link>
     </div> : <>
       <div className={`memory-canvas ${status}`}>
         <svg className="memory-edges" viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`} role="presentation">
           {points.map((point, index) => <line key={`center-${graph.memories[index].id}`} x1={CENTER.x} y1={CENTER.y} x2={point.x} y2={point.y} className="memory-edge solid" />)}
-          {taskMemories.slice(1, 4).map((memoryItem, index) => {
-            const fromIndex = graph.memories.findIndex((item) => item.id === taskMemories[index]?.id);
+          {graph.memories.slice(1, 4).map((memoryItem, index) => {
+            const fromIndex = graph.memories.findIndex((item) => item.id === graph.memories[index]?.id);
             const toIndex = graph.memories.findIndex((item) => item.id === memoryItem.id);
             if (fromIndex < 0 || toIndex < 0) return null;
             return <line key={`similar-${memoryItem.id}`} x1={points[fromIndex].x} y1={points[fromIndex].y} x2={points[toIndex].x} y2={points[toIndex].y} className="memory-edge dotted" />;
@@ -173,14 +200,15 @@ export function MemoryGraph({ task, memory, events }: { task: string; memory?: R
           <span>{title}</span>
         </div>
         {graph.memories.map((item, index) => {
-          const Icon = categoryIcon(item.category);
-          const isRecovery = item.category === "recovery" || item.phase === "recovery";
+          const type = experienceTypeFor(item);
+          const Icon = experienceIcon(item);
+          const isRecovery = type === "failure" || item.phase === "recovery";
           const isNew = item.phase === "learned";
           return <button
             key={item.id}
             type="button"
-            title={`${categoryMeta[item.category].label} · ${item.granularity === "task" ? "任务级" : "子任务级"}`}
-            className={`memory-node ${item.granularity === "task" ? "task-level" : "subtask-level"} ${isRecovery ? "recovery-node" : ""} ${isNew ? "learning-node" : ""} ${selectedId === item.id ? "selected" : ""} ${graph.retrievalActive ? "retrieval-node" : ""} ${graph.recoveryVisible && !isRecovery ? "memory-faded" : ""}`}
+            title={`${experienceMeta[type].label} · ${categoryMeta[item.category].label}`}
+            className={`memory-node ${type} ${item.category} ${isRecovery ? "recovery-node" : ""} ${isNew ? "learning-node" : ""} ${selectedId === item.id ? "selected" : ""} ${graph.retrievalActive ? "retrieval-node" : ""} ${graph.recoveryVisible && !isRecovery ? "memory-faded" : ""}`}
             style={{ left: `${(points[index].x / GRAPH_WIDTH) * 100}%`, top: `${(points[index].y / GRAPH_HEIGHT) * 100}%` }}
             onClick={() => setSelectedId(item.id)}
           >
@@ -193,8 +221,6 @@ export function MemoryGraph({ task, memory, events }: { task: string; memory?: R
     </>}
 
     <div className="memory-footer">
-      <span><i className="memory-size-sample large" /> 任务级</span>
-      <span><i className="memory-size-sample small" /> 子任务级</span>
       {graph.hasLearning && <span className="memory-learned-note"><Lightbulb /> 已记录新经验</span>}
     </div>
   </div>;
@@ -203,14 +229,15 @@ export function MemoryGraph({ task, memory, events }: { task: string; memory?: R
 function MemoryInspection({ memory, onClose }: { memory: GraphMemory; onClose: () => void }) {
   const [showSteps, setShowSteps] = useState(true);
   const detailRef = useRef<HTMLDivElement>(null);
-  const Icon = categoryIcon(memory.category);
+  const type = experienceTypeFor(memory);
+  const Icon = experienceIcon(memory);
   useEffect(() => {
     if (!showSteps) return;
     requestAnimationFrame(() => detailRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
   }, [showSteps]);
   return <div className="memory-inspection">
     <div className="memory-inspection-head">
-      <div className="memory-inspection-title"><Icon /><span>{categoryMeta[memory.category].label} · {memory.granularity === "task" ? "任务级" : "子任务级"}</span></div>
+      <div className="memory-inspection-title"><Icon /><span>{experienceMeta[type].label} · {categoryMeta[memory.category].label}</span></div>
       <button type="button" className="memory-close" onClick={onClose} title="关闭详情">×</button>
     </div>
     <strong>{memory.content || memory.trigger || "未命名经验"}</strong>
@@ -226,6 +253,9 @@ function MemoryInspection({ memory, onClose }: { memory: GraphMemory; onClose: (
       {memory.purpose && <p><b>目的</b>{memory.purpose}</p>}
       {!!memory.steps?.length && <p><b>行动步骤</b>{memory.steps.join("；")}</p>}
       {memory.negative_example && <p><b>避免</b>{memory.negative_example}</p>}
+      {memory.failure && <p><b>实际失败</b>{memory.failure}</p>}
+      {memory.fix && <p><b>修复</b>{memory.fix}</p>}
+      {memory.verification && <p><b>验证</b>{memory.verification}</p>}
     </div>}
   </div>;
 }

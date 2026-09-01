@@ -166,7 +166,7 @@ Agent 控制核心。它保存 messages、调用模型、执行 Bash、回传 ob
 - `schemas.py`：定义 `MemoryNode`、`MemoryQuery`、`RetrievedMemory`。
 - `embedding.py`：调用硅基流动 `/v1/embeddings`，固定使用 `Qwen/Qwen3-Embedding-8B`。
 - `store.py`：负责 SQLite 建表、增删查和本地余弦相似度搜索。
-- `query_analyzer.py`：把新题目改写为 task/subtask 检索查询，并提取题型和算法标签。
+- `query_analyzer.py`：把新题目改写为多个语义检索查询，并提取题型和算法标签。
 - `extractor.py`：从已验证运行的题目、轨迹、题解、pytest 输出和 Reviewer 结果中提炼结构化经验。
 - `reranker.py`：使用 DeepSeek-V4-Flash 从向量召回候选中筛选少量高价值经验。
 - `formatter.py`：将选中的经验格式化为注入编程模型上下文的参考文本。
@@ -174,7 +174,7 @@ Agent 控制核心。它保存 messages、调用模型、执行 Bash、回传 ob
 - `manager.py`：统筹任务检索、pytest 失败后的 Recovery 检索、经验学习和事件通知。
 - `factory.py`：读取 YAML 和环境变量，构建记忆服务和 Embedding 客户端。
 
-写入记忆时，经验正文和 metadata 保存在 SQLite，Embedding 仅用于检索索引。新任务开始时进行 task/subtask 召回；pytest 失败时追加失败输出和最近动作进行 Recovery 召回；Reviewer 完成后才提炼并写入新经验。
+写入记忆时，经验正文和 metadata 保存在 SQLite，Embedding 仅用于检索索引。新任务开始时进行多路语义召回；pytest 失败时追加失败输出和最近动作进行 Recovery 召回；Reviewer 完成后才提炼并写入新经验。
 
 ### `src/code_agent/run/main.py`
 
@@ -225,7 +225,7 @@ frontend/
 
 当前运行页右侧默认展示 Memory Graph，Trace 作为可切换的次级视图；后端已经提供 `/api/memories` 查询接口，但尚未提供独立的全局记忆库页面。
 
-`memory-graph.tsx` 只使用四种视觉规则：Task-level 为大节点、Subtask-level 为小节点、Strategy/Recovery/Optimization 使用不同图标、关系使用实线或虚线。点击节点后才显示相似度、来源和完整行动步骤等详情。
+`memory-graph.tsx` 按成功/失败经验和策略/恢复/优化标签展示节点，关系使用实线或虚线。点击节点后才显示相似度、来源和完整行动步骤等详情。
 
 `lib/api.ts` 封装 FastAPI 请求、运行/Memory 类型和 SSE URL；`lib/trace.ts` 将事件转换为时间线和终端行；`lib/data.ts` 保存前端共享类型。
 

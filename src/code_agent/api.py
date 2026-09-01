@@ -223,8 +223,8 @@ def list_memories(limit: int = 100) -> dict[str, Any]:
     manager = build_memory_manager(_NoopTextModel(), config, PROJECT_ROOT)
     if manager is None:
         return {"enabled": False, "count": 0, "items": []}
-    memories = manager.list_memories(max(1, min(limit, 500)))
-    return {"enabled": True, "count": manager.store.count(), "items": [node.to_dict() for node in memories]}
+    memories = manager.list_memories(max(1, min(limit, 500)), verified_only=True)
+    return {"enabled": True, "count": manager.store.count(verified_only=True), "items": [node.to_dict() for node in memories]}
 
 
 @app.get("/api/memories/graph")
@@ -232,14 +232,14 @@ def memory_graph(limit: int = 200) -> dict[str, Any]:
     """Return display-ready memory nodes and sparse, typed relationships.
 
     Embedding vectors stay server-side. The API computes source-run structure
-    edges and a maximum of three cosine neighbors per task-level node.
+    edges and a maximum of three cosine neighbors per memory node.
     """
     config = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
     manager = build_memory_manager(_NoopTextModel(), config, PROJECT_ROOT)
     if manager is None:
         return {"enabled": False, "count": 0, "nodes": [], "edges": []}
 
-    memories = manager.list_memories(max(1, min(limit, 500)))
+    memories = manager.list_memories(max(1, min(limit, 500)), verified_only=True)
     edges: list[dict[str, Any]] = []
     edge_keys: set[tuple[str, str]] = set()
 
@@ -265,15 +265,15 @@ def memory_graph(limit: int = 200) -> dict[str, Any]:
         for node in group[1:]:
             add_edge(anchor.id, node.id, "solid")
 
-    # Keep the similarity graph sparse: each task memory participates in <= 3 edges.
-    task_nodes = [node for node in memories if node.granularity == "task"]
+    # Keep the similarity graph sparse: each memory participates in <= 3 edges.
+    graph_nodes = memories
     pair_scores: list[tuple[float, MemoryNode, MemoryNode]] = []
-    for index, left in enumerate(task_nodes):
-        for right in task_nodes[index + 1:]:
+    for index, left in enumerate(graph_nodes):
+        for right in graph_nodes[index + 1:]:
             similarity = cosine_similarity(left.embedding, right.embedding)
             if similarity >= float(config.get("memory", {}).get("min_similarity", 0.35)):
                 pair_scores.append((similarity, left, right))
-    degrees: dict[str, int] = {node.id: 0 for node in task_nodes}
+    degrees: dict[str, int] = {node.id: 0 for node in graph_nodes}
     for similarity, left, right in sorted(pair_scores, key=lambda item: item[0], reverse=True):
         if degrees[left.id] >= 3 or degrees[right.id] >= 3:
             continue
@@ -283,7 +283,7 @@ def memory_graph(limit: int = 200) -> dict[str, Any]:
 
     return {
         "enabled": True,
-        "count": manager.store.count(),
+        "count": manager.store.count(verified_only=True),
         "embedding_model": manager.embedder.config.model,
         "nodes": [node.to_dict() for node in memories],
         "edges": edges,
@@ -502,9 +502,6 @@ def _learn_memory(manager: MemoryManager | None, state: RunState, agent: Default
     if (
         manager is None
         or state.result is None
-        or not state.result.get("verified")
-        or not state.review
-        or state.review.get("status") != "completed"
     ):
         return
     try:

@@ -17,7 +17,7 @@ pytest 失败 -> Recovery Retrieval -> Agent 上下文
 每条记忆包含：
 
 - `category`: `strategy`、`recovery` 或 `optimization`；
-- `granularity`: `task` 或 `subtask`；
+- `experience_type`: `success` 或 `failure`；
 - `trigger`: 什么时候适用；
 - `content`: 可复用的知识；
 - `steps`: 模型可以执行的动作；
@@ -41,7 +41,7 @@ Authorization: Bearer <key>
 
 ## 读取路径
 
-`QueryAnalyzer` 将题目改写成一个 task query 和最多三个 subtask query，并提取问题类型、算法标签。每个 query 分别向量化，按粒度和类别过滤后进行候选合并。向量只负责 Candidate Recall；候选超过上限时交给 `MemoryReranker` 让模型按适用性、具体性、质量、重复和冲突筛选。最终最多注入 4 条经验，而且固定声明经验只是参考，当前题目和权威测试优先。
+`QueryAnalyzer` 将题目改写成最多四个语义查询，并提取问题类型、算法标签。每个 query 分别向量化，按经验类型和类别过滤后进行候选合并。向量只负责 Candidate Recall；候选超过上限时交给 `MemoryReranker` 让模型按适用性、具体性、质量、重复和冲突筛选。最终最多注入 4 条经验，而且固定声明经验只是参考，当前题目和权威测试优先。
 
 pytest 失败时，查询内容会增加当前题目、失败输出和最近动作，并只召回 `recovery` 记忆。这是 Coding Agent 特有的第二次检索时机。
 
@@ -54,7 +54,7 @@ Reviewer 完成后，`ExperienceExtractor` 读取题目、trajectory、最终代
 - `memory/schemas.py`: MemoryNode、MemoryQuery、RetrievedMemory；
 - `memory/embedding.py`: 硅基流动 Embeddings HTTP 客户端；
 - `memory/store.py`: SQLite CRUD 与余弦召回；
-- `memory/query_analyzer.py`: 任务多粒度查询；
+- `memory/query_analyzer.py`: 语义查询改写；
 - `memory/extractor.py`: 已验证轨迹到可复用经验；
 - `memory/reranker.py`: 候选二阶段筛选；
 - `memory/formatter.py`: 经验上下文格式化；

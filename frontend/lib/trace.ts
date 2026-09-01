@@ -23,6 +23,7 @@ export const RUN_EVENT_TYPES = [
   "memory_query_rewritten",
   "memory_context_injected",
   "memory_learning_started",
+  "memory_dedup_judged",
   "memory_learning_finished",
   "memory_error",
   "run_finished",
@@ -52,6 +53,7 @@ const eventLabels: Record<string, string> = {
   memory_query_rewritten: "重写记忆查询",
   memory_context_injected: "经验已注入模型",
   memory_learning_started: "开始提炼经验",
+  memory_dedup_judged: "记忆去重判断",
   memory_learning_finished: "经验已持久化",
   memory_error: "记忆服务错误",
   run_finished: "本次运行结束",
@@ -100,6 +102,8 @@ export function toTraceEvent(event: RunEvent, index: number): TraceEvent {
     summary = `${data.phase === "recovery" ? "恢复" : "任务"}经验已加入模型上下文`;
   } else if (type === "memory_learning_started") {
     summary = "从已验证运行中提炼可复用经验";
+  } else if (type === "memory_dedup_judged") {
+    summary = `${data.duplicate ? "发现重复经验" : "保留新经验"}${data.reason ? `：${String(data.reason)}` : ""}`;
   } else if (type === "memory_learning_finished") {
     summary = `提炼 ${data.extracted_count ?? 0} 条，新增 ${data.stored_count ?? 0} 条记忆`;
   } else if (type === "memory_error") {

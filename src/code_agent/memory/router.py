@@ -127,11 +127,14 @@ class MemoryRelevanceGrader:
 
         compact: list[dict[str, Any]] = [
             {
+                "experience_type": item.node.experience_type,
                 "category": item.node.category,
-                "granularity": item.node.granularity,
                 "trigger": item.node.trigger,
                 "content": item.node.content,
                 "steps": item.node.steps,
+                "failure": item.node.failure,
+                "fix": item.node.fix,
+                "verification": item.node.verification,
                 "similarity": round(item.similarity, 3),
                 "quality_score": item.node.quality_score,
             }

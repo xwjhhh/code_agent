@@ -7,19 +7,20 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 from uuid import uuid4
 
+MemoryExperienceType = Literal["success", "failure"]
 MemoryCategory = Literal["strategy", "recovery", "optimization"]
-MemoryGranularity = Literal["task", "subtask"]
 
+VALID_EXPERIENCE_TYPES = {"success", "failure"}
 VALID_CATEGORIES = {"strategy", "recovery", "optimization"}
-VALID_GRANULARITIES = {"task", "subtask"}
 
 
 @dataclass
 class MemoryNode:
     category: MemoryCategory
-    granularity: MemoryGranularity
     trigger: str
     content: str
+    # Top-level meaning; category remains a secondary compatibility tag.
+    experience_type: MemoryExperienceType | None = None
     purpose: str = ""
     steps: list[str] = field(default_factory=list)
     negative_example: str | None = None
@@ -30,18 +31,27 @@ class MemoryNode:
     quality_score: float = 1.0
     source_run_id: str = ""
     source_verified: bool = True
+    source_task: str = ""
+    evidence: list[str] = field(default_factory=list)
+    failure: str = ""
+    fix: str = ""
+    verification: str = ""
     embedding_text: str = ""
     embedding_model: str = ""
     embedding: list[float] = field(default_factory=list, repr=False)
+    source_task_embedding: list[float] = field(default_factory=list, repr=False)
     id: str = field(default_factory=lambda: uuid4().hex)
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     retrieval_count: int = 0
 
     def __post_init__(self) -> None:
+        if self.experience_type is None:
+            # Preserve callers using the old recovery category.
+            self.experience_type = "failure" if self.category == "recovery" else "success"
+        if self.experience_type not in VALID_EXPERIENCE_TYPES:
+            raise ValueError(f"Unsupported memory experience type: {self.experience_type}")
         if self.category not in VALID_CATEGORIES:
             raise ValueError(f"Unsupported memory category: {self.category}")
-        if self.granularity not in VALID_GRANULARITIES:
-            raise ValueError(f"Unsupported memory granularity: {self.granularity}")
         self.priority = max(1, min(5, int(self.priority)))
         self.quality_score = max(0.0, min(1.0, float(self.quality_score)))
 
@@ -49,30 +59,32 @@ class MemoryNode:
         data = asdict(self)
         if not include_embedding:
             data.pop("embedding", None)
+            data.pop("source_task_embedding", None)
         return data
 
     def build_embedding_text(self) -> str:
-        # Keep the embedded document bilingual at the structural level while
-        # preserving the original Chinese memory text verbatim.
+        """Build the document representation used for memory-level similarity."""
         avoid = self.negative_example or "无"
         return "\n".join(
             [
-                f"记忆类型: {self.category}",
-                f"记忆层级: {self.granularity}",
-                f"问题类型: {', '.join(self.problem_family) or '通用'}",
-                f"算法标签: {', '.join(self.algorithm_tags) or '无'}",
-                f"适用条件: {self.trigger}",
-                f"约束条件: {', '.join(self.constraints) or '无'}",
-                f"可复用知识: {self.content}",
-                f"行动步骤: {'；'.join(self.steps) or '无'}",
-                f"需要避免: {avoid}",
+                f"experience_type: {self.experience_type}",
+                f"category: {self.category}",
+                f"problem_family: {', '.join(self.problem_family) or '通用'}",
+                f"algorithm_tags: {', '.join(self.algorithm_tags) or '无'}",
+                f"trigger: {self.trigger}",
+                f"constraints: {', '.join(self.constraints) or '无'}",
+                f"reusable_knowledge: {self.content}",
+                f"actions: {'；'.join(self.steps) or '无'}",
+                f"avoid: {avoid}",
+                f"failure: {self.failure or '无'}",
+                f"fix: {self.fix or '无'}",
+                f"verification: {self.verification or '无'}",
             ]
         )
 
 
 @dataclass(frozen=True)
 class MemoryQuery:
-    granularity: MemoryGranularity
     text: str
     category: MemoryCategory | None = None
     problem_family: tuple[str, ...] = ()
@@ -84,10 +96,14 @@ class RetrievedMemory:
     node: MemoryNode
     similarity: float
     query_text: str
+    task_similarity: float = 0.0
+    memory_similarity: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return {
             **self.node.to_dict(),
             "similarity": round(self.similarity, 6),
+            "task_similarity": round(self.task_similarity, 6),
+            "memory_similarity": round(self.memory_similarity, 6),
             "matched_query": self.query_text,
         }

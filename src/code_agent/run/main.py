@@ -90,7 +90,10 @@ def main(argv: list[str] | None = None) -> int:
             review = {"status": "error", "content": str(error)}
             storage.save_review(review)
     memory_data: dict[str, Any] = {"enabled": memory_manager is not None}
-    if memory_manager is not None and result.get("verified") and review and review.get("status") == "completed":
+    # Memory learning can record an evidence-backed recovery episode even when
+    # the final submission is not verified. Success memories remain gated by
+    # verification inside MemoryManager.
+    if memory_manager is not None:
         try:
             learned = memory_manager.learn_from_run(
                 task=task,

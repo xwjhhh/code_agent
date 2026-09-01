@@ -57,7 +57,7 @@ export function RunHistory() {
         <div className="run-row table-header"><div>题目</div><div>状态</div><div>模型</div><div>调用</div><div>创建时间</div><div /></div>
         {runs.map((run) => {
           const status = runStatus(run);
-          return <Link href={`/history/${run.run_id}`} className="run-row" key={run.run_id}>
+          return <Link href={`/run/${run.run_id}`} className="run-row" key={run.run_id}>
             <div className="run-problem">
               <span className={`run-glyph ${status === "passed" ? "green" : status === "failed" ? "red" : status === "reviewing" ? "yellow" : ""}`}>{status === "passed" ? <Check /> : status === "reviewing" ? <Sparkles /> : <Cpu />}</span>
               <span><span className="run-name">{run.task.split("\n")[0].slice(0, 52)}</span><span className="run-id">{run.run_id}</span></span>

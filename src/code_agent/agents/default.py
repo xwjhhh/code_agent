@@ -46,6 +46,7 @@ class DefaultAgent:
         self.env = env
         self.messages: list[dict[str, Any]] = []
         self.steps: list[dict[str, Any]] = []
+        self.event_history: list[dict[str, Any]] = []
         self.n_calls = 0
         self.verified = False
         self.last_test_output = ""
@@ -105,15 +106,19 @@ class DefaultAgent:
             if self.verified and command.strip() != SUBMISSION_COMMAND:
                 self.verified = False
             self._emit("command_started", step=self.n_calls, command=command)
+            # Snapshot around every command so recovery episodes can detect an
+            # edit even when the shell command does not mention solution.py
+            # (for example a heredoc or a helper script).
+            solution_before = self._read_solution()
             if command.strip() == TEST_COMMAND:
                 self._emit("test_started", step=self.n_calls, command=command)
             output = self.env.execute(action)
+            solution_after = self._read_solution()
+            solution_changed = solution_before != solution_after
             outputs.append(output)
             self._emit("command_finished", step=self.n_calls, command=command, output=output.get("output", ""), returncode=output.get("returncode", -1), exception_info=output.get("exception_info", ""))
-            if "solution.py" in command or "test_solution.py" in command:
-                changed = [name for name in ("solution.py", "test_solution.py") if name in command]
-                for filename in changed:
-                    self._emit("file_changed", step=self.n_calls, filename=filename)
+            if solution_changed:
+                self._emit("file_changed", step=self.n_calls, filename="solution.py")
             submitted = submitted or output.get("extra", {}).get("submitted", False)
             if command.strip() == TEST_COMMAND:
                 self.verified = (
@@ -124,7 +129,17 @@ class DefaultAgent:
                 self.last_test_output = output["output"]
                 test_failed = not self.verified
                 self._emit("test_passed" if self.verified else "test_failed", step=self.n_calls, output=output["output"], returncode=output["returncode"])
-            self.steps.append({"step": self.n_calls, "action": action, "observation": output})
+            step_record: dict[str, Any] = {"step": self.n_calls, "action": action, "observation": output}
+            capture_solution = command.strip() == TEST_COMMAND or "solution.py" in command or solution_changed
+            if capture_solution:
+                step_record.update(
+                    {
+                        "solution_before": solution_before,
+                        "solution_after": solution_after,
+                        "solution_changed": solution_changed,
+                    }
+                )
+            self.steps.append(step_record)
 
         observations = self.model.format_observation_messages(message, outputs)
         result_messages = self.add_messages(*observations)
@@ -168,6 +183,7 @@ class DefaultAgent:
         return self.add_messages(rejection)
 
     def _emit(self, event_type: str, **data: Any) -> None:
+        self.event_history.append({"type": event_type, "data": dict(data)})
         if self.event_callback is None:
             return
         try:
@@ -179,6 +195,7 @@ class DefaultAgent:
     def _reset(self, task: str) -> None:
         self.messages = []
         self.steps = []
+        self.event_history = []
         self.n_calls = 0
         self.verified = False
         self.last_test_output = ""
@@ -217,6 +234,14 @@ class DefaultAgent:
         workspace = Path(environment.get("cwd", "."))
         return all((workspace / name).is_file() for name in ("solution.py", "test_solution.py", TEST_CASES_FILE))
 
+    def _read_solution(self) -> str:
+        environment = self.env.serialize().get("environment", {})
+        workspace = Path(environment.get("cwd", "."))
+        try:
+            return (workspace / "solution.py").read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return ""
+
     def result(self) -> dict[str, Any]:
         environment = self.env.serialize().get("environment", {})
         workspace = Path(environment.get("cwd", "."))
@@ -231,6 +256,7 @@ class DefaultAgent:
             "last_test_output": self.last_test_output,
             "messages": self.messages,
             "steps": self.steps,
+            "events": self.event_history,
         }
 
     def serialize(self, **extra: Any) -> dict[str, Any]:

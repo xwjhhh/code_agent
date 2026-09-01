@@ -16,7 +16,7 @@ def format_memory_context(memories: list[RetrievedMemory]) -> str:
     ]
     for item in memories:
         node = item.node
-        title = f"[{node.category.upper()} / {node.granularity.upper()}]"
+        title = f"[{node.experience_type.upper()}]"
         sections.extend(
             [
                 title,
@@ -28,5 +28,13 @@ def format_memory_context(memories: list[RetrievedMemory]) -> str:
             sections.append("Actions: " + " -> ".join(node.steps))
         if node.negative_example:
             sections.append("Avoid: " + node.negative_example)
+        if node.failure:
+            sections.append("Observed failure: " + node.failure)
+        if node.fix:
+            sections.append("Repair: " + node.fix)
+        if node.verification:
+            sections.append("Verification: " + node.verification)
+        if node.evidence:
+            sections.append("Evidence: " + " | ".join(node.evidence[:4]))
         sections.append("")
     return "\n".join(sections).strip()

@@ -95,6 +95,10 @@ def test_agent_marks_failed_test_as_unverified(tmp_path: Path):
 
     assert result["status"] == "max_steps"
     assert result["verified"] is False
+    assert any(event["type"] == "test_failed" for event in result["events"])
+    failed_step = next(step for step in result["steps"] if step.get("action", {}).get("command") == "python -m pytest -q")
+    assert "solution_before" in failed_step
+    assert "solution_after" in failed_step
 
 
 def test_agent_injects_recovery_memory_after_failed_pytest(tmp_path: Path):
@@ -114,3 +118,30 @@ def test_agent_injects_recovery_memory_after_failed_pytest(tmp_path: Path):
     agent.run("solve")
 
     assert any(message.get("extra", {}).get("memory_phase") == "recovery" for message in agent.messages)
+
+
+def test_agent_snapshots_edits_even_when_command_hides_solution_path(tmp_path: Path):
+    (tmp_path / "solution.py").write_text("def answer(): return 1", encoding="utf-8")
+    (tmp_path / "test_solution.py").write_text("def test_answer(): assert True", encoding="utf-8")
+    (tmp_path / "test_cases.json").write_text('{"cases": []}', encoding="utf-8")
+
+    class HiddenEditEnvironment(FakeEnvironment):
+        def execute(self, action):
+            if action["command"] == "python -c hidden-edit":
+                (self.workspace / "solution.py").write_text("def answer(): return 2", encoding="utf-8")
+                return {"output": "ok", "returncode": 0, "exception_info": ""}
+            return super().execute(action)
+
+    agent = DefaultAgent(
+        FakeModel([]),
+        HiddenEditEnvironment(tmp_path, test_returncode=0),
+        system_prompt="system",
+        task_template="{task}",
+        step_limit=1,
+    )
+    agent.execute_actions(action("python -c hidden-edit", "edit-1"))
+
+    edited_step = agent.steps[0]
+    assert edited_step["solution_changed"] is True
+    assert edited_step["solution_before"] != edited_step["solution_after"]
+    assert any(event["type"] == "file_changed" for event in agent.event_history)

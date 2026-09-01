@@ -1,8 +1,16 @@
 import json
+import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
 
-from code_agent.memory import MemoryManager, MemoryManagerConfig, MemoryNode, MemoryStore
+from code_agent.memory import (
+    MemoryManager,
+    MemoryManagerConfig,
+    MemoryNode,
+    MemoryStore,
+    RecoveryEpisodeBuilder,
+)
+from code_agent.memory.consolidator import MemoryConsolidator
 
 
 class FakeEmbedder:
@@ -19,19 +27,17 @@ class MemoryModel:
         if "Analyze this programming problem" in prompt:
             return json.dumps(
                 {
-                    "task_query": "minimum window problem",
-                    "subtask_queries": ["maintain a sliding window"],
+                    "queries": ["minimum window problem", "maintain a sliding window"],
                     "problem_family": ["array"],
                     "algorithm_tags": ["sliding-window"],
                 }
             )
-        if "Extract up to six" in prompt:
+        if "Extract up to 3" in prompt:
             return json.dumps(
                 {
                     "memories": [
                         {
                             "category": "strategy",
-                            "granularity": "task",
                             "trigger": "positive array and contiguous window condition",
                             "content": "Use a sliding window when the maintained sum is monotonic.",
                             "purpose": "avoid quadratic interval enumeration",
@@ -40,6 +46,7 @@ class MemoryModel:
                             "problem_family": ["array", "interval"],
                             "algorithm_tags": ["sliding-window"],
                             "constraints": ["large input"],
+                            "evidence": ["本地测试全部通过"],
                             "priority": 1,
                         }
                     ]
@@ -55,7 +62,6 @@ class MemoryModel:
 def node() -> MemoryNode:
     memory = MemoryNode(
         category="strategy",
-        granularity="task",
         trigger="contiguous interval with monotonic statistic",
         content="Maintain the statistic while moving the window boundaries.",
         problem_family=["array"],
@@ -74,7 +80,6 @@ def test_memory_store_persists_and_filters_by_metadata(tmp_path: Path):
     store.add(task_memory)
     recovery = MemoryNode(
         category="recovery",
-        granularity="subtask",
         trigger="test output differs",
         content="Inspect output normalization.",
         source_run_id="run-1",
@@ -83,11 +88,27 @@ def test_memory_store_persists_and_filters_by_metadata(tmp_path: Path):
     )
     store.add(recovery)
 
-    matches = store.search([1.0, 0.0], category="strategy", granularity="task", limit=5)
+    matches = store.search([1.0, 0.0], category="strategy", limit=5)
 
     assert store.count() == 2
     assert [match.node.id for match in matches] == [task_memory.id]
     assert MemoryStore(tmp_path / "memory.sqlite3").list()[0].id in {task_memory.id, recovery.id}
+
+
+def test_legacy_granularity_column_is_migrated_without_losing_memories(tmp_path: Path):
+    database = tmp_path / "memory.sqlite3"
+    store = MemoryStore(database)
+    memory = node()
+    store.add(memory)
+    with sqlite3.connect(database) as connection:
+        connection.execute("ALTER TABLE memories ADD COLUMN granularity TEXT NOT NULL DEFAULT 'task'")
+
+    migrated = MemoryStore(database)
+    with sqlite3.connect(database) as connection:
+        columns = {row[1] for row in connection.execute("PRAGMA table_info(memories)")}
+    assert "granularity" not in columns
+    assert migrated.count() == 1
+    assert migrated.list()[0].id == memory.id
 
 
 def test_manager_learns_deduplicates_and_retrieves_context(tmp_path: Path):
@@ -119,7 +140,6 @@ def test_recovery_retrieval_only_uses_recovery_memories(tmp_path: Path):
     store.add(strategy)
     recovery = MemoryNode(
         category="recovery",
-        granularity="subtask",
         trigger="pytest output mismatches expected lines",
         content="Preserve line boundaries with splitlines when they carry meaning.",
         source_run_id="run-1",
@@ -170,8 +190,7 @@ class AgenticMemoryModel:
             return json.dumps({"action": "retrieve", "query": "sliding window rewritten", "reason": "可能复用窗口维护经验"})
         if "Analyze this programming problem" in prompt:
             return json.dumps({
-                "task_query": "minimum window problem",
-                "subtask_queries": ["maintain a sliding window"],
+                "queries": ["minimum window problem", "maintain a sliding window"],
                 "problem_family": ["array"],
                 "algorithm_tags": ["sliding-window"],
             })
@@ -232,3 +251,141 @@ def test_agentic_route_can_skip_non_retrieval(tmp_path: Path):
     assert retrieval.route_action == "skip"
     assert retrieval.grade_relevant is None
     assert retrieval.context == ""
+
+
+def _recovery_result(include_pass: bool = True, changed: bool = True) -> dict:
+    steps = [
+        {
+            "step": 1,
+            "action": {"command": "python -m pytest -q"},
+            "observation": {"returncode": 1, "output": "1 failed"},
+            "solution_before": "def solve(text): return 0\n",
+            "solution_after": "def solve(text): return 0\n",
+        },
+    ]
+    if changed:
+        steps.append(
+            {
+                "step": 2,
+                "action": {"command": "python -c 'write solution.py'"},
+                "observation": {"returncode": 0, "output": ""},
+                "solution_before": "def solve(text): return 0\n",
+                "solution_after": "def solve(text): return 1\n",
+                "solution_changed": True,
+            }
+        )
+    if include_pass:
+        steps.append(
+            {
+                "step": 3,
+                "action": {"command": "python -m pytest -q"},
+                "observation": {"returncode": 0, "output": "1 passed"},
+                "solution_before": "def solve(text): return 0\n",
+                "solution_after": "def solve(text): return 1\n",
+            }
+        )
+    return {"verified": include_pass, "steps": steps, "last_test_output": "1 passed" if include_pass else "1 failed"}
+
+
+def test_recovery_episode_requires_edit_and_following_pass():
+    episodes = RecoveryEpisodeBuilder().build(_recovery_result())
+    assert len(episodes) == 1
+    assert episodes[0].failure_output == "1 failed"
+    assert episodes[0].actions_between == ["python -c 'write solution.py'"]
+    assert episodes[0].code_before.endswith("return 0\n")
+    assert episodes[0].code_after.endswith("return 1\n")
+
+    assert RecoveryEpisodeBuilder().build(_recovery_result(include_pass=False)) == []
+    assert RecoveryEpisodeBuilder().build(_recovery_result(changed=False)) == []
+
+
+class FailureMemoryModel:
+    def query_text(self, messages, **kwargs):
+        prompt = messages[-1]["content"]
+        if "FAILURE experiences" in prompt:
+            return json.dumps(
+                {
+                    "memories": [
+                        {
+                            "experience_type": "failure",
+                            "category": "recovery",
+                            "trigger": "测试出现失败输出后修改了解题代码",
+                            "content": "根据失败输出定位状态转移错误，修复后重新运行同一测试",
+                            "purpose": "避免重复出现相同测试失败",
+                            "steps": ["读取失败输出", "修改状态转移", "重新运行测试"],
+                            "failure": "测试输出失败",
+                            "fix": "修正状态转移",
+                            "verification": "修改后测试通过",
+                            "evidence": ["1 failed", "1 passed"],
+                            "priority": 1,
+                        }
+                    ]
+                }
+            )
+        raise AssertionError("success extraction should not be created for this test")
+
+
+def test_manager_learns_only_evidence_backed_failure(tmp_path: Path):
+    manager = MemoryManager(
+        FailureMemoryModel(),
+        FakeEmbedder(),
+        MemoryStore(tmp_path / "memory.sqlite3"),
+        MemoryManagerConfig(rerank_with_llm=False, min_similarity=0.0),
+    )
+    learned = manager.learn_from_run(
+        task="debug a dynamic programming solution",
+        result=_recovery_result(),
+        review=None,
+        source_run_id="run-failure",
+    )
+    assert len(learned) == 1
+    assert learned[0].experience_type == "failure"
+    assert learned[0].category == "recovery"
+    assert learned[0].source_task == "debug a dynamic programming solution"
+    assert learned[0].evidence == ["1 failed", "1 passed"]
+
+
+def test_llm_duplicate_judgment_runs_before_vector_threshold(tmp_path: Path):
+    class Judge:
+        def __init__(self):
+            self.calls = 0
+
+        def query_text(self, messages, **kwargs):
+            self.calls += 1
+            return json.dumps({"duplicate": False, "matched_id": None, "reason": "虽然向量相似，但行动建议不同"})
+
+    store = MemoryStore(tmp_path / "memory.sqlite3")
+    existing = node()
+    store.add(existing)
+    judge = Judge()
+    incoming = node()
+    incoming.id = "incoming"
+    incoming.content = "A different actionable rule"
+    incoming.embedding_text = incoming.build_embedding_text()
+    incoming.embedding = [1.0, 0.0]
+    consolidator = MemoryConsolidator(store, model=judge)
+    assert consolidator.is_duplicate(incoming) is False
+    assert judge.calls == 1
+    assert consolidator.last_judgment is not None
+    assert consolidator.last_judgment.fallback is False
+
+
+def test_weighted_search_exposes_task_and_memory_scores(tmp_path: Path):
+    store = MemoryStore(tmp_path / "memory.sqlite3")
+    first = node()
+    first.source_task = "window task"
+    first.source_task_embedding = [1.0, 0.0]
+    first.embedding = [0.0, 1.0]
+    first.embedding_text = first.build_embedding_text()
+    second = node()
+    second.source_task = "other task"
+    second.source_task_embedding = [0.0, 1.0]
+    second.embedding = [1.0, 0.0]
+    second.embedding_text = second.build_embedding_text()
+    store.add(first)
+    store.add(second)
+    matches = store.search([1.0, 0.0], task_embedding=[1.0, 0.0], limit=2)
+    assert matches[0].node.id == first.id
+    assert matches[0].similarity == 0.6
+    assert all(match.task_similarity >= 0 for match in matches)
+    assert all(match.memory_similarity >= 0 for match in matches)

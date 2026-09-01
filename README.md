@@ -119,7 +119,7 @@ trajectories/<run_id>/review.json
 
 ## V2 持久化经验记忆
 
-项目已加入可选的轨迹经验记忆：验证成功的运行会提炼 Strategy、Recovery、Optimization 经验，调用硅基流动 Embeddings API 建立向量索引，并保存到本地 SQLite。新任务开始前进行 task/subtask 多粒度检索，pytest 失败后进行 Recovery 检索，最多把少量筛选后的经验作为参考注入编程模型。详细设计见 [`doc/MEMORY_V2.md`](doc/MEMORY_V2.md)。
+项目已加入可选的轨迹经验记忆：验证成功的运行会提炼成功/失败经验，调用硅基流动 Embeddings API 建立向量索引，并保存到本地 SQLite。新任务开始前进行多路语义检索，pytest 失败后进行 Recovery 检索，最多把少量筛选后的经验作为参考注入编程模型。详细设计见 [`doc/MEMORY_V2.md`](doc/MEMORY_V2.md)。
 
 Embedding 固定使用 `Qwen/Qwen3-Embedding-8B`。可在 `.env` 中设置 `SILICONFLOW_EMBEDDING_API_KEY`；未设置时回退到 `OPENAI_API_KEY`，Base URL 仍为 `https://api.siliconflow.cn/v1`。记忆库目录 `memory_store/` 已被 Git 忽略。
 

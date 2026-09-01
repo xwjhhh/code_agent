@@ -1,4 +1,4 @@
-"""Turn a new coding task into task-level and subtask-level memory queries."""
+"""Turn a new coding task into several semantic memory queries."""
 
 from __future__ import annotations
 
@@ -17,13 +17,13 @@ class QueryAnalyzer:
         self.model = model
 
     def analyze(self, task: str) -> list[MemoryQuery]:
-        fallback = [MemoryQuery(granularity="task", text=task)]
+        fallback = [MemoryQuery(text=task)]
         try:
             response = self.model.query_text(
                 [
                     {
                         "role": "system",
-                        "content": "You analyze algorithm problems for a reusable experience-memory retriever. Return JSON only. Write task_query and subtask_queries in concise Simplified Chinese; keep problem_family and algorithm_tags as short stable tags.",
+                        "content": "You analyze algorithm problems for a reusable experience-memory retriever. Return JSON only. Write concise semantic queries in Simplified Chinese; keep problem_family and algorithm_tags as short stable tags.",
                     },
                     {
                         "role": "user",
@@ -34,13 +34,12 @@ Problem:
 
 Return exactly one JSON object. The query fields must be written in Simplified Chinese so they match the Chinese memories saved by the system:
 {{
-  "task_query": "用简体中文描述整体问题结构",
-  "subtask_queries": ["最多三个具体的算法、实现、校验或输入输出关注点（使用简体中文）"],
+  "queries": ["整体问题结构", "具体算法、实现、校验或输入输出关注点"],
   "problem_family": ["array", "graph", "string", ...],
   "algorithm_tags": ["sliding-window", "dijkstra", ...]
 }}
 
-Do not solve the problem. Do not include sample-specific values. Keep the two query fields in Simplified Chinese; stable metadata tags may remain short English identifiers for matching.""",
+Do not solve the problem. Do not include sample-specific values. Keep query fields in Simplified Chinese; stable metadata tags may remain short English identifiers for matching.""",
                     },
                 ]
             )
@@ -50,13 +49,11 @@ Do not solve the problem. Do not include sample-specific values. Keep the two qu
             data = parse_json_object(response)
             family = tuple(_strings(data.get("problem_family")))
             tags = tuple(_strings(data.get("algorithm_tags")))
-            task_query = str(data.get("task_query", "")).strip()
             queries = [
-                MemoryQuery("task", task_query, problem_family=family, algorithm_tags=tags)
-            ] if task_query else fallback
-            for query in _strings(data.get("subtask_queries"))[:3]:
-                queries.append(MemoryQuery("subtask", query, problem_family=family, algorithm_tags=tags))
-            return queries
+                MemoryQuery(query, problem_family=family, algorithm_tags=tags)
+                for query in _strings(data.get("queries"))[:4]
+            ]
+            return queries or fallback
         except (TypeError, ValueError, json.JSONDecodeError):
             return fallback
 
