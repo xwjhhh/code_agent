@@ -51,7 +51,7 @@ def main(argv: list[str] | None = None) -> int:
     model = LitellmModel(
         model_name=model_name,
         model_kwargs=model_kwargs,
-        max_retries=config["model"].get("max_retries", 3),
+        max_retries=config["model"].get("max_retries", 5),
     )
     memory_manager = build_memory_manager(model, config, Path.cwd())
     try:

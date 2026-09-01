@@ -50,6 +50,10 @@ class RunRequest(BaseModel):
     # Batch runs can skip the model-backed retrieval pass while retaining
     # post-verification memory extraction and persistence.
     memory_retrieval: bool = Field(default=True, description="是否在运行前检索历史经验")
+    # Batch evaluations may disable the post-run learning pass so its provider
+    # retries do not dominate end-to-end latency. Retrieval behavior is kept
+    # independent from this switch.
+    memory_learning: bool = Field(default=True, description="是否在运行结束后提炼并写入记忆")
     review_enabled: bool = Field(default=True, description="是否执行完成后的模型评审")
 
     @field_validator("model")
@@ -362,7 +366,7 @@ def _run_agent(state: RunState, request: RunRequest) -> None:
     submitted_cases = [case.model_dump() for case in request.test_cases]
     agent: DefaultAgent | None = None
     try:
-        model = _build_model(request.model, config)
+        model = _build_model(request.model, config, request.timeout)
         try:
             memory_manager = build_memory_manager(model, config, PROJECT_ROOT, state.emit)
         except Exception as memory_error:
@@ -414,7 +418,10 @@ def _run_agent(state: RunState, request: RunRequest) -> None:
             state.storage.save_review(state.review)
             state.emit("review_finished", {"step": state.result["model_calls"], "review": state.review})
         _save_run_snapshot(state, agent)
-        _learn_memory(memory_manager, state, agent)
+        if request.memory_learning:
+            _learn_memory(memory_manager, state, agent)
+        else:
+            state.memory["learning_skipped"] = True
         _save_run_snapshot(state, agent)
     except Exception as error:  # The event stream must expose failures to the UI.
         state.error = str(error)
@@ -457,14 +464,17 @@ def _build_model(model_name: str, config: dict[str, Any], timeout: int | None = 
     model_kwargs = dict(config["model"].get("model_kwargs", {}))
     # Bound provider calls as well as shell commands so a stalled model cannot
     # leave a run in a permanent "running" state.
-    model_kwargs.setdefault("timeout", max(1, timeout or 120))
+    if timeout is not None:
+        model_kwargs["timeout"] = max(1, timeout)
+    else:
+        model_kwargs.setdefault("timeout", 120)
     api_base = os.getenv("OPENAI_API_BASE") or os.getenv("OPENAI_BASE_URL")
     if api_base:
         model_kwargs["api_base"] = api_base
     api_key = resolve_api_key(model_name)
     if api_key:
         model_kwargs["api_key"] = api_key
-    return LitellmModel(model_name=model_name, model_kwargs=model_kwargs, max_retries=config["model"].get("max_retries", 3))
+    return LitellmModel(model_name=model_name, model_kwargs=model_kwargs, max_retries=config["model"].get("max_retries", 5))
 
 
 def _retrieve_task_memory(manager: MemoryManager | None, state: RunState, task: str) -> str:

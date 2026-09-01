@@ -34,11 +34,11 @@ def validate_model_name(model_name: str) -> str:
 class LitellmModelConfig:
     model_name: str
     model_kwargs: dict[str, Any] = field(default_factory=dict)
-    max_retries: int = 3
+    max_retries: int = 5
 
 
 class LitellmModel:
-    def __init__(self, model_name: str, model_kwargs: dict[str, Any] | None = None, max_retries: int = 3):
+    def __init__(self, model_name: str, model_kwargs: dict[str, Any] | None = None, max_retries: int = 5):
         validate_model_name(model_name)
         self.config = LitellmModelConfig(model_name, model_kwargs or {}, max_retries)
 

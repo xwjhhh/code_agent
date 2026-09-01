@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from code_agent.agents import DefaultAgent
+from code_agent.exceptions import ModelError
 
 
 class FakeModel:
@@ -99,6 +100,38 @@ def test_agent_marks_failed_test_as_unverified(tmp_path: Path):
     failed_step = next(step for step in result["steps"] if step.get("action", {}).get("command") == "python -m pytest -q")
     assert "solution_before" in failed_step
     assert "solution_after" in failed_step
+
+
+def test_agent_recovers_when_model_fails_after_tests_pass(tmp_path: Path):
+    (tmp_path / "solution.py").write_text("def answer(): return 1", encoding="utf-8")
+    (tmp_path / "test_solution.py").write_text("def test_answer(): assert True", encoding="utf-8")
+    (tmp_path / "test_cases.json").write_text('{"cases": []}', encoding="utf-8")
+
+    class FailingAfterTestModel(FakeModel):
+        def __init__(self):
+            self.first = True
+
+        def query(self, messages):
+            if self.first:
+                self.first = False
+                return action("python -m pytest -q", "test-1")
+            raise ModelError("provider connection failed")
+
+    model = FailingAfterTestModel()
+    agent = DefaultAgent(
+        model,
+        FakeEnvironment(tmp_path, test_returncode=0),
+        system_prompt="system",
+        task_template="{task}",
+        step_limit=3,
+    )
+
+    result = agent.run("solve")
+
+    assert result["status"] == "success"
+    assert result["verified"] is True
+    assert result["recovered_from_model_error"] is True
+    assert any(event["type"] == "model_error_recovered" for event in result["events"])
 
 
 def test_agent_injects_recovery_memory_after_failed_pytest(tmp_path: Path):

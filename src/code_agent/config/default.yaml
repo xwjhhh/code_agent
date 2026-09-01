@@ -31,7 +31,8 @@ environment:
 
 model:
   model_name: openai/deepseek-ai/DeepSeek-V4-Flash
-  max_retries: 3
+  # Provider connections can fail transiently during long agent runs.
+  max_retries: 5
   model_kwargs:
     drop_params: true
     timeout: 120

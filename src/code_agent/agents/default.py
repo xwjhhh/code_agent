@@ -49,6 +49,7 @@ class DefaultAgent:
         self.event_history: list[dict[str, Any]] = []
         self.n_calls = 0
         self.verified = False
+        self.recovered_from_model_error = False
         self.last_test_output = ""
         self.exit_status = "running"
         self.event_callback = event_callback
@@ -65,9 +66,29 @@ class DefaultAgent:
         except LimitsExceeded as error:
             self._finish_from_flow(error, "max_steps")
         except ModelError as error:
-            self.exit_status = "model_error"
-            self._emit("model_error", error=str(error))
-            self.add_messages({"role": "exit", "content": str(error), "extra": {"exit_status": self.exit_status}})
+            if self.verified:
+                # A successful local test is a terminally verified state. The
+                # next model call normally only emits the submission sentinel;
+                # a provider outage at that point must not turn a valid run
+                # into a failed run.
+                self.recovered_from_model_error = True
+                self.exit_status = "success"
+                self._emit("model_error_recovered", error=str(error), reason="local_tests_passed")
+                self.add_messages(
+                    {
+                        "role": "exit",
+                        "content": "Model request failed after local tests passed; finalized successfully.",
+                        "extra": {
+                            "exit_status": self.exit_status,
+                            "recovered_from_model_error": True,
+                            "error": str(error),
+                        },
+                    }
+                )
+            else:
+                self.exit_status = "model_error"
+                self._emit("model_error", error=str(error))
+                self.add_messages({"role": "exit", "content": str(error), "extra": {"exit_status": self.exit_status}})
         finally:
             self._emit("agent_finished", status=self.exit_status, verified=self.verified)
             self.save()
@@ -198,6 +219,7 @@ class DefaultAgent:
         self.event_history = []
         self.n_calls = 0
         self.verified = False
+        self.recovered_from_model_error = False
         self.last_test_output = ""
         self.exit_status = "running"
         self.current_task = task
@@ -248,6 +270,7 @@ class DefaultAgent:
         return {
             "status": self.exit_status,
             "verified": self.verified,
+            "recovered_from_model_error": self.recovered_from_model_error,
             "model_calls": self.n_calls,
             "workspace": str(workspace),
             "solution_path": str(workspace / "solution.py"),
