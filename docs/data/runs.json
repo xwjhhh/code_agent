@@ -1,7 +1,874 @@
 {
-  "generated_at": "2026-09-01T07:29:11.359306+00:00",
-  "count": 93,
+  "generated_at": "2026-09-02T09:25:09.095813+00:00",
+  "count": 100,
   "items": [
+    {
+      "run_id": "20260902-150014-n-sku-k-sku-dba816",
+      "task": "仓库按到达顺序收到 n 个订单，每个订单属于一个 SKU 类别。现在需要将这些订单划分为恰好 k 个连续且非空的批次。\n如果同一个批次中有多个相同 SKU 的订单，则这些订单之间会产生冲突。SKU 类别 v 的每一对冲突产生 w[v] 分风险。\n如果某个批次中 SKU v 出现了 cnt[v] 次，则该批次的风险为：\nsum(w[v] * cnt[v] * (cnt[v] - 1) / 2)\n请将所有订单划分为 k 个连续批次，使总风险最小。\n输入格式：\n第一行：n k m\n分别表示订单数量、批次数和 SKU 类别数量。\n第二行：n 个整数 a[i]\n表示每个订单的 SKU 类别编号。\n第三行：m 个整数 w[v]\n表示 SKU 类别 v 的冲突权重。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 17,
+      "created_at": "2026-09-02T07:00:14.956910+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.07s\n",
+      "solution_code": "import sys\n\n\ndef solve(input_text: str) -> str:\n    data = input_text.split()\n    if not data:\n        return \"\"\n    pos = 0\n    n = int(data[pos]); pos += 1\n    k = int(data[pos]); pos += 1\n    m = int(data[pos]); pos += 1\n    a = [int(data[pos + i]) - 1 for i in range(n)]\n    pos += n\n    w = [int(data[pos + i]) for i in range(m)]\n\n    INF = float('inf')\n\n    freq = [0] * m\n    L = 0\n    R = -1\n    cur = 0\n\n    prev = [INF] * (n + 1)\n    prev[0] = 0\n    cur_dp = [INF] * (n + 1)\n\n    def dc(l, r, optL, optR):\n        # min over j in [optL, min(optR, mid-1)] of prev[j] + cost(a[j..mid-1])\n        # where cost is the weighted number of equal-value pairs in the segment.\n        nonlocal L, R, cur\n        if l > r:\n            return\n        mid = (l + r) >> 1\n        end = optR if optR < mid - 1 else mid - 1\n        best = INF\n        best_j = optL\n        aa = a\n        ww = w\n        ff = freq\n        pp = prev\n        for j in range(optL, end + 1):\n            nl = j\n            nr = mid - 1\n            # Move the shared window [L, R] to [nl, nr] (expand first, then shrink).\n            while L > nl:\n                L -= 1\n                v = aa[L]\n                cur += ww[v] * ff[v]\n                ff[v] += 1\n            while R < nr:\n                R += 1\n                v = aa[R]\n                cur += ww[v] * ff[v]\n                ff[v] += 1\n            while L < nl:\n                v = aa[L]\n                ff[v] -= 1\n                cur -= ww[v] * ff[v]\n                L += 1\n            while R > nr:\n                v = aa[R]\n                ff[v] -= 1\n                cur -= ww[v] * ff[v]\n                R -= 1\n            val = pp[j] + cur\n            if val < best:\n                best = val\n                best_j = j\n        cur_dp[mid] = best\n        dc(l, mid - 1, optL, best_j)\n        dc(mid + 1, r, best_j, optR)\n\n    for g in range(1, k + 1):\n        freq[:] = [0] * m\n        L = 0\n        R = -1\n        cur = 0\n        cur_dp = [INF] * (n + 1)\n        dc(g, n, g - 1, n - 1)\n        prev, cur_dp = cur_dp, prev\n\n    return str(prev[n])\n",
+      "review": {
+        "status": "completed",
+        "content": "### 1. 算法思路\n采用分治优化DP。将订单按顺序分成`k`个连续批次，最小化总风险。`dp[i][j]`表示前`i`个订单分成`j`个批次的最小风险。利用莫队风格的滑动窗口维护当前区间内各SKU的对数风险，在DP转移时使用分治法（DivCon）优化：对区间`[l,r]`计算`mid`位置的最优转移点，利用决策单调性缩小搜索范围，复杂度从`O(kn²)`降至`O(kn log n)`。\n\n### 2. 时间与空间复杂度\n- **时间复杂度**：外层循环`k`次，每次分治遍历`O(n log n)`个状态，每次滑动窗口均摊`O(1)`移动，总体`O(k n log n)`。\n- **空间复杂度**：使用两个长度为`n+1`的DP数组交替，以及长度为`m`的频率数组，整体`O(n + m)`。\n\n### 3. 边界情况\n- `k=1`：所有订单在一个批次，直接计算全区间风险，DP退化为前缀和。\n- `k=n`：每个订单单独成批，风险为0。\n- `m`较大但实际出现SKU少：频率数组按`m`初始化，浪费空间但无正确性问题。\n- 订单序列长度`n`较小：分治递归能够正常终止。\n\n### 4. 测试覆盖\n本地`test_cases.json`包含3个手动用例，覆盖了不同`k`、`n`、`m`组合，均通过。但缺少：\n- 极端值（如`n=1`或`k=1`或`k=n`）\n- 大权重或零权重的边界情况\n- 全部相同SKU的退化场景\n- 更大规模的压力测试\n\n### 5. 潜在风险与代码质量\n- **数值溢出**：风险值可能较大，使用Python的`int`无问题，但`float('inf')`混杂可能导致类型不一致。\n- **窗口移动顺序**：先扩展再收缩，避免计数变负，逻辑正确。\n- **可读性**：变量命名简洁，但非局部变量较多，嵌套较深，维护成本高。\n- **决策单调性假设**：未显式验证凸四边形不等式，若问题性质不满足，分治优化可能失效，但本题中风险函数满足该性质，因此正确。\n\n本地验证已通过。"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260902-144649-n-sku-k-sku-fd671f",
+      "task": "题目：仓储订单分批风险最小化\n仓库按到达顺序收到 n 个订单，每个订单属于一个 SKU 类别。现在需要将这些订单划分为恰好 k 个连续且非空的批次。\n如果同一个批次中有多个相同 SKU 的订单，则这些订单之间会产生冲突。SKU 类别 v 的每一对冲突产生 w[v] 分风险。\n如果某个批次中 SKU v 出现了 cnt[v] 次，则该批次的风险为：\nsum(w[v] * cnt[v] * (cnt[v] - 1) / 2)\n请将所有订单划分为 k 个连续批次，使总风险最小。\n输入格式：\n第一行：n k m\n分别表示订单数量、批次数和 SKU 类别数量。\n第二行：n 个整数 a[i]\n表示每个订单的 SKU 类别编号。\n第三行：m 个整数 w[v]\n表示 SKU 类别 v 的冲突权重。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 10,
+      "created_at": "2026-09-02T06:46:49.885195+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.07s\n",
+      "solution_code": "def solve(input_text: str) -> str:\n    data = list(map(int, input_text.split()))\n    if not data:\n        return \"0\"\n    idx = 0\n    n, k, m = data[idx], data[idx + 1], data[idx + 2]\n    idx += 3\n    a = data[idx:idx + n]\n    idx += n\n    w_raw = data[idx:idx + m]\n\n    # SKU labels are 1-based (1..m)\n    w = [0] * (m + 1)\n    for v in range(1, m + 1):\n        w[v] = w_raw[v - 1]\n\n    # With k >= n each batch can hold exactly one order: no conflicts.\n    if k >= n:\n        return \"0\"\n\n    arr = a\n    wt = w\n    freq = [0] * (m + 1)\n    pairs = 0  # weighted number of conflicting pairs in current window [L, R]\n    L, R = 1, 0\n\n    # One group: dp_prev[i] = cost of batch [1..i]\n    dp_prev = [0] * (n + 1)\n    for i in range(1, n + 1):\n        while R < i:\n            R += 1\n            v = arr[R - 1]\n            pairs += wt[v] * freq[v]\n            freq[v] += 1\n        dp_prev[i] = pairs\n\n    if k == 1:\n        return str(dp_prev[n])\n\n    INF = 10 ** 30\n\n    for g in range(2, k + 1):\n        dp_cur = [0] * (n + 1)\n        g1 = g - 1\n        # iterative divide-and-conquer over split positions\n        stack = [(g, n, g1, n - 1)]\n        while stack:\n            lo, hi, optl, optr = stack.pop()\n            if lo > hi:\n                continue\n            mid = (lo + hi) >> 1\n            left = optl if optl >= g1 else g1\n            right = optr if optr <= mid - 1 else mid - 1\n            nl = left + 1\n            nr = mid\n\n            # move inclusive window [L, R] to [nl, nr]; expand L/R first, then shrink\n            while L > nl:\n                L -= 1\n                v = arr[L - 1]\n                pairs += wt[v] * freq[v]\n                freq[v] += 1\n            while R < nr:\n                R += 1\n                v = arr[R - 1]\n                pairs += wt[v] * freq[v]\n                freq[v] += 1\n            while L < nl:\n                v = arr[L - 1]\n                freq[v] -= 1\n                pairs -= wt[v] * freq[v]\n                L += 1\n            while R > nr:\n                v = arr[R - 1]\n                freq[v] -= 1\n                pairs -= wt[v] * freq[v]\n                R -= 1\n\n            # evaluate candidates; window is at [left+1, mid] for j = left\n            best = INF\n            bestj = left\n            dpj = dp_prev\n            val = dpj[left] + pairs\n            if val < best:\n                best = val\n            j = left + 1\n            end = right\n            while j <= end:\n                # advance left edge by one position: remove arr[L-1]\n                v = arr[L - 1]\n                freq[v] -= 1\n                pairs -= wt[v] * freq[v]\n                L += 1\n                val = dpj[j] + pairs\n                if val < best:\n                    best = val\n                    bestj = j\n                j += 1\n\n            dp_cur[mid] = best\n            stack.append((mid + 1, hi, bestj, optr))\n            stack.append((lo, mid - 1, optl, bestj))\n\n        dp_prev = dp_cur\n\n    return str(dp_prev[n])\n",
+      "review": {
+        "status": "error",
+        "content": "Reviewer 执行失败：Model request failed after 1 attempts: Model request exceeded 30 seconds"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260902-110830-nums-target-target-nums-521e73",
+      "task": "给定一个整数数组 nums 和一个整数 target，请在数组中找出和为 target 的两个不同元素，并返回它们的下标。\n\n每个输入只保证存在一个有效答案。同一个元素不能重复使用。\n\n输入格式：\n第一行是整数数组 nums。\n第二行是整数 target。\n\n输出格式：\n返回两个下标组成的数组，要求下标从小到大排列，例如 [0, 1]。",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-02T03:08:30.777877+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.07s\n",
+      "solution_code": "from typing import List, Tuple\n\n\ndef parse_input(input_text: str) -> Tuple[List[int], int]:\n    \"\"\"Parse the input text into nums and target.\"\"\"\n    lines = [line.strip() for line in input_text.strip().splitlines() if line.strip()]\n    nums_line = lines[0]\n    # Accept both \"1,2,3\" and \"[1, 2, 3]\" styles.\n    if nums_line.startswith(\"[\") and nums_line.endswith(\"]\"):\n        nums_line = nums_line[1:-1]\n    nums = [int(part.strip()) for part in nums_line.split(\",\") if part.strip()]\n    target = int(lines[1].strip())\n    return nums, target\n\n\ndef solve(input_text: str) -> str:\n    nums, target = parse_input(input_text)\n\n    # One-pass hash map solution: for each value, check whether the\n    # complement has already been seen.\n    seen = {}\n    for j, value in enumerate(nums):\n        complement = target - value\n        if complement in seen and seen[complement] != j:\n            i = seen[complement]\n            if i > j:\n                i, j = j, i\n            return f\"{i}, {j}\\n\"\n        seen[value] = j\n\n    # The problem guarantees exactly one valid answer; this is a safety net.\n    for i in range(len(nums)):\n        for j in range(i + 1, len(nums)):\n            if nums[i] + nums[j] == target:\n                return f\"{i}, {j}\\n\"\n\n    raise ValueError(\"No valid pair found\")\n",
+      "review": {
+        "status": "completed",
+        "content": "本地验证已通过（3 passed）。以下为独立评审结果，不能保证隐藏在线评测必然通过。\n\n## 1. 算法思路\n\n- 先解析输入：按行取第一行作为数组 `nums`，第二行作为 `target`。\n- 使用一个哈希表 `seen` 记录已经遍历过的元素值到其下标。\n- 遍历数组时，计算当前元素的补数 `complement = target - nums[j]`。\n- 若 `complement` 已在 `seen` 中出现，说明之前存在某个下标 `i` 与当前下标 `j` 的和等于 `target`，返回排序后的 `[i, j]`。\n- 否则将当前元素值存入 `seen`。\n- 问题保证存在唯一答案，因此一次遍历即可找到；代码末尾还有双重循环作为兜底。\n\n核心是利用“先遍历到的元素先存入，后遍历到的元素查补数”的方式，避免同一个元素重复使用。\n\n## 2. 时间与空间复杂度\n\n- 常规有效输入下：时间复杂度 `O(n)`，其中 `n` 是数组长度。\n  - 哈希表插入和查找的均摊时间复杂度为 `O(1)`。\n- 空间复杂度 `O(n)`：需要存储最多 `n` 个元素的下标。\n- 代码末尾的兜底双重循环在最坏情况下为 `O(n^2)`，但由于题目保证有效答案且哈希表逻辑正确，正常输入不会执行到该分支。\n\n## 3. 边界情况\n\n- 重复元素：例如 `nums = [3, 3]`，`target = 6`，算法能在第二个元素处找到补数，且下标不会重复。\n- 负数：例如 `nums = [-3, 3]`，`target = 0`，补数计算正确。\n- 大整数：Python 的 `int` 无溢出问题，`1000000000000` 与 `-1000000000000` 可正常相加。\n- 带方括号的数组输入：解析时支持 `[1, 2, 3]` 和 `1,2,3` 两种格式。\n- 无解输入：最终会触发兜底逻辑并抛出 `ValueError`；但题目保证有唯一解，因此不是正常路径。\n\n## 4. 测试覆盖\n\n本地三个用例全部通过：\n\n- `case_1`：覆盖大数组、正负大整数配对。\n- `case_2`：覆盖数组中出现重复元素的情况。\n- `case_3`：覆盖极端大整数和 `target = 0` 的情况。\n\n同时，本地测试使用 `normalize_output` 忽略末尾换行，因此 `solve` 返回带 `\"\\n\"` 的字符串也能与无换行的期望输出匹配。\n\n但测试用例未覆盖：方括号数组输入、重复元素直接配对（如 `[2, 2]`, `target = 4`）、单元素数组等场景。从代码逻辑看这些情况均可处理，但隐藏测试是否覆盖无法保证。\n\n## 5. 潜在风险与代码质量\n\n- 输出格式：`solve` 返回 `\"i, j\\n\"`，不是题目描述中示例的 `[0, 1]` 形式。这与 `test_cases.json` 中的实际期望输出一致，因此本地测试通过；如果评测系统采用严格字符串比较且不归一化换行，部分用例可能受影响。\n- 兜底逻辑冗余：哈希表方法已经能保证有效输入下找到答案，兜底的双重循环增加了不必要的最坏时间复杂度，并且与主逻辑重复；可视为安全网，但也会掩盖潜在的算法逻辑错误。\n- 输入解析较宽松：只支持逗号分隔，且仅去除首尾方括号；如果输入格式为空格分隔或包含多余括号，会解析失败。不过测试文件中的格式是逗号分隔。\n- `seen[complement] != j` 的检查是防御性的。实际上在保存当前元素之前进行查询，`seen` 中不会存在当前下标，因此该条件通常恒成立，但不会破坏正确性。\n- 代码整体清晰，有类型注解和函数说明，结构简单，可维护性较好。\n"
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-230219-49-group-anagrams-given-b4c59a",
+      "task": "49. Group Anagrams\n\nGiven an array of strings strs , group the anagrams together. You can return the answer in any order . Example 1: Input: strs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"] Output: [[\"bat\"],[\"nat\",\"tan\"],[\"ate\",\"eat\",\"tea\"]] Explanation: There is no string in strs that can be rearranged to form \"bat\" . The strings \"nat\" and \"tan\" are anagrams as they can be rearranged to form each other. The strings \"ate\" , \"eat\" , and \"tea\" are anagrams as they can be rearranged to form each other. Example 2: Input: strs = [\"\"] Output: [[\"\"]] Example 3: Input: strs = [\"a\"] Output: [[\"a\"]] Constraints: 1 <= strs.length <= 10 4 0 <= strs[i].length <= 100 strs[i] consists of lowercase English letters.",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T15:02:19.435163+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.07s\n",
+      "solution_code": "import json\nfrom collections import defaultdict\n\n\ndef solve(input_text: str) -> str:\n    strs = json.loads(input_text)\n    groups = defaultdict(list)\n    for s in strs:\n        groups[\"\".join(sorted(s))].append(s)\n    result = list(groups.values())\n    return json.dumps(result)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-223909-codeforces-342e-xenia-and-f4da35",
+      "task": "Codeforces 342E - Xenia and Tree (rating 2400).\n\nThere is an undirected tree with n vertices and n-1 edges.  Initially only\nvertex 1 is red.  Process m online operations:\n1 v: paint vertex v red (it remains red forever).\n2 v: print the minimum tree-edge distance from v to any red vertex.\n\nInput: n and m (1 <= n,m <= 100000), followed by n-1 edges, followed by m\noperations.  Output one line for every operation of type 2.  The input is a\nsingle test case.  Implement solve(input_text: str) -> str and read the\ncomplete input from input_text.",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T14:39:09.977715+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.73s\n",
+      "solution_code": "import sys\n\ndef solve(input_text: str) -> str:\n    data = list(map(int, input_text.split()))\n    pos = 0\n    n = data[pos]; pos += 1\n    m = data[pos]; pos += 1\n\n    adj = [[] for _ in range(n + 1)]\n    for _ in range(n - 1):\n        u = data[pos]; v = data[pos + 1]; pos += 2\n        adj[u].append(v)\n        adj[v].append(u)\n\n    removed = [False] * (n + 1)\n    parent = [0] * (n + 1)\n    size = [0] * (n + 1)\n\n    # For each vertex store its centroid-ancestors and distances to them.\n    anc_c = [[] for _ in range(n + 1)]\n    anc_d = [[] for _ in range(n + 1)]\n\n    sys.setrecursionlimit(1_000_000)\n\n    def decompose(start):\n        # Collect the current connected component (not containing removed vertices).\n        order = []\n        stack = [start]\n        parent[start] = 0\n        while stack:\n            v = stack.pop()\n            order.append(v)\n            for to in adj[v]:\n                if to != parent[v] and not removed[to]:\n                    parent[to] = v\n                    stack.append(to)\n\n        total = len(order)\n\n        # Subtree sizes inside this component (rooted at start).\n        for v in reversed(order):\n            s = 1\n            for to in adj[v]:\n                if to != parent[v] and not removed[to] and parent[to] == v:\n                    s += size[to]\n            size[v] = s\n\n        # Find the centroid.\n        c = start\n        while True:\n            heavy = 0\n            for to in adj[c]:\n                if to != parent[c] and not removed[to] and parent[to] == c and size[to] * 2 > total:\n                    heavy = to\n                    break\n            if heavy == 0:\n                break\n            c = heavy\n\n        removed[c] = True\n\n        # Distances from centroid to all vertices of this component.\n        parent[c] = 0\n        stack = [(c, 0)]\n        anc_c[c].append(c)\n        anc_d[c].append(0)\n        while stack:\n            v, d = stack.pop()\n            for to in adj[v]:\n                if to != parent[v] and not removed[to]:\n                    parent[to] = v\n                    anc_c[to].append(c)\n                    anc_d[to].append(d + 1)\n                    stack.append((to, d + 1))\n\n        # Recurse into the remaining components.\n        for to in adj[c]:\n            if not removed[to]:\n                decompose(to)\n\n    decompose(1)\n\n    best = [10**9] * (n + 1)\n\n    def add_red(v):\n        for i in range(len(anc_c[v])):\n            c = anc_c[v][i]\n            d = anc_d[v][i]\n            if d < best[c]:\n                best[c] = d\n\n    add_red(1)\n\n    out = []\n    for _ in range(m):\n        t = data[pos]; v = data[pos + 1]; pos += 2\n        if t == 1:\n            add_red(v)\n        else:\n            ans = 10**9\n            ac = anc_c[v]\n            ad = anc_d[v]\n            for i in range(len(ac)):\n                val = best[ac[i]] + ad[i]\n                if val < ans:\n                    ans = val\n            out.append(str(ans))\n\n    return \"\\n\".join(out)\n\nif __name__ == \"__main__\":\n    print(solve(sys.stdin.read()))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-222550-codeforces-342e-xenia-and-7a533c",
+      "task": "Codeforces 342E - Xenia and Tree (rating 2400).\n\nThere is an undirected tree with n vertices and n-1 edges.  Initially only\nvertex 1 is red.  Process m online operations:\n1 v: paint vertex v red (it remains red forever).\n2 v: print the minimum tree-edge distance from v to any red vertex.\n\nInput: n and m (1 <= n,m <= 100000), followed by n-1 edges, followed by m\noperations.  Output one line for every operation of type 2.  The input is a\nsingle test case.  Implement solve(input_text: str) -> str and read the\ncomplete input from input_text.",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 12,
+      "created_at": "2026-09-01T14:25:50.576832+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.68s\n",
+      "solution_code": "import sys\n\n\ndef solve(input_text: str) -> str:\n    data = list(map(int, input_text.split()))\n    if not data:\n        return \"\"\n    n, m = data[0], data[1]\n    g = [[] for _ in range(n + 1)]\n    idx = 2\n    for _ in range(n - 1):\n        u = data[idx]\n        v = data[idx + 1]\n        idx += 2\n        g[u].append(v)\n        g[v].append(u)\n\n    removed = [False] * (n + 1)\n    size = [0] * (n + 1)\n    par = [0] * (n + 1)\n    ancestors = [[] for _ in range(n + 1)]\n    distances = [[] for _ in range(n + 1)]\n\n    def get_order(start):\n        order = []\n        par[start] = 0\n        stack = [start]\n        while stack:\n            u = stack.pop()\n            order.append(u)\n            pu = par[u]\n            for w in g[u]:\n                if w != pu and not removed[w]:\n                    par[w] = u\n                    stack.append(w)\n        for u in reversed(order):\n            s = 1\n            pu = par[u]\n            for w in g[u]:\n                if w != pu and not removed[w]:\n                    s += size[w]\n            size[u] = s\n        return order\n\n    def decompose(start, pc):\n        order = get_order(start)\n        total = size[start]\n        best_imbalance = total + 1\n        cent = start\n        for u in order:\n            max_part = total - size[u]  # part towards the parent side\n            pu = par[u]\n            for w in g[u]:\n                if w != pu and not removed[w]:\n                    sw = size[w]\n                    if sw > max_part:\n                        max_part = sw\n            if max_part < best_imbalance:\n                best_imbalance = max_part\n                cent = u\n\n        removed[cent] = True\n        ancestors[cent].append(cent)\n        distances[cent].append(0)\n\n        for nb in g[cent]:\n            if not removed[nb]:\n                stack = [(nb, cent, 1)]\n                while stack:\n                    u, p, d = stack.pop()\n                    ancestors[u].append(cent)\n                    distances[u].append(d)\n                    for w in g[u]:\n                        if w != p and not removed[w]:\n                            stack.append((w, u, d + 1))\n\n        for nb in g[cent]:\n            if not removed[nb]:\n                decompose(nb, cent)\n\n    decompose(1, 0)\n\n    ops = []\n    for _ in range(m):\n        t = data[idx]\n        v = data[idx + 1]\n        idx += 2\n        ops.append((t, v))\n\n    INF = 10 ** 9\n    best = [INF] * (n + 1)\n\n    # vertex 1 is initially red\n    for c, d in zip(ancestors[1], distances[1]):\n        if d < best[c]:\n            best[c] = d\n\n    out = []\n    for t, v in ops:\n        anc = ancestors[v]\n        dst = distances[v]\n        if t == 1:\n            for c, d in zip(anc, dst):\n                if d < best[c]:\n                    best[c] = d\n        else:\n            ans = INF\n            for c, d in zip(anc, dst):\n                val = best[c] + d\n                if val < ans:\n                    ans = val\n            out.append(str(ans))\n\n    return \"\\n\".join(out)\n\n\nif __name__ == \"__main__\":\n    print(solve(sys.stdin.read()))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-221541-codeforces-868f-yet-another-943b41",
+      "task": "Codeforces 868F - Yet Another Minimization Problem (rating 2500).\n\nGiven an integer sequence a[1..n] and an integer k, split the sequence into\nexactly k non-empty contiguous groups.  The cost of a group [l,r] is the\nnumber of pairs (i,j) with l <= i < j <= r and a[i] = a[j].  Minimize the sum\nof group costs.\n\nInput: the first line contains n and k (1 <= k <= n <= 100000).  The second\nline contains n integers a[i] (1 <= a[i] <= n).  Output one integer, the\nminimum possible cost.  The answer can exceed 32-bit signed integer range.\n\nThis is the standard Codeforces problem; implement solve(input_text: str) ->\nstr and read the complete input from input_text.",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 12,
+      "created_at": "2026-09-01T14:15:41.108931+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 1.38s\n",
+      "solution_code": "def solve(input_text: str) -> str:\n    data = input_text.split()\n    if not data:\n        return \"\"\n    n = int(data[0])\n    k = int(data[1])\n    a = [0] + [int(x) for x in data[2:2 + n]]  # 1-indexed\n\n    INF = 10 ** 30\n\n    # prev[i] = optimal cost to split first i elements into (j-1) groups\n    prev = [INF] * (n + 1)\n    prev[0] = 0\n\n    cnt = [0] * (max(n + 1, max(a) + 1))  # occurrence counts for current Mo interval\n    cur_cost = 0\n    cur_l = 1                 # current interval [cur_l, cur_r], empty at start\n    cur_r = 0\n\n    def move_to(L, R):\n        nonlocal cur_cost, cur_l, cur_r\n        # expand left\n        while cur_l > L:\n            cur_l -= 1\n            v = a[cur_l]\n            cur_cost += cnt[v]\n            cnt[v] += 1\n        # expand right\n        while cur_r < R:\n            cur_r += 1\n            v = a[cur_r]\n            cur_cost += cnt[v]\n            cnt[v] += 1\n        # shrink left\n        while cur_l < L:\n            v = a[cur_l]\n            cur_cost -= cnt[v] - 1\n            cnt[v] -= 1\n            cur_l += 1\n        # shrink right\n        while cur_r > R:\n            v = a[cur_r]\n            cur_cost -= cnt[v] - 1\n            cnt[v] -= 1\n            cur_r -= 1\n\n    for j in range(1, k + 1):\n        ndp = [INF] * (n + 1)\n\n        def compute(l, r, opt_l, opt_r):\n            nonlocal cur_cost, cur_l, cur_r\n            if l > r:\n                return\n            mid = (l + r) // 2\n            limit = opt_r if opt_r < mid - 1 else mid - 1\n            if limit < opt_l:\n                compute(l, mid - 1, opt_l, opt_r)\n                compute(mid + 1, r, opt_l, opt_r)\n                return\n            # segment for t = opt_l is [opt_l + 1, mid]\n            move_to(opt_l + 1, mid)\n            best = INF\n            best_t = opt_l\n            # scan t from opt_l to limit\n            for t in range(opt_l, limit + 1):\n                pv = prev[t]\n                if pv < INF:\n                    val = pv + cur_cost\n                    if val < best:\n                        best = val\n                        best_t = t\n                # advance to next t: drop leftmost element (position t+1)\n                v = a[cur_l]\n                cur_cost -= cnt[v] - 1\n                cnt[v] -= 1\n                cur_l += 1\n            ndp[mid] = best\n            compute(l, mid - 1, opt_l, best_t)\n            compute(mid + 1, r, best_t, opt_r)\n\n        compute(j, n, j - 1, n - 1)\n        prev = ndp\n\n    return str(prev[n])\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-220644-codeforces-868f-yet-another-27b8c3",
+      "task": "Codeforces 868F - Yet Another Minimization Problem (rating 2500).\n\nGiven an integer sequence a[1..n] and an integer k, split the sequence into\nexactly k non-empty contiguous groups.  The cost of a group [l,r] is the\nnumber of pairs (i,j) with l <= i < j <= r and a[i] = a[j].  Minimize the sum\nof group costs.\n\nInput: the first line contains n and k (1 <= k <= n <= 100000).  The second\nline contains n integers a[i] (1 <= a[i] <= n).  Output one integer, the\nminimum possible cost.  The answer can exceed 32-bit signed integer range.\n\nThis is the standard Codeforces problem; implement solve(input_text: str) ->\nstr and read the complete input from input_text.",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 14,
+      "created_at": "2026-09-01T14:06:44.079520+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 1.35s\n",
+      "solution_code": "import sys\n\n\ndef solve(input_text: str) -> str:\n    data = list(map(int, input_text.split()))\n    if not data:\n        return \"\"\n    n, k = data[0], data[1]\n    a = data[2:2 + n]\n    INF = 10 ** 18\n\n    max_val = max(a) if a else 0\n    freq = [0] * (max_val + 1)  # values are 1..n\n    L = 1\n    R = 0\n    pairs = 0\n\n    def move_window(newL, newR):\n        nonlocal L, R, pairs\n        while L > newL:\n            L -= 1\n            v = a[L - 1]\n            pairs += freq[v]\n            freq[v] += 1\n        while R < newR:\n            R += 1\n            v = a[R - 1]\n            pairs += freq[v]\n            freq[v] += 1\n        while L < newL:\n            v = a[L - 1]\n            freq[v] -= 1\n            pairs -= freq[v]\n            L += 1\n        while R > newR:\n            v = a[R - 1]\n            freq[v] -= 1\n            pairs -= freq[v]\n            R -= 1\n\n    dp_prev = [INF] * (n + 1)\n    dp_prev[0] = 0\n\n    for g in range(1, k + 1):\n        if dp_prev[n] == 0:\n            break  # already optimal; refinements cannot increase the cost\n        dp_cur = [INF] * (n + 1)\n\n        def compute(l, r, optl, optr):\n            if l > r:\n                return\n            nonlocal L, pairs\n            mid = (l + r) // 2\n            limit = min(optr, mid - 1)\n            best = INF\n            bestj = -1\n            if limit >= optl:\n                # bring window to [optl+1, mid]\n                move_window(optl + 1, mid)\n                # scan j from optl to limit; window is [j+1, mid]\n                for j in range(optl, limit + 1):\n                    cand = dp_prev[j] + pairs\n                    if cand < best:\n                        best = cand\n                        bestj = j\n                    if j < limit:\n                        # shrink left by one: window becomes [j+2, mid]\n                        v = a[L - 1]\n                        freq[v] -= 1\n                        pairs -= freq[v]\n                        L += 1\n            dp_cur[mid] = best\n            compute(l, mid - 1, optl, bestj)\n            compute(mid + 1, r, bestj, optr)\n\n        compute(g, n, g - 1, n - 1)\n        dp_prev = dp_cur\n\n    return str(dp_prev[n])\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-203652-295-find-median-from-294b37",
+      "task": "295. Find Median from Data Stream\n\nThe median is the middle value in an ordered integer list. If the size of the list is even, there is no middle value, and the median is the mean of the two middle values. For example, for arr = [2,3,4] , the median is 3 . For example, for arr = [2,3] , the median is (2 + 3) / 2 = 2.5 . Implement the MedianFinder class: MedianFinder() initializes the MedianFinder object. void addNum(int num) adds the integer num from the data stream to the data structure. double findMedian() returns the median of all elements so far. Answers within 10 -5 of the actual answer will be accepted. Example 1: Input [\"MedianFinder\", \"addNum\", \"addNum\", \"findMedian\", \"addNum\", \"findMedian\"] [[], [1], [2], [], [3], []] Output [null, null, null, 1.5, null, 2.0] Explanation MedianFinder medianFinder = new MedianFinder(); medianFinder.addNum(1); // arr = [1] medianFinder.addNum(2); // arr = [1, 2] medianFinder.findMedian(); // return 1.5 (i.e., (1 + 2) / 2) medianFinder.addNum(3); // arr[1, 2, 3] medianFinder.findMedian(); // return 2.0 Constraints: -10 5 <= num <= 10 5 There will be at least one element in the data structure before calling findMedian . At most 5 * 10 4 calls will be made to addNum and findMedian . Follow up: If all integer numbers from the stream are in the range [0, 100] , how would you optimize your solution? If 99% of all integer numbers from the stream are in the range [0, 100] , how would you optimize your solution?",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T12:36:52.177529+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.07s\n",
+      "solution_code": "import json\nimport heapq\n\n\nclass MedianFinder:\n    def __init__(self):\n        # max-heap storing the smaller half (as negatives)\n        self.low = []\n        # min-heap storing the larger half\n        self.high = []\n\n    def addNum(self, num: int) -> None:\n        if not self.low or num <= -self.low[0]:\n            heapq.heappush(self.low, -num)\n        else:\n            heapq.heappush(self.high, num)\n\n        if len(self.low) > len(self.high) + 1:\n            heapq.heappush(self.high, -heapq.heappop(self.low))\n        elif len(self.high) > len(self.low):\n            heapq.heappush(self.low, -heapq.heappop(self.high))\n\n    def findMedian(self) -> float:\n        if len(self.low) == len(self.high):\n            return (-self.low[0] + self.high[0]) / 2.0\n        return float(-self.low[0])\n\n\ndef _format_number(value):\n    \"\"\"Format a number the way the expected outputs do:\n    integral results are shown without a decimal point.\"\"\"\n    if isinstance(value, float) and value.is_integer():\n        return str(int(value))\n    return str(value)\n\n\ndef solve(input_text: str) -> str:\n    data = json.loads(input_text)\n    operations = data[\"operations\"]\n    arguments = data[\"arguments\"]\n\n    finder = None\n    outputs = []\n\n    for op, args in zip(operations, arguments):\n        if op == \"MedianFinder\":\n            finder = MedianFinder()\n            outputs.append(\"null\")\n        elif op == \"addNum\":\n            finder.addNum(args[0])\n            outputs.append(\"null\")\n        elif op == \"findMedian\":\n            outputs.append(_format_number(finder.findMedian()))\n        else:\n            raise ValueError(f\"Unknown operation: {op}\")\n\n    return \"[\" + \", \".join(outputs) + \"]\"\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-203433-295-find-median-from-ef851a",
+      "task": "295. Find Median from Data Stream\n\nThe median is the middle value in an ordered integer list. If the size of the list is even, there is no middle value, and the median is the mean of the two middle values. For example, for arr = [2,3,4] , the median is 3 . For example, for arr = [2,3] , the median is (2 + 3) / 2 = 2.5 . Implement the MedianFinder class: MedianFinder() initializes the MedianFinder object. void addNum(int num) adds the integer num from the data stream to the data structure. double findMedian() returns the median of all elements so far. Answers within 10 -5 of the actual answer will be accepted. Example 1: Input [\"MedianFinder\", \"addNum\", \"addNum\", \"findMedian\", \"addNum\", \"findMedian\"] [[], [1], [2], [], [3], []] Output [null, null, null, 1.5, null, 2.0] Explanation MedianFinder medianFinder = new MedianFinder(); medianFinder.addNum(1); // arr = [1] medianFinder.addNum(2); // arr = [1, 2] medianFinder.findMedian(); // return 1.5 (i.e., (1 + 2) / 2) medianFinder.addNum(3); // arr[1, 2, 3] medianFinder.findMedian(); // return 2.0 Constraints: -10 5 <= num <= 10 5 There will be at least one element in the data structure before calling findMedian . At most 5 * 10 4 calls will be made to addNum and findMedian . Follow up: If all integer numbers from the stream are in the range [0, 100] , how would you optimize your solution? If 99% of all integer numbers from the stream are in the range [0, 100] , how would you optimize your solution?",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 9,
+      "created_at": "2026-09-01T12:34:33.326961+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.08s\n",
+      "solution_code": "import heapq\nimport json\n\n\nclass MedianFinder:\n    def __init__(self):\n        # max-heap of smaller half (stored negated)\n        self.small = []\n        # min-heap of larger half\n        self.large = []\n\n    def addNum(self, num: int) -> None:\n        heapq.heappush(self.small, -num)\n\n        # largest of small half must be <= smallest of large half\n        if self.small and self.large and (-self.small[0] > self.large[0]):\n            heapq.heappush(self.large, -heapq.heappop(self.small))\n\n        # keep sizes balanced: len(small) == len(large) or len(small) == len(large) + 1\n        if len(self.small) > len(self.large) + 1:\n            heapq.heappush(self.large, -heapq.heappop(self.small))\n        elif len(self.large) > len(self.small):\n            heapq.heappush(self.small, -heapq.heappop(self.large))\n\n    def findMedian(self) -> float:\n        if len(self.small) > len(self.large):\n            return -self.small[0]\n        return (-self.small[0] + self.large[0]) / 2.0\n\n\ndef _format_value(value):\n    if value is None:\n        return \"null\"\n    if isinstance(value, float) and value.is_integer():\n        return str(int(value))\n    return str(value)\n\n\ndef solve(input_text: str) -> str:\n    data = json.loads(input_text)\n    operations = data[\"operations\"]\n    arguments = data[\"arguments\"]\n\n    finder = None\n    results = []\n\n    for op, arg in zip(operations, arguments):\n        if op == \"MedianFinder\":\n            finder = MedianFinder()\n            results.append(None)\n        elif op == \"addNum\":\n            finder.addNum(arg[0])\n            results.append(None)\n        elif op == \"findMedian\":\n            results.append(finder.findMedian())\n\n    return \"[\" + \", \".join(_format_value(v) for v in results) + \"]\"\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-203332-84-largest-rectangle-in-4c431d",
+      "task": "84. Largest Rectangle in Histogram\n\nGiven an array of integers heights representing the histogram's bar height where the width of each bar is 1 , return the area of the largest rectangle in the histogram . Example 1: Input: heights = [2,1,5,6,2,3] Output: 10 Explanation: The above is a histogram where width of each bar is 1. The largest rectangle is shown in the red area, which has an area = 10 units. Example 2: Input: heights = [2,4] Output: 4 Constraints: 1 <= heights.length <= 10 5 0 <= heights[i] <= 10 4",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 6,
+      "created_at": "2026-09-01T12:33:32.989743+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.11s\n",
+      "solution_code": "import json\nfrom typing import List\n\n\ndef largest_rectangle_area(heights: List[int]) -> int:\n    \"\"\"Return the area of the largest rectangle in the histogram.\"\"\"\n    stack = []\n    max_area = 0\n    # Append a sentinel height 0 to flush all remaining bars from the stack.\n    for i, h in enumerate(heights + [0]):\n        start = i\n        while stack and stack[-1][1] > h:\n            idx, height = stack.pop()\n            # width extends from idx to i-1\n            width = i - idx\n            area = height * width\n            if area > max_area:\n                max_area = area\n            start = idx\n        stack.append((start, h))\n    return max_area\n\n\ndef solve(input_text: str) -> str:\n    \"\"\"Parse the input and return the largest rectangle area as a string.\"\"\"\n    text = input_text.strip()\n    if not text:\n        return \"\"\n    if text.startswith(\"[\"):\n        heights = json.loads(text)\n    elif text.startswith(\"heights\"):\n        # fallback: parse \"heights = [...]\"\n        heights = json.loads(text.split(\"=\", 1)[1].strip())\n    else:\n        heights = json.loads(text)\n    return str(largest_rectangle_area(heights))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-203250-84-largest-rectangle-in-b2ff4d",
+      "task": "84. Largest Rectangle in Histogram\n\nGiven an array of integers heights representing the histogram's bar height where the width of each bar is 1 , return the area of the largest rectangle in the histogram . Example 1: Input: heights = [2,1,5,6,2,3] Output: 10 Explanation: The above is a histogram where width of each bar is 1. The largest rectangle is shown in the red area, which has an area = 10 units. Example 2: Input: heights = [2,4] Output: 4 Constraints: 1 <= heights.length <= 10 5 0 <= heights[i] <= 10 4",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T12:32:50.720371+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.09s\n",
+      "solution_code": "import json\n\n\ndef largest_rectangle_area(heights):\n    \"\"\"Return the area of the largest rectangle in the histogram.\"\"\"\n    stack = []  # stack of indices with non-decreasing heights\n    max_area = 0\n    # Append a sentinel 0 to flush all remaining bars from the stack.\n    for i, h in enumerate(heights + [0]):\n        start = i\n        while stack and stack[-1][1] > h:\n            idx, height = stack.pop()\n            # The popped bar can extend from its original index to i-1.\n            max_area = max(max_area, height * (i - idx))\n            start = idx\n        stack.append((start, h))\n    return max_area\n\n\ndef solve(input_text: str) -> str:\n    heights = json.loads(input_text.strip())\n    return str(largest_rectangle_area(heights))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-203150-4-median-of-two-0e5b67",
+      "task": "4. Median of Two Sorted Arrays\n\nGiven two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays. The overall run time complexity should be O(log (m+n)) . Example 1: Input: nums1 = [1,3], nums2 = [2] Output: 2.00000 Explanation: merged array = [1,2,3] and median is 2. Example 2: Input: nums1 = [1,2], nums2 = [3,4] Output: 2.50000 Explanation: merged array = [1,2,3,4] and median is (2 + 3) / 2 = 2.5. Constraints: nums1.length == m nums2.length == n 0 <= m <= 1000 0 <= n <= 1000 1 <= m + n <= 2000 -10 6 <= nums1[i], nums2[i] <= 10 6",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T12:31:50.358970+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.07s\n",
+      "solution_code": "import json\n\n\ndef find_median(nums1, nums2):\n    # Binary search over the smaller array for O(log(m+n)) time.\n    if len(nums1) > len(nums2):\n        nums1, nums2 = nums2, nums1\n    m, n = len(nums1), len(nums2)\n    total = m + n\n    half = total // 2\n\n    lo, hi = 0, m\n    while lo <= hi:\n        i = (lo + hi) // 2      # elements taken from nums1 (left partition)\n        j = half - i            # elements taken from nums2 (left partition)\n\n        left1 = nums1[i - 1] if i > 0 else float('-inf')\n        right1 = nums1[i] if i < m else float('inf')\n        left2 = nums2[j - 1] if j > 0 else float('-inf')\n        right2 = nums2[j] if j < n else float('inf')\n\n        if left1 <= right2 and left2 <= right1:\n            if total % 2 == 1:\n                return float(min(right1, right2))\n            return (max(left1, left2) + min(right1, right2)) / 2.0\n        elif left1 > right2:\n            hi = i - 1\n        else:\n            lo = i + 1\n\n\ndef solve(input_text: str) -> str:\n    data = json.loads(input_text)\n    median = find_median(data[\"nums1\"], data[\"nums2\"])\n    return str(median)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-202934-4-median-of-two-8ad94b",
+      "task": "4. Median of Two Sorted Arrays\n\nGiven two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays. The overall run time complexity should be O(log (m+n)) . Example 1: Input: nums1 = [1,3], nums2 = [2] Output: 2.00000 Explanation: merged array = [1,2,3] and median is 2. Example 2: Input: nums1 = [1,2], nums2 = [3,4] Output: 2.50000 Explanation: merged array = [1,2,3,4] and median is (2 + 3) / 2 = 2.5. Constraints: nums1.length == m nums2.length == n 0 <= m <= 1000 0 <= n <= 1000 1 <= m + n <= 2000 -10 6 <= nums1[i], nums2[i] <= 10 6",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T12:29:34.609366+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.06s\n",
+      "solution_code": "import json\n\n\ndef find_median_sorted_arrays(nums1, nums2):\n    # Ensure A is the smaller array to keep binary search O(log(min(m, n)))\n    A, B = nums1, nums2\n    if len(A) > len(B):\n        A, B = B, A\n    m, n = len(A), len(B)\n    total = m + n\n    total_left = (total + 1) // 2\n\n    lo, hi = 0, m\n    while lo <= hi:\n        i = (lo + hi) // 2          # number of elements taken from A\n        j = total_left - i          # number of elements taken from B\n\n        a_left = A[i - 1] if i > 0 else float(\"-inf\")\n        a_right = A[i] if i < m else float(\"inf\")\n        b_left = B[j - 1] if j > 0 else float(\"-inf\")\n        b_right = B[j] if j < n else float(\"inf\")\n\n        if a_left <= b_right and b_left <= a_right:\n            if total % 2 == 1:\n                return float(max(a_left, b_left))\n            return (max(a_left, b_left) + min(a_right, b_right)) / 2.0\n        elif a_left > b_right:\n            hi = i - 1\n        else:\n            lo = i + 1\n\n    raise ValueError(\"Input arrays are not sorted\")\n\n\ndef solve(input_text: str) -> str:\n    data = json.loads(input_text)\n    nums1 = data[\"nums1\"]\n    nums2 = data[\"nums2\"]\n    return str(find_median_sorted_arrays(nums1, nums2))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-202801-51-n-queens-the-93f4e6",
+      "task": "51. N-Queens\n\nThe n-queens puzzle is the problem of placing n queens on an n x n chessboard such that no two queens attack each other. Given an integer n , return all distinct solutions to the n-queens puzzle . You may return the answer in any order . Each solution contains a distinct board configuration of the n-queens' placement, where 'Q' and '.' both indicate a queen and an empty space, respectively. Example 1: Input: n = 4 Output: [[\".Q..\",\"...Q\",\"Q...\",\"..Q.\"],[\"..Q.\",\"Q...\",\"...Q\",\".Q..\"]] Explanation: There exist two distinct solutions to the 4-queens puzzle as shown above Example 2: Input: n = 1 Output: [[\"Q\"]] Constraints: 1 <= n <= 9",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T12:28:01.053571+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.06s\n",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    \"\"\"Solve the N-Queens problem.\n\n    Accepts a JSON string such as '{\"n\":4}' and returns a JSON array of\n    distinct board configurations, e.g. '[[\".Q..\",\"...Q\",\"Q...\",\"..Q.\"]]'.\n    \"\"\"\n    data = json.loads(input_text)\n    n = data[\"n\"]\n\n    solutions = []\n    board = [[\".\"] * n for _ in range(n)]\n    cols = set()      # occupied columns\n    diag1 = set()     # r - c diagonals (top-left to bottom-right)\n    diag2 = set()     # r + c diagonals (top-right to bottom-left)\n\n    def backtrack(row: int) -> None:\n        if row == n:\n            solutions.append([\"\".join(line) for line in board])\n            return\n        for col in range(n):\n            if col in cols or (row - col) in diag1 or (row + col) in diag2:\n                continue\n            cols.add(col)\n            diag1.add(row - col)\n            diag2.add(row + col)\n            board[row][col] = \"Q\"\n            backtrack(row + 1)\n            board[row][col] = \".\"\n            cols.remove(col)\n            diag1.remove(row - col)\n            diag2.remove(row + col)\n\n    backtrack(0)\n    return json.dumps(solutions)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-202718-51-n-queens-the-64c18c",
+      "task": "51. N-Queens\n\nThe n-queens puzzle is the problem of placing n queens on an n x n chessboard such that no two queens attack each other. Given an integer n , return all distinct solutions to the n-queens puzzle . You may return the answer in any order . Each solution contains a distinct board configuration of the n-queens' placement, where 'Q' and '.' both indicate a queen and an empty space, respectively. Example 1: Input: n = 4 Output: [[\".Q..\",\"...Q\",\"Q...\",\"..Q.\"],[\"..Q.\",\"Q...\",\"...Q\",\".Q..\"]] Explanation: There exist two distinct solutions to the 4-queens puzzle as shown above Example 2: Input: n = 1 Output: [[\"Q\"]] Constraints: 1 <= n <= 9",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 6,
+      "created_at": "2026-09-01T12:27:18.791713+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.07s\n",
+      "solution_code": "import json\nfrom typing import List\n\n\ndef solve_n_queens(n: int) -> List[List[str]]:\n    \"\"\"Return all distinct solutions to the n-queens puzzle.\"\"\"\n    solutions: List[List[str]] = []\n    board: List[str] = [\".\" * n for _ in range(n)]\n    cols = [False] * n\n    diag1 = [False] * (2 * n - 1)  # r + c\n    diag2 = [False] * (2 * n - 1)  # r - c + (n - 1)\n\n    def backtrack(row: int) -> None:\n        if row == n:\n            solutions.append(board.copy())\n            return\n        for col in range(n):\n            d1 = row + col\n            d2 = row - col + (n - 1)\n            if cols[col] or diag1[d1] or diag2[d2]:\n                continue\n            cols[col] = diag1[d1] = diag2[d2] = True\n            board[row] = board[row][:col] + \"Q\" + board[row][col + 1:]\n            backtrack(row + 1)\n            cols[col] = diag1[d1] = diag2[d2] = False\n            board[row] = \".\" * n\n\n    backtrack(0)\n    return solutions\n\n\ndef solve(input_text: str) -> str:\n    \"\"\"Parse JSON input like {\"n\": 4} and return the solutions as a JSON string.\"\"\"\n    data = json.loads(input_text)\n    n = int(data[\"n\"])\n    return json.dumps(solve_n_queens(n))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-202432-124-binary-tree-maximum-dc86e0",
+      "task": "124. Binary Tree Maximum Path Sum\n\nA path in a binary tree is a sequence of nodes where each pair of adjacent nodes in the sequence has an edge connecting them. A node can only appear in the sequence at most once . Note that the path does not need to pass through the root. The path sum of a path is the sum of the node's values in the path. Given the root of a binary tree, return the maximum path sum of any non-empty path . Example 1: Input: root = [1,2,3] Output: 6 Explanation: The optimal path is 2 -> 1 -> 3 with a path sum of 2 + 1 + 3 = 6. Example 2: Input: root = [-10,9,20,null,null,15,7] Output: 42 Explanation: The optimal path is 15 -> 20 -> 7 with a path sum of 15 + 20 + 7 = 42. Constraints: The number of nodes in the tree is in the range [1, 3 * 10 4 ] . -1000 <= Node.val <= 1000",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 13,
+      "created_at": "2026-09-01T12:24:32.904043+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.07s\n",
+      "solution_code": "import json\n\n\nclass TreeNode:\n    def __init__(self, val=0, left=None, right=None):\n        self.val = val\n        self.left = left\n        self.right = right\n\n\ndef build_tree(values):\n    \"\"\"Build a binary tree from LeetCode level-order list representation.\"\"\"\n    if not values or values[0] is None:\n        return None\n    root = TreeNode(values[0])\n    queue = [root]\n    idx = 1\n    while queue and idx < len(values):\n        node = queue.pop(0)\n        if idx < len(values):\n            val = values[idx]\n            idx += 1\n            if val is not None:\n                node.left = TreeNode(val)\n                queue.append(node.left)\n        if idx < len(values):\n            val = values[idx]\n            idx += 1\n            if val is not None:\n                node.right = TreeNode(val)\n                queue.append(node.right)\n    return root\n\n\ndef solve(input_text: str) -> str:\n    data = json.loads(input_text)\n    root = build_tree(data[\"root\"])\n    if root is None:\n        return \"0\"\n\n    best = float(\"-inf\")\n    gains = {}\n    # Iterative post-order traversal to avoid recursion-depth issues on long chains.\n    stack = [(root, False)]\n    while stack:\n        node, visited = stack.pop()\n        if node is None:\n            continue\n        if visited:\n            left_gain = max(gains.get(id(node.left), 0), 0)\n            right_gain = max(gains.get(id(node.right), 0), 0)\n            through = node.val + left_gain + right_gain\n            if through > best:\n                best = through\n            gains[id(node)] = node.val + max(left_gain, right_gain)\n        else:\n            stack.append((node, True))\n            if node.right is not None:\n                stack.append((node.right, False))\n            if node.left is not None:\n                stack.append((node.left, False))\n\n    return str(best)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-202353-124-binary-tree-maximum-e63454",
+      "task": "124. Binary Tree Maximum Path Sum\n\nA path in a binary tree is a sequence of nodes where each pair of adjacent nodes in the sequence has an edge connecting them. A node can only appear in the sequence at most once . Note that the path does not need to pass through the root. The path sum of a path is the sum of the node's values in the path. Given the root of a binary tree, return the maximum path sum of any non-empty path . Example 1: Input: root = [1,2,3] Output: 6 Explanation: The optimal path is 2 -> 1 -> 3 with a path sum of 2 + 1 + 3 = 6. Example 2: Input: root = [-10,9,20,null,null,15,7] Output: 42 Explanation: The optimal path is 15 -> 20 -> 7 with a path sum of 15 + 20 + 7 = 42. Constraints: The number of nodes in the tree is in the range [1, 3 * 10 4 ] . -1000 <= Node.val <= 1000",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 6,
+      "created_at": "2026-09-01T12:23:53.668151+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.06s\n",
+      "solution_code": "import json\n\nclass TreeNode:\n    def __init__(self, val=0, left=None, right=None):\n        self.val = val\n        self.left = left\n        self.right = right\n\n\ndef build_tree(values):\n    \"\"\"Build a binary tree from LeetCode level-order list representation.\"\"\"\n    if not values or values[0] is None:\n        return None\n    root = TreeNode(values[0])\n    queue = [root]\n    idx = 1\n    while queue and idx < len(values):\n        node = queue.pop(0)\n        if idx < len(values) and values[idx] is not None:\n            node.left = TreeNode(values[idx])\n            queue.append(node.left)\n        idx += 1\n        if idx < len(values) and values[idx] is not None:\n            node.right = TreeNode(values[idx])\n            queue.append(node.right)\n        idx += 1\n    return root\n\n\ndef max_path_sum(root):\n    best = float('-inf')\n\n    def dfs(node):\n        nonlocal best\n        if node is None:\n            return 0\n        left_gain = max(dfs(node.left), 0)\n        right_gain = max(dfs(node.right), 0)\n        # Path through this node as the highest point\n        current_path_sum = node.val + left_gain + right_gain\n        best = max(best, current_path_sum)\n        # Best contribution continuing upward from this node\n        return node.val + max(left_gain, right_gain)\n\n    dfs(root)\n    return best\n\n\ndef solve(input_text: str) -> str:\n    data = json.loads(input_text)\n    root_vals = data[\"root\"]\n    root = build_tree(root_vals)\n    return str(max_path_sum(root))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-202302-23-merge-k-sorted-f48b88",
+      "task": "23. Merge k Sorted Lists\n\nYou are given an array of k linked-lists lists , each linked-list is sorted in ascending order. Merge all the linked-lists into one sorted linked-list and return it. Example 1: Input: lists = [[1,4,5],[1,3,4],[2,6]] Output: [1,1,2,3,4,4,5,6] Explanation: The linked-lists are: [ 1->4->5, 1->3->4, 2->6 ] merging them into one sorted linked list: 1->1->2->3->4->4->5->6 Example 2: Input: lists = [] Output: [] Example 3: Input: lists = [[]] Output: [] Constraints: k == lists.length 0 <= k <= 10 4 0 <= lists[i].length <= 500 -10 4 <= lists[i][j] <= 10 4 lists[i] is sorted in ascending order . The sum of lists[i].length will not exceed 10 4 .",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T12:23:02.374694+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.06s\n",
+      "solution_code": "import json\nimport heapq\n\n\ndef merge_k_sorted_lists(lists):\n    \"\"\"Merge a list of sorted integer lists into one sorted list.\"\"\"\n    heap = []\n    for i, lst in enumerate(lists):\n        if lst:\n            # push (value, list index, element index)\n            heapq.heappush(heap, (lst[0], i, 0))\n\n    result = []\n    while heap:\n        value, list_idx, elem_idx = heapq.heappop(heap)\n        result.append(value)\n        lst = lists[list_idx]\n        nxt = elem_idx + 1\n        if nxt < len(lst):\n            heapq.heappush(heap, (lst[nxt], list_idx, nxt))\n    return result\n\n\ndef solve(input_text: str) -> str:\n    data = json.loads(input_text)\n    # data is a list of lists (possibly empty list of lists)\n    merged = merge_k_sorted_lists(data)\n    return str(merged)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-202211-23-merge-k-sorted-f295cb",
+      "task": "23. Merge k Sorted Lists\n\nYou are given an array of k linked-lists lists , each linked-list is sorted in ascending order. Merge all the linked-lists into one sorted linked-list and return it. Example 1: Input: lists = [[1,4,5],[1,3,4],[2,6]] Output: [1,1,2,3,4,4,5,6] Explanation: The linked-lists are: [ 1->4->5, 1->3->4, 2->6 ] merging them into one sorted linked list: 1->1->2->3->4->4->5->6 Example 2: Input: lists = [] Output: [] Example 3: Input: lists = [[]] Output: [] Constraints: k == lists.length 0 <= k <= 10 4 0 <= lists[i].length <= 500 -10 4 <= lists[i][j] <= 10 4 lists[i] is sorted in ascending order . The sum of lists[i].length will not exceed 10 4 .",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T12:22:11.076997+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.06s\n",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    \"\"\"Merge k sorted lists (given as text) into one sorted list.\n\n    The input text is a JSON-style array of arrays of integers, e.g.\n    \"[[1,4,5],[1,3,4],[2,6]]\". The output is the string representation\n    of the merged sorted list, e.g. \"[1, 1, 2, 3, 4, 4, 5, 6]\".\n    \"\"\"\n    lists = json.loads(input_text)\n    merged = []\n    for lst in lists:\n        merged.extend(lst)\n    merged.sort()\n    return \"[\" + \", \".join(str(x) for x in merged) + \"]\"\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-202055-25-reverse-nodes-in-eb3897",
+      "task": "25. Reverse Nodes in k-Group\n\nGiven the head of a linked list, reverse the nodes of the list k at a time, and return the modified list . k is a positive integer and is less than or equal to the length of the linked list. If the number of nodes is not a multiple of k then left-out nodes, in the end, should remain as it is. You may not alter the values in the list's nodes, only nodes themselves may be changed. Example 1: Input: head = [1,2,3,4,5], k = 2 Output: [2,1,4,3,5] Example 2: Input: head = [1,2,3,4,5], k = 3 Output: [3,2,1,4,5] Constraints: The number of nodes in the list is n . 1 <= k <= n <= 5000 0 <= Node.val <= 1000 Follow-up: Can you solve the problem in O(1) extra memory space?",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T12:20:55.604716+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.06s\n",
+      "solution_code": "import json\n\n\nclass ListNode:\n    def __init__(self, val=0, next_node=None):\n        self.val = val\n        self.next = next_node\n\n\ndef reverse_k_group(head, k):\n    \"\"\"Reverse nodes in k groups. O(1) extra memory.\"\"\"\n    dummy = ListNode(0)\n    dummy.next = head\n    pre = dummy\n\n    while True:\n        # Check whether there are at least k nodes after pre.\n        count = 0\n        cur = pre\n        while count < k and cur is not None:\n            cur = cur.next\n            count += 1\n        if count < k or cur is None:\n            break\n\n        group_start = pre.next\n        next_group = cur.next\n        # Reverse the group between group_start and next_group.\n        prev = next_group\n        node = group_start\n        while node != next_group:\n            temp = node.next\n            node.next = prev\n            prev = node\n            node = temp\n        pre.next = prev\n        # Move pre to the tail of the reversed group.\n        pre = group_start\n\n    return dummy.next\n\n\ndef list_to_nodes(values):\n    dummy = ListNode(0)\n    tail = dummy\n    for v in values:\n        tail.next = ListNode(v)\n        tail = tail.next\n    return dummy.next\n\n\ndef nodes_to_list(head):\n    result = []\n    cur = head\n    while cur is not None:\n        result.append(cur.val)\n        cur = cur.next\n    return result\n\n\ndef solve(input_text: str) -> str:\n    data = json.loads(input_text)\n    head_values = data[\"head\"]\n    k = data[\"k\"]\n    head = list_to_nodes(head_values)\n    new_head = reverse_k_group(head, k)\n    return str(nodes_to_list(new_head))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-201806-25-reverse-nodes-in-fbd78c",
+      "task": "25. Reverse Nodes in k-Group\n\nGiven the head of a linked list, reverse the nodes of the list k at a time, and return the modified list . k is a positive integer and is less than or equal to the length of the linked list. If the number of nodes is not a multiple of k then left-out nodes, in the end, should remain as it is. You may not alter the values in the list's nodes, only nodes themselves may be changed. Example 1: Input: head = [1,2,3,4,5], k = 2 Output: [2,1,4,3,5] Example 2: Input: head = [1,2,3,4,5], k = 3 Output: [3,2,1,4,5] Constraints: The number of nodes in the list is n . 1 <= k <= n <= 5000 0 <= Node.val <= 1000 Follow-up: Can you solve the problem in O(1) extra memory space?",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T12:18:06.634154+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.06s\n",
+      "solution_code": "import json\n\n\nclass ListNode:\n    def __init__(self, val=0, next=None):\n        self.val = val\n        self.next = next\n\n\ndef reverse_k_group(head, k):\n    \"\"\"Reverse nodes of the list k at a time, O(1) extra memory.\"\"\"\n    dummy = ListNode(0)\n    dummy.next = head\n    prev = dummy\n\n    while True:\n        # Check whether there are at least k nodes remaining after prev.\n        group_end = prev\n        for _ in range(k):\n            group_end = group_end.next\n            if group_end is None:\n                return dummy.next\n\n        start = prev.next\n        next_group_start = group_end.next\n\n        # Reverse the k nodes from start up to (but excluding) next_group_start.\n        prev_node = None\n        cur = start\n        while cur is not next_group_start:\n            nxt = cur.next\n            cur.next = prev_node\n            prev_node = cur\n            cur = nxt\n\n        # Reconnect: prev -> new group head, old start -> next group.\n        prev.next = prev_node\n        start.next = next_group_start\n        prev = start\n\n\ndef solve(input_text: str) -> str:\n    data = json.loads(input_text)\n    values = data[\"head\"]\n    k = data[\"k\"]\n\n    if not values:\n        return str([])\n\n    dummy = ListNode(0)\n    cur = dummy\n    for v in values:\n        cur.next = ListNode(v)\n        cur = cur.next\n\n    new_head = reverse_k_group(dummy.next, k)\n\n    result = []\n    cur = new_head\n    while cur is not None:\n        result.append(cur.val)\n        cur = cur.next\n    return str(result)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-201645-41-first-missing-positive-d58131",
+      "task": "41. First Missing Positive\n\nGiven an unsorted integer array nums . Return the smallest positive integer that is not present in nums . You must implement an algorithm that runs in O(n) time and uses O(1) auxiliary space. Example 1: Input: nums = [1,2,0] Output: 3 Explanation: The numbers in the range [1,2] are all in the array. Example 2: Input: nums = [3,4,-1,1] Output: 2 Explanation: 1 is in the array but 2 is missing. Example 3: Input: nums = [7,8,9,11,12] Output: 1 Explanation: The smallest positive integer 1 is missing. Constraints: 1 <= nums.length <= 10 5 -2 31 <= nums[i] <= 2 31 - 1",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T12:16:45.077939+00:00",
+      "test_case_count": 4,
+      "last_test_output": "....                                                                     [100%]\n4 passed in 0.06s\n",
+      "solution_code": "import ast\n\n\ndef first_missing_positive(nums):\n    n = len(nums)\n    for i in range(n):\n        while 1 <= nums[i] <= n and nums[nums[i] - 1] != nums[i]:\n            target = nums[i] - 1\n            nums[i], nums[target] = nums[target], nums[i]\n    for i in range(n):\n        if nums[i] != i + 1:\n            return i + 1\n    return n + 1\n\n\ndef solve(input_text: str) -> str:\n    nums = ast.literal_eval(input_text.strip())\n    return str(first_missing_positive(nums))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-194807-41-first-missing-positive-98e739",
+      "task": "41. First Missing Positive\n\nGiven an unsorted integer array nums . Return the smallest positive integer that is not present in nums . You must implement an algorithm that runs in O(n) time and uses O(1) auxiliary space. Example 1: Input: nums = [1,2,0] Output: 3 Explanation: The numbers in the range [1,2] are all in the array. Example 2: Input: nums = [3,4,-1,1] Output: 2 Explanation: 1 is in the array but 2 is missing. Example 3: Input: nums = [7,8,9,11,12] Output: 1 Explanation: The smallest positive integer 1 is missing. Constraints: 1 <= nums.length <= 10 5 -2 31 <= nums[i] <= 2 31 - 1",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 19,
+      "created_at": "2026-09-01T11:48:07.981624+00:00",
+      "test_case_count": 4,
+      "last_test_output": "....                                                                     [100%]\n4 passed in 0.07s\n",
+      "solution_code": "import json\n\n\ndef first_missing_positive(nums):\n    n = len(nums)\n    i = 0\n    while i < n:\n        v = nums[i]\n        if 1 <= v <= n and nums[v - 1] != v:\n            nums[v - 1], nums[i] = nums[i], nums[v - 1]\n        else:\n            i += 1\n    for i in range(n):\n        if nums[i] != i + 1:\n            return i + 1\n    return n + 1\n\n\ndef solve(input_text: str) -> str:\n    nums = json.loads(input_text)\n    return str(first_missing_positive(nums))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-194719-76-minimum-window-substring-5b5a65",
+      "task": "76. Minimum Window Substring\n\nGiven two strings s and t of lengths m and n respectively, return the minimum window substring of s such that every character in t ( including duplicates ) is included in the window . If there is no such substring, return the empty string \"\" . The testcases will be generated such that the answer is unique . Example 1: Input: s = \"ADOBECODEBANC\", t = \"ABC\" Output: \"BANC\" Explanation: The minimum window substring \"BANC\" includes 'A', 'B', and 'C' from string t. Example 2: Input: s = \"a\", t = \"a\" Output: \"a\" Explanation: The entire string s is the minimum window. Example 3: Input: s = \"a\", t = \"aa\" Output: \"\" Explanation: Both 'a's from t must be included in the window. Since the largest window of s only has one 'a', return empty string. Constraints: m == s.length n == t.length 1 <= m, n <= 10 5 s and t consist of uppercase and lowercase English letters. Follow up: Could you find an algorithm that runs in O(m + n) time?",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T11:47:19.607149+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.06s\n",
+      "solution_code": "import json\nfrom collections import Counter\n\ndef solve(input_text: str) -> str:\n    \"\"\"Return the minimum window substring of s containing all chars of t.\"\"\"\n    data = json.loads(input_text)\n    s = data[\"s\"]\n    t = data[\"t\"]\n\n    if len(t) > len(s):\n        return \"\"\n\n    need = Counter(t)\n    have = {}\n    required = len(need)\n    formed = 0\n\n    left = 0\n    min_len = float(\"inf\")\n    min_left = 0\n\n    for right, ch in enumerate(s):\n        # add current char to window\n        have[ch] = have.get(ch, 0) + 1\n        if ch in need and have[ch] == need[ch]:\n            formed += 1\n\n        # shrink window while all required chars are satisfied\n        while formed == required:\n            window_len = right - left + 1\n            if window_len < min_len:\n                min_len = window_len\n                min_left = left\n\n            left_ch = s[left]\n            have[left_ch] -= 1\n            if left_ch in need and have[left_ch] < need[left_ch]:\n                formed -= 1\n            left += 1\n\n    if min_len == float(\"inf\"):\n        return \"\"\n    return s[min_left:min_left + min_len]\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-194540-76-minimum-window-substring-78329e",
+      "task": "76. Minimum Window Substring\n\nGiven two strings s and t of lengths m and n respectively, return the minimum window substring of s such that every character in t ( including duplicates ) is included in the window . If there is no such substring, return the empty string \"\" . The testcases will be generated such that the answer is unique . Example 1: Input: s = \"ADOBECODEBANC\", t = \"ABC\" Output: \"BANC\" Explanation: The minimum window substring \"BANC\" includes 'A', 'B', and 'C' from string t. Example 2: Input: s = \"a\", t = \"a\" Output: \"a\" Explanation: The entire string s is the minimum window. Example 3: Input: s = \"a\", t = \"aa\" Output: \"\" Explanation: Both 'a's from t must be included in the window. Since the largest window of s only has one 'a', return empty string. Constraints: m == s.length n == t.length 1 <= m, n <= 10 5 s and t consist of uppercase and lowercase English letters. Follow up: Could you find an algorithm that runs in O(m + n) time?",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 10,
+      "created_at": "2026-09-01T11:45:40.083363+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.06s\n",
+      "solution_code": "import json\n\n\ndef min_window(s: str, t: str) -> str:\n    \"\"\"Return the minimum window substring of s containing all chars of t.\"\"\"\n    if not s or not t or len(s) < len(t):\n        return \"\"\n\n    need = {}\n    for ch in t:\n        need[ch] = need.get(ch, 0) + 1\n\n    have = {}\n    required = len(need)\n    formed = 0\n    left = 0\n    best_len = float(\"inf\")\n    best_start = 0\n\n    for right, ch in enumerate(s):\n        have[ch] = have.get(ch, 0) + 1\n        if ch in need and have[ch] == need[ch]:\n            formed += 1\n\n        while formed == required:\n            window_len = right - left + 1\n            if window_len < best_len:\n                best_len = window_len\n                best_start = left\n\n            left_ch = s[left]\n            have[left_ch] -= 1\n            if left_ch in need and have[left_ch] < need[left_ch]:\n                formed -= 1\n            left += 1\n\n    if best_len == float(\"inf\"):\n        return \"\"\n    return s[best_start:best_start + best_len]\n\n\ndef solve(input_text: str) -> str:\n    data = json.loads(input_text)\n    s = data[\"s\"]\n    t = data[\"t\"]\n    return min_window(s, t)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-194457-239-sliding-window-maximum-52e722",
+      "task": "239. Sliding Window Maximum\n\nYou are given an array of integers nums , there is a sliding window of size k which is moving from the very left of the array to the very right. You can only see the k numbers in the window. Each time the sliding window moves right by one position. Return the max sliding window . Example 1: Input: nums = [1,3,-1,-3,5,3,6,7], k = 3 Output: [3,3,5,5,6,7] Explanation: Window position Max --------------- ----- [1 3 -1] -3 5 3 6 7 3 1 [3 -1 -3] 5 3 6 7 3 1 3 [-1 -3 5] 3 6 7 5 1 3 -1 [-3 5 3] 6 7 5 1 3 -1 -3 [5 3 6] 7 6 1 3 -1 -3 5 [3 6 7] 7 Example 2: Input: nums = [1], k = 1 Output: [1] Constraints: 1 <= nums.length <= 10 5 -10 4 <= nums[i] <= 10 4 1 <= k <= nums.length",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T11:44:57.815930+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.07s\n",
+      "solution_code": "import json\nfrom collections import deque\n\n\ndef max_sliding_window(nums, k):\n    \"\"\"Return the maximum of each sliding window of size k.\"\"\"\n    result = []\n    dq = deque()  # stores indices; values are decreasing from left to right\n    for i, num in enumerate(nums):\n        # Remove indices outside the current window\n        while dq and dq[0] <= i - k:\n            dq.popleft()\n        # Maintain decreasing order: pop smaller values at the back\n        while dq and nums[dq[-1]] <= num:\n            dq.pop()\n        dq.append(i)\n        # The window is fully formed starting at index k - 1\n        if i >= k - 1:\n            result.append(nums[dq[0]])\n    return result\n\n\ndef solve(input_text: str) -> str:\n    data = json.loads(input_text)\n    nums = data[\"nums\"]\n    k = data[\"k\"]\n    return str(max_sliding_window(nums, k))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-194348-239-sliding-window-maximum-139131",
+      "task": "239. Sliding Window Maximum\n\nYou are given an array of integers nums , there is a sliding window of size k which is moving from the very left of the array to the very right. You can only see the k numbers in the window. Each time the sliding window moves right by one position. Return the max sliding window . Example 1: Input: nums = [1,3,-1,-3,5,3,6,7], k = 3 Output: [3,3,5,5,6,7] Explanation: Window position Max --------------- ----- [1 3 -1] -3 5 3 6 7 3 1 [3 -1 -3] 5 3 6 7 3 1 3 [-1 -3 5] 3 6 7 5 1 3 -1 [-3 5 3] 6 7 5 1 3 -1 -3 [5 3 6] 7 6 1 3 -1 -3 5 [3 6 7] 7 Example 2: Input: nums = [1], k = 1 Output: [1] Constraints: 1 <= nums.length <= 10 5 -10 4 <= nums[i] <= 10 4 1 <= k <= nums.length",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 10,
+      "created_at": "2026-09-01T11:43:48.391255+00:00",
+      "test_case_count": 3,
+      "last_test_output": "...                                                                      [100%]\n3 passed in 0.06s\n",
+      "solution_code": "import json\nfrom collections import deque\n\n\ndef solve(input_text: str) -> str:\n    data = json.loads(input_text)\n    nums = data[\"nums\"]\n    k = data[\"k\"]\n    n = len(nums)\n    if n == 0:\n        return \"[]\"\n    dq = deque()\n    result = []\n    for i in range(n):\n        # Remove indices outside the current window\n        while dq and dq[0] <= i - k:\n            dq.popleft()\n        # Maintain decreasing order of values in deque\n        while dq and nums[dq[-1]] <= nums[i]:\n            dq.pop()\n        dq.append(i)\n        if i >= k - 1:\n            result.append(nums[dq[0]])\n    return str(result)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-192929-49-group-anagrams-given-d55437",
+      "task": "49. Group Anagrams\n\nGiven an array of strings strs , group the anagrams together. You can return the answer in any order . Example 1: Input: strs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"] Output: [[\"bat\"],[\"nat\",\"tan\"],[\"ate\",\"eat\",\"tea\"]] Explanation: There is no string in strs that can be rearranged to form \"bat\" . The strings \"nat\" and \"tan\" are anagrams as they can be rearranged to form each other. The strings \"ate\" , \"eat\" , and \"tea\" are anagrams as they can be rearranged to form each other. Example 2: Input: strs = [\"\"] Output: [[\"\"]] Example 3: Input: strs = [\"a\"] Output: [[\"a\"]] Constraints: 1 <= strs.length <= 10 4 0 <= strs[i].length <= 100 strs[i] consists of lowercase English letters.",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T11:29:29.673307+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.06s\n",
+      "solution_code": "import json\nfrom collections import defaultdict\n\n\ndef solve(input_text: str) -> str:\n    \"\"\"Group anagrams from a JSON-encoded list of strings.\"\"\"\n    strs = json.loads(input_text)\n    groups = []\n    index_by_key = {}\n    for s in strs:\n        key = \"\".join(sorted(s))\n        if key in index_by_key:\n            groups[index_by_key[key]].append(s)\n        else:\n            index_by_key[key] = len(groups)\n            groups.append([s])\n    return json.dumps(groups)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-174408-560-subarray-sum-equals-d62033",
+      "task": "560. Subarray Sum Equals K\n\nGiven an array of integers nums and an integer k , return the total number of subarrays whose sum equals to k . A subarray is a contiguous non-empty sequence of elements within an array. Example 1: Input: nums = [1,1,1], k = 2 Output: 2 Example 2: Input: nums = [1,2,3], k = 3 Output: 2 Constraints: 1 <= nums.length <= 2 * 10 4 -1000 <= nums[i] <= 1000 -10 7 <= k <= 10 7",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T09:44:08.359170+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.06s\n",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    lines = [ln.strip() for ln in input_text.strip().splitlines() if ln.strip()]\n    nums = json.loads(lines[0])\n    k = int(lines[1])\n\n    counts = {0: 1}\n    prefix = 0\n    total = 0\n    for num in nums:\n        prefix += num\n        total += counts.get(prefix - k, 0)\n        counts[prefix] = counts.get(prefix, 0) + 1\n    return str(total)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-173559-560-subarray-sum-equals-cbedb9",
+      "task": "560. Subarray Sum Equals K\n\nGiven an array of integers nums and an integer k , return the total number of subarrays whose sum equals to k . A subarray is a contiguous non-empty sequence of elements within an array. Example 1: Input: nums = [1,1,1], k = 2 Output: 2 Example 2: Input: nums = [1,2,3], k = 3 Output: 2 Constraints: 1 <= nums.length <= 2 * 10 4 -1000 <= nums[i] <= 1000 -10 7 <= k <= 10 7",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T09:35:59.526494+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.06s\n",
+      "solution_code": "import ast\n\n\ndef solve(input_text: str) -> str:\n    lines = input_text.strip().splitlines()\n    nums = ast.literal_eval(lines[0].strip())\n    k = int(lines[1].strip())\n\n    count = 0\n    prefix = 0\n    seen = {0: 1}  # prefix sum -> number of occurrences\n\n    for num in nums:\n        prefix += num\n        count += seen.get(prefix - k, 0)\n        seen[prefix] = seen.get(prefix, 0) + 1\n\n    return str(count)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-173502-438-find-all-anagrams-346b6e",
+      "task": "438. Find All Anagrams in a String\n\nGiven two strings s and p , return an array of all the start indices of p 's anagrams in s . You may return the answer in any order . Example 1: Input: s = \"cbaebabacd\", p = \"abc\" Output: [0,6] Explanation: The substring with start index = 0 is \"cba\", which is an anagram of \"abc\". The substring with start index = 6 is \"bac\", which is an anagram of \"abc\". Example 2: Input: s = \"abab\", p = \"ab\" Output: [0,1,2] Explanation: The substring with start index = 0 is \"ab\", which is an anagram of \"ab\". The substring with start index = 1 is \"ba\", which is an anagram of \"ab\". The substring with start index = 2 is \"ab\", which is an anagram of \"ab\". Constraints: 1 <= s.length, p.length <= 3 * 10 4 s and p consist of lowercase English letters.",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 9,
+      "created_at": "2026-09-01T09:35:02.212350+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.07s\n",
+      "solution_code": "from collections import Counter\n\n\ndef solve(input_text: str) -> str:\n    lines = input_text.splitlines()\n    s = lines[0].strip()\n    p = lines[1].strip()\n    return str(find_anagrams(s, p))\n\n\ndef find_anagrams(s: str, p: str) -> list:\n    n, m = len(s), len(p)\n    if m > n:\n        return []\n    p_count = Counter(p)\n    window_count = Counter(s[:m])\n    result = []\n\n    if window_count == p_count:\n        result.append(0)\n\n    for i in range(1, n - m + 1):\n        removed = s[i - 1]\n        added = s[i + m - 1]\n        window_count[removed] -= 1\n        if window_count[removed] == 0:\n            del window_count[removed]\n        window_count[added] += 1\n        if window_count == p_count:\n            result.append(i)\n\n    return result\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-173328-438-find-all-anagrams-aa0f1d",
+      "task": "438. Find All Anagrams in a String\n\nGiven two strings s and p , return an array of all the start indices of p 's anagrams in s . You may return the answer in any order . Example 1: Input: s = \"cbaebabacd\", p = \"abc\" Output: [0,6] Explanation: The substring with start index = 0 is \"cba\", which is an anagram of \"abc\". The substring with start index = 6 is \"bac\", which is an anagram of \"abc\". Example 2: Input: s = \"abab\", p = \"ab\" Output: [0,1,2] Explanation: The substring with start index = 0 is \"ab\", which is an anagram of \"ab\". The substring with start index = 1 is \"ba\", which is an anagram of \"ab\". The substring with start index = 2 is \"ab\", which is an anagram of \"ab\". Constraints: 1 <= s.length, p.length <= 3 * 10 4 s and p consist of lowercase English letters.",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 6,
+      "created_at": "2026-09-01T09:33:28.751024+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.06s\n",
+      "solution_code": "from typing import List\n\n\ndef find_anagrams(s: str, p: str) -> List[int]:\n    ns, np = len(s), len(p)\n    if np > ns:\n        return []\n\n    target = [0] * 26\n    window = [0] * 26\n    a = ord('a')\n\n    for ch in p:\n        target[ord(ch) - a] += 1\n    for i in range(np):\n        window[ord(s[i]) - a] += 1\n\n    result = []\n    if window == target:\n        result.append(0)\n\n    for i in range(np, ns):\n        window[ord(s[i - np]) - a] -= 1\n        window[ord(s[i]) - a] += 1\n        if window == target:\n            result.append(i - np + 1)\n\n    return result\n\n\ndef solve(input_text: str) -> str:\n    lines = input_text.splitlines()\n    s = lines[0].strip()\n    p = lines[1].strip()\n    return str(find_anagrams(s, p))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-172909-3-longest-substring-without-578d24",
+      "task": "3. Longest Substring Without Repeating Characters\n\nGiven a string s , find the length of the longest substring without duplicate characters. Example 1: Input: s = \"abcabcbb\" Output: 3 Explanation: The answer is \"abc\", with the length of 3. Note that \"bca\" and \"cab\" are also correct answers. Example 2: Input: s = \"bbbbb\" Output: 1 Explanation: The answer is \"b\", with the length of 1. Example 3: Input: s = \"pwwkew\" Output: 3 Explanation: The answer is \"wke\", with the length of 3. Notice that the answer must be a substring, \"pwke\" is a subsequence and not a substring. Constraints: 0 <= s.length <= 10 5 s consists of English letters, digits, symbols and spaces.",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T09:29:09.354168+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.07s\n",
+      "solution_code": "def solve(input_text: str) -> str:\n    s = input_text\n    seen = {}\n    left = 0\n    max_len = 0\n    for right, ch in enumerate(s):\n        if ch in seen and seen[ch] >= left:\n            left = seen[ch] + 1\n        seen[ch] = right\n        max_len = max(max_len, right - left + 1)\n    return str(max_len)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-172529-3-longest-substring-without-332c8b",
+      "task": "3. Longest Substring Without Repeating Characters\n\nGiven a string s , find the length of the longest substring without duplicate characters. Example 1: Input: s = \"abcabcbb\" Output: 3 Explanation: The answer is \"abc\", with the length of 3. Note that \"bca\" and \"cab\" are also correct answers. Example 2: Input: s = \"bbbbb\" Output: 1 Explanation: The answer is \"b\", with the length of 1. Example 3: Input: s = \"pwwkew\" Output: 3 Explanation: The answer is \"wke\", with the length of 3. Notice that the answer must be a substring, \"pwke\" is a subsequence and not a substring. Constraints: 0 <= s.length <= 10 5 s consists of English letters, digits, symbols and spaces.",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T09:25:29.169736+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.05s\n",
+      "solution_code": "def solve(input_text: str) -> str:\n    \"\"\"Return the length of the longest substring without repeating characters.\"\"\"\n    last_seen = {}\n    left = 0\n    best = 0\n    for right, ch in enumerate(input_text):\n        if ch in last_seen and last_seen[ch] >= left:\n            left = last_seen[ch] + 1\n        last_seen[ch] = right\n        length = right - left + 1\n        if length > best:\n            best = length\n    return str(best)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-172416-42-trapping-rain-water-075dbc",
+      "task": "42. Trapping Rain Water\n\nGiven n non-negative integers representing an elevation map where the width of each bar is 1 , compute how much water it can trap after raining. Example 1: Input: height = [0,1,0,2,1,0,1,3,2,1,2,1] Output: 6 Explanation: The above elevation map (black section) is represented by array [0,1,0,2,1,0,1,3,2,1,2,1]. In this case, 6 units of rain water (blue section) are being trapped. Example 2: Input: height = [4,2,0,3,2,5] Output: 9 Constraints: n == height.length 1 <= n <= 2 * 10 4 0 <= height[i] <= 10 5",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T09:24:16.777171+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.06s\n",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    \"\"\"Compute trapped rain water for an elevation map given as a list string.\"\"\"\n    height = json.loads(input_text.strip())\n    n = len(height)\n    if n <= 2:\n        return \"0\"\n\n    left = [0] * n\n    right = [0] * n\n\n    left[0] = height[0]\n    for i in range(1, n):\n        left[i] = max(left[i - 1], height[i])\n\n    right[n - 1] = height[n - 1]\n    for i in range(n - 2, -1, -1):\n        right[i] = max(right[i + 1], height[i])\n\n    total = 0\n    for i in range(n):\n        total += max(0, min(left[i], right[i]) - height[i])\n\n    return str(total)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-171939-42-trapping-rain-water-4c5752",
+      "task": "42. Trapping Rain Water\n\nGiven n non-negative integers representing an elevation map where the width of each bar is 1 , compute how much water it can trap after raining. Example 1: Input: height = [0,1,0,2,1,0,1,3,2,1,2,1] Output: 6 Explanation: The above elevation map (black section) is represented by array [0,1,0,2,1,0,1,3,2,1,2,1]. In this case, 6 units of rain water (blue section) are being trapped. Example 2: Input: height = [4,2,0,3,2,5] Output: 9 Constraints: n == height.length 1 <= n <= 2 * 10 4 0 <= height[i] <= 10 5",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T09:19:39.144228+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.06s\n",
+      "solution_code": "import json\n\n\ndef trap(height):\n    \"\"\"Compute trapped rainwater using the two-pointer approach.\"\"\"\n    if not height:\n        return 0\n    left, right = 0, len(height) - 1\n    left_max = right_max = 0\n    water = 0\n    while left <= right:\n        if height[left] <= height[right]:\n            left_max = max(left_max, height[left])\n            water += left_max - height[left]\n            left += 1\n        else:\n            right_max = max(right_max, height[right])\n            water += right_max - height[right]\n            right -= 1\n    return water\n\n\ndef solve(input_text: str) -> str:\n    # Input is a Python/JSON style list, e.g. \"[0,1,0,2,1,0,1,3,2,1,2,1]\"\n    input_text = input_text.strip()\n    if not input_text:\n        return \"0\"\n    height = json.loads(input_text)\n    return str(trap(height))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-171808-15-3sum-given-an-f97e7d",
+      "task": "15. 3Sum\n\nGiven an integer array nums, return all the triplets [nums[i], nums[j], nums[k]] such that i != j , i != k , and j != k , and nums[i] + nums[j] + nums[k] == 0 . Notice that the solution set must not contain duplicate triplets. Example 1: Input: nums = [-1,0,1,2,-1,-4] Output: [[-1,-1,2],[-1,0,1]] Explanation: nums[0] + nums[1] + nums[2] = (-1) + 0 + 1 = 0. nums[1] + nums[2] + nums[4] = 0 + 1 + (-1) = 0. nums[0] + nums[3] + nums[4] = (-1) + 2 + (-1) = 0. The distinct triplets are [-1,0,1] and [-1,-1,2]. Notice that the order of the output and the order of the triplets does not matter. Example 2: Input: nums = [0,1,1] Output: [] Explanation: The only possible triplet does not sum up to 0. Example 3: Input: nums = [0,0,0] Output: [[0,0,0]] Explanation: The only possible triplet sums up to 0. Constraints: 3 <= nums.length <= 3000 -10 5 <= nums[i] <= 10 5",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T09:18:08.623993+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.06s\n",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    nums = json.loads(input_text.strip())\n    nums.sort()\n    n = len(nums)\n    result = []\n\n    for i in range(n - 2):\n        # Skip duplicate values for the first element.\n        if i > 0 and nums[i] == nums[i - 1]:\n            continue\n        target = -nums[i]\n        j, k = i + 1, n - 1\n        while j < k:\n            total = nums[j] + nums[k]\n            if total == target:\n                result.append([nums[i], nums[j], nums[k]])\n                j += 1\n                k -= 1\n                # Skip duplicates for the second element.\n                while j < k and nums[j] == nums[j - 1]:\n                    j += 1\n                # Skip duplicates for the third element.\n                while j < k and nums[k] == nums[k + 1]:\n                    k -= 1\n            elif total < target:\n                j += 1\n            else:\n                k -= 1\n\n    return str(result)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-170843-15-3sum-given-an-1b253e",
+      "task": "15. 3Sum\n\nGiven an integer array nums, return all the triplets [nums[i], nums[j], nums[k]] such that i != j , i != k , and j != k , and nums[i] + nums[j] + nums[k] == 0 . Notice that the solution set must not contain duplicate triplets. Example 1: Input: nums = [-1,0,1,2,-1,-4] Output: [[-1,-1,2],[-1,0,1]] Explanation: nums[0] + nums[1] + nums[2] = (-1) + 0 + 1 = 0. nums[1] + nums[2] + nums[4] = 0 + 1 + (-1) = 0. nums[0] + nums[3] + nums[4] = (-1) + 2 + (-1) = 0. The distinct triplets are [-1,0,1] and [-1,-1,2]. Notice that the order of the output and the order of the triplets does not matter. Example 2: Input: nums = [0,1,1] Output: [] Explanation: The only possible triplet does not sum up to 0. Example 3: Input: nums = [0,0,0] Output: [[0,0,0]] Explanation: The only possible triplet sums up to 0. Constraints: 3 <= nums.length <= 3000 -10 5 <= nums[i] <= 10 5",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T09:08:43.913474+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.05s\n",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    \"\"\"Return a string representation of all unique triplets summing to zero.\"\"\"\n    nums = json.loads(input_text)\n    nums.sort()\n    n = len(nums)\n    triplets = []\n\n    for i in range(n - 2):\n        if i > 0 and nums[i] == nums[i - 1]:\n            continue  # skip duplicate first elements\n        left, right = i + 1, n - 1\n        while left < right:\n            total = nums[i] + nums[left] + nums[right]\n            if total == 0:\n                triplets.append([nums[i], nums[left], nums[right]])\n                left += 1\n                right -= 1\n                while left < right and nums[left] == nums[left - 1]:\n                    left += 1\n                while left < right and nums[right] == nums[right + 1]:\n                    right -= 1\n            elif total < 0:\n                left += 1\n            else:\n                right -= 1\n\n    return str(triplets)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-170746-11-container-with-most-3fc03c",
+      "task": "11. Container With Most Water\n\nYou are given an integer array height of length n . There are n vertical lines drawn such that the two endpoints of the i th line are (i, 0) and (i, height[i]) . Find two lines that together with the x-axis form a container, such that the container contains the most water. Return the maximum amount of water a container can store . Notice that you may not slant the container. Example 1: Input: height = [1,8,6,2,5,4,8,3,7] Output: 49 Explanation: The above vertical lines are represented by array [1,8,6,2,5,4,8,3,7]. In this case, the max area of water (blue section) the container can contain is 49. Example 2: Input: height = [1,1] Output: 1 Constraints: n == height.length 2 <= n <= 10 5 0 <= height[i] <= 10 4",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T09:07:46.595526+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.05s\n",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    \"\"\"Return the maximum water area for the given height array string.\"\"\"\n    heights = json.loads(input_text)\n    left, right = 0, len(heights) - 1\n    max_area = 0\n    while left < right:\n        width = right - left\n        if heights[left] < heights[right]:\n            area = heights[left] * width\n            left += 1\n        else:\n            area = heights[right] * width\n            right -= 1\n        if area > max_area:\n            max_area = area\n    return str(max_area)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-170515-11-container-with-most-8abe5c",
+      "task": "11. Container With Most Water\n\nYou are given an integer array height of length n . There are n vertical lines drawn such that the two endpoints of the i th line are (i, 0) and (i, height[i]) . Find two lines that together with the x-axis form a container, such that the container contains the most water. Return the maximum amount of water a container can store . Notice that you may not slant the container. Example 1: Input: height = [1,8,6,2,5,4,8,3,7] Output: 49 Explanation: The above vertical lines are represented by array [1,8,6,2,5,4,8,3,7]. In this case, the max area of water (blue section) the container can contain is 49. Example 2: Input: height = [1,1] Output: 1 Constraints: n == height.length 2 <= n <= 10 5 0 <= height[i] <= 10 4",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T09:05:15.563725+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.06s\n",
+      "solution_code": "import json\nfrom typing import List\n\n\ndef max_area(height: List[int]) -> int:\n    left, right = 0, len(height) - 1\n    best = 0\n    while left < right:\n        h = min(height[left], height[right])\n        area = (right - left) * h\n        if area > best:\n            best = area\n        if height[left] < height[right]:\n            left += 1\n        else:\n            right -= 1\n    return best\n\n\ndef solve(input_text: str) -> str:\n    # The input is a JSON array of integers, e.g. \"[1,8,6,2,5,4,8,3,7]\".\n    text = input_text.strip()\n    if not text:\n        return \"\"\n    height = json.loads(text)\n    return str(max_area(height))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-170345-283-move-zeroes-given-831578",
+      "task": "283. Move Zeroes\n\nGiven an integer array nums , move all 0 's to the end of it while maintaining the relative order of the non-zero elements. Note that you must do this in-place without making a copy of the array. Example 1: Input: nums = [0,1,0,3,12] Output: [1,3,12,0,0] Example 2: Input: nums = [0] Output: [0] Constraints: 1 <= nums.length <= 10 4 -2 31 <= nums[i] <= 2 31 - 1 Follow up: Could you minimize the total number of operations done?",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T09:03:45.074904+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.06s\n",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    \"\"\"Move all zeros to the end of the array, in-place, preserving relative order.\"\"\"\n    nums = json.loads(input_text)\n    write = 0\n    for i in range(len(nums)):\n        if nums[i] != 0:\n            nums[write], nums[i] = nums[i], nums[write]\n            write += 1\n    return str(nums)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-165940-283-move-zeroes-given-d75b8b",
+      "task": "283. Move Zeroes\n\nGiven an integer array nums , move all 0 's to the end of it while maintaining the relative order of the non-zero elements. Note that you must do this in-place without making a copy of the array. Example 1: Input: nums = [0,1,0,3,12] Output: [1,3,12,0,0] Example 2: Input: nums = [0] Output: [0] Constraints: 1 <= nums.length <= 10 4 -2 31 <= nums[i] <= 2 31 - 1 Follow up: Could you minimize the total number of operations done?",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T08:59:40.780636+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.06s\n",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    \"\"\"Move all zeros to the end of the array in-place.\n\n    Input text is a JSON-style array, e.g. \"[0,1,0,3,12]\".\n    Output is the string representation of the mutated list.\n    \"\"\"\n    nums = json.loads(input_text)\n\n    # Two-pointer approach: write non-zero elements to the front\n    # while scanning the array, then fill the rest with zeros.\n    write = 0\n    for read in range(len(nums)):\n        if nums[read] != 0:\n            nums[write], nums[read] = nums[read], nums[write]\n            write += 1\n\n    return str(nums)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-165855-128-longest-consecutive-sequence-1d63e6",
+      "task": "128. Longest Consecutive Sequence\n\nGiven an unsorted array of integers nums , return the length of the longest consecutive elements sequence. You must write an algorithm that runs in O(n) time. Example 1: Input: nums = [100,4,200,1,3,2] Output: 4 Explanation: The longest consecutive elements sequence is [1, 2, 3, 4] . Therefore its length is 4. Example 2: Input: nums = [0,3,7,2,5,8,4,6,0,1] Output: 9 Example 3: Input: nums = [1,0,1,2] Output: 3 Constraints: 0 <= nums.length <= 10 5 -10 9 <= nums[i] <= 10 9",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 8,
+      "created_at": "2026-09-01T08:58:55.477487+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.05s\n",
+      "solution_code": "import json\n\n\ndef longest_consecutive(nums):\n    num_set = set(nums)\n    longest = 0\n    for num in num_set:\n        if num - 1 not in num_set:\n            current = num\n            length = 1\n            while current + 1 in num_set:\n                current += 1\n                length += 1\n            if length > longest:\n                longest = length\n    return longest\n\n\ndef solve(input_text: str) -> str:\n    text = input_text.strip()\n    if not text:\n        nums = []\n    else:\n        nums = json.loads(text)\n    return str(longest_consecutive(nums))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-165606-128-longest-consecutive-sequence-e9640c",
+      "task": "128. Longest Consecutive Sequence\n\nGiven an unsorted array of integers nums , return the length of the longest consecutive elements sequence. You must write an algorithm that runs in O(n) time. Example 1: Input: nums = [100,4,200,1,3,2] Output: 4 Explanation: The longest consecutive elements sequence is [1, 2, 3, 4] . Therefore its length is 4. Example 2: Input: nums = [0,3,7,2,5,8,4,6,0,1] Output: 9 Example 3: Input: nums = [1,0,1,2] Output: 3 Constraints: 0 <= nums.length <= 10 5 -10 9 <= nums[i] <= 10 9",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T08:56:06.447366+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.06s\n",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    # Input is the array printed as a Python/JSON list, e.g. \"[100,4,200,1,3,2]\" or \"[]\".\n    nums = json.loads(input_text.strip())\n    num_set = set(nums)\n    best = 0\n    for num in num_set:\n        if num - 1 not in num_set:  # start of a sequence\n            length = 1\n            cur = num\n            while cur + 1 in num_set:\n                cur += 1\n                length += 1\n            if length > best:\n                best = length\n    return str(best)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-165344-49-group-anagrams-given-261ab5",
+      "task": "49. Group Anagrams\n\nGiven an array of strings strs , group the anagrams together. You can return the answer in any order . Example 1: Input: strs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"] Output: [[\"bat\"],[\"nat\",\"tan\"],[\"ate\",\"eat\",\"tea\"]] Explanation: There is no string in strs that can be rearranged to form \"bat\" . The strings \"nat\" and \"tan\" are anagrams as they can be rearranged to form each other. The strings \"ate\" , \"eat\" , and \"tea\" are anagrams as they can be rearranged to form each other. Example 2: Input: strs = [\"\"] Output: [[\"\"]] Example 3: Input: strs = [\"a\"] Output: [[\"a\"]] Constraints: 1 <= strs.length <= 10 4 0 <= strs[i].length <= 100 strs[i] consists of lowercase English letters.",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "failed",
+      "verified": false,
+      "model_calls": 3,
+      "created_at": "2026-09-01T08:53:44.503615+00:00",
+      "test_case_count": 2,
+      "last_test_output": "",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    strs = json.loads(input_text.strip())\n    groups = {}\n    for s in strs:\n        key = tuple(sorted(s))\n        groups.setdefault(key, []).append(s)\n    return json.dumps(list(groups.values()))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Connection error."
+    },
+    {
+      "run_id": "20260901-165137-49-group-anagrams-given-3ef12a",
+      "task": "49. Group Anagrams\n\nGiven an array of strings strs , group the anagrams together. You can return the answer in any order . Example 1: Input: strs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"] Output: [[\"bat\"],[\"nat\",\"tan\"],[\"ate\",\"eat\",\"tea\"]] Explanation: There is no string in strs that can be rearranged to form \"bat\" . The strings \"nat\" and \"tan\" are anagrams as they can be rearranged to form each other. The strings \"ate\" , \"eat\" , and \"tea\" are anagrams as they can be rearranged to form each other. Example 2: Input: strs = [\"\"] Output: [[\"\"]] Example 3: Input: strs = [\"a\"] Output: [[\"a\"]] Constraints: 1 <= strs.length <= 10 4 0 <= strs[i].length <= 100 strs[i] consists of lowercase English letters.",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 5,
+      "created_at": "2026-09-01T08:51:37.711484+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.05s\n",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    \"\"\"Group anagrams from a JSON array of strings and return the JSON array of groups.\"\"\"\n    strs = json.loads(input_text)\n\n    groups = []\n    index_by_key = {}\n    for s in strs:\n        key = \"\".join(sorted(s))\n        if key not in index_by_key:\n            index_by_key[key] = len(groups)\n            groups.append([])\n        groups[index_by_key[key]].append(s)\n\n    return json.dumps(groups)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-164812-1-two-sum-you-bb2382",
+      "task": "1. Two Sum\n\nYou are given an array of integers nums and an integer target , return indices of the two numbers such that they add up to target . You may assume that each input would have exactly one solution , and you may not use the same element twice. You can return the answer in any order. Example 1: Input: nums = [2,7,11,15], target = 9 Output: [0,1] Explanation: Because nums[0] + nums[1] == 9, we return [0, 1]. Example 2: Input: nums = [3,2,4], target = 6 Output: [1,2] Example 3: Input: nums = [3,3], target = 6 Output: [0,1] Constraints: 2 <= nums.length <= 10 4 -10 9 <= nums[i] <= 10 9 -10 9 <= target <= 10 9 Only one valid answer exists. Follow-up: Can you come up with an algorithm that is less than O(n 2 ) time complexity?",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 10,
+      "created_at": "2026-09-01T08:48:12.642610+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.05s\n",
+      "solution_code": "import ast\n\n\ndef solve(input_text: str) -> str:\n    data = input_text.strip().splitlines()\n    nums = ast.literal_eval(data[0].strip())\n    target = ast.literal_eval(data[1].strip())\n\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return f\"[{seen[complement]}, {i}]\"\n        seen[num] = i\n\n    return \"[]\"\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-164706-1-two-sum-you-e04b26",
+      "task": "1. Two Sum\n\nYou are given an array of integers nums and an integer target , return indices of the two numbers such that they add up to target . You may assume that each input would have exactly one solution , and you may not use the same element twice. You can return the answer in any order. Example 1: Input: nums = [2,7,11,15], target = 9 Output: [0,1] Explanation: Because nums[0] + nums[1] == 9, we return [0, 1]. Example 2: Input: nums = [3,2,4], target = 6 Output: [1,2] Example 3: Input: nums = [3,3], target = 6 Output: [0,1] Constraints: 2 <= nums.length <= 10 4 -10 9 <= nums[i] <= 10 9 -10 9 <= target <= 10 9 Only one valid answer exists. Follow-up: Can you come up with an algorithm that is less than O(n 2 ) time complexity?",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 6,
+      "created_at": "2026-09-01T08:47:06.195754+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.05s\n",
+      "solution_code": "import json\n\n\ndef solve(input_text: str) -> str:\n    lines = [line.strip() for line in input_text.strip().splitlines() if line.strip()]\n    nums_str = lines[0]\n    target = int(lines[1])\n    nums = json.loads(nums_str)\n\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return f\"[{seen[complement]}, {i}]\"\n        seen[num] = i\n\n    return \"[]\"\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-164335-1-two-sum-you-d5324e",
+      "task": "1. Two Sum\n\nYou are given an array of integers nums and an integer target , return indices of the two numbers such that they add up to target . You may assume that each input would have exactly one solution , and you may not use the same element twice. You can return the answer in any order. Example 1: Input: nums = [2,7,11,15], target = 9 Output: [0,1] Explanation: Because nums[0] + nums[1] == 9, we return [0, 1]. Example 2: Input: nums = [3,2,4], target = 6 Output: [1,2] Example 3: Input: nums = [3,3], target = 6 Output: [0,1] Constraints: 2 <= nums.length <= 10 4 -10 9 <= nums[i] <= 10 9 -10 9 <= target <= 10 9 Only one valid answer exists. Follow-up: Can you come up with an algorithm that is less than O(n 2 ) time complexity?",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 9,
+      "created_at": "2026-09-01T08:43:35.207642+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.05s\n",
+      "solution_code": "import ast\nfrom typing import List\n\n\ndef two_sum(nums: List[int], target: int) -> List[int]:\n    \"\"\"Return the indices of the two numbers that add up to target.\"\"\"\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return [seen[complement], i]\n        seen[num] = i\n    # Problem guarantees exactly one solution, but this keeps the type checker happy.\n    return []\n\n\ndef solve(input_text: str) -> str:\n    \"\"\"Parse input_text, solve Two Sum, and return the answer as a string.\"\"\"\n    lines = [line.strip() for line in input_text.strip().splitlines() if line.strip()]\n    nums = ast.literal_eval(lines[0])\n    target = int(lines[1])\n    result = two_sum(nums, target)\n    return str(result)\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
+    {
+      "run_id": "20260901-163243-1-two-sum-you-20e3d7",
+      "task": "1. Two Sum\n\nYou are given an array of integers nums and an integer target , return indices of the two numbers such that they add up to target . You may assume that each input would have exactly one solution , and you may not use the same element twice. You can return the answer in any order. Example 1: Input: nums = [2,7,11,15], target = 9 Output: [0,1] Explanation: Because nums[0] + nums[1] == 9, we return [0, 1]. Example 2: Input: nums = [3,2,4], target = 6 Output: [1,2] Example 3: Input: nums = [3,3], target = 6 Output: [0,1] Constraints: 2 <= nums.length <= 10 4 -10 9 <= nums[i] <= 10 9 -10 9 <= target <= 10 9 Only one valid answer exists. Follow-up: Can you come up with an algorithm that is less than O(n 2 ) time complexity?",
+      "model": "openai/deepseek-ai/DeepSeek-V4-Flash",
+      "status": "passed",
+      "verified": true,
+      "model_calls": 7,
+      "created_at": "2026-09-01T08:32:43.303988+00:00",
+      "test_case_count": 2,
+      "last_test_output": "..                                                                       [100%]\n2 passed in 0.05s\n",
+      "solution_code": "import json\nfrom typing import List\n\n\ndef solve(input_text: str) -> str:\n    lines = input_text.strip().splitlines()\n    nums: List[int] = json.loads(lines[0].strip())\n    target: int = int(lines[1].strip())\n\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return str([seen[complement], i])\n        seen[num] = i\n\n    # Problem guarantees exactly one solution exists.\n    raise ValueError(\"No two-sum solution found\")\n\n\nif __name__ == \"__main__\":\n    import sys\n    print(solve(sys.stdin.read()))\n",
+      "review": {
+        "status": null,
+        "content": ""
+      },
+      "error": null
+    },
     {
       "run_id": "20260831-172447-128-nums-o-n-eb9abb",
       "task": "128. 最长连续序列\n\n给定一个未排序的整数数组 nums ，找出数字连续的最长序列（不要求序列元素在原数组中连续）的长度。\n\n请你设计并实现时间复杂度为 O(n) 的算法解决此问题。",
@@ -834,754 +1701,6 @@
         "content": ""
       },
       "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-152026-acwing-334-dp-n-145d1d",
-      "task": "【AcWing 334，DP-困难】给定 n 天价格和最多 k 次完整交易（一次买入加一次卖出），同一时间只能持有一股，求最大利润。输入 n k 及价格序列，输出最大利润。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:20:26.359180+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-152026-acwing-301-dp-k-d0cbd9",
-      "task": "【AcWing 301，DP-困难】给定整数序列，选择一个非空连续子段，长度不超过 k，使元素和最大。输入 n k 及序列，输出最大和；要求用单调队列优化前缀和 DP。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:20:26.103381+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151958-acwing-526-dp-n-409e8d",
-      "task": "【AcWing 526，DP-困难】平面上有 n 只猪，坐标均为正数。一只鸟沿经过原点的向下开口抛物线飞行，可消灭曲线上的所有猪；求消灭全部猪所需最少鸟数。输入 n m（m 为无关的上限参数），随后 n 行 x y；输出最少鸟数。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:19:58.076907+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151953-acwing-736-dp-s-989da0",
-      "task": "【AcWing 736，DP-困难】每块石头有吃掉耗时 s、初始能量 e、每单位时间损失 l。按任意顺序吃石头，获得 max(0,e-l*t) 能量，求最大总能量。输入 n 及 n 行 s e l。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:19:53.941686+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151950-acwing-6-dp-n-ede9a3",
-      "task": "【AcWing 6，DP-困难】多重背包的大规模版本。输入 n m 及 n 行体积 v、价值 w、数量 s，每种物品最多选 s 件；输出最大价值。请使用单调队列等优化处理大容量。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:19:50.196832+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151950-acwing-10-dp-v-a65a7d",
-      "task": "【AcWing 10，DP-困难】物品构成树形依赖：每行体积 v、价值 w、父编号 p，p=-1 为主件，选附件必须先选父件。输入 n m 及物品，求容量内最大价值。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:19:50.185332+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151921-acwing-559-dp-n-f2dcfd",
-      "task": "【AcWing 559，DP-困难】给定字符串，允许在任意位置插入字符，求变成回文串所需的最少插入次数。输入长度 n 和字符串，输出最少次数。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:19:21.849200+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151917-acwing-334-dp-n-bb4373",
-      "task": "【AcWing 334，DP-困难】给定 n 天价格和最多 k 次完整交易（一次买入加一次卖出），同一时间只能持有一股，求最大利润。输入 n k 及价格序列，输出最大利润。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:19:17.809471+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151910-acwing-293-dp-1x2-c16d3b",
-      "task": "【AcWing 293，DP-中等】用 1x2 小方块完全覆盖 n 行 m 列棋盘，方块可旋转。多组输入，以 0 0 结束；每组输出铺法数量。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:19:10.016511+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151909-acwing-294-dp-n-7653ff",
-      "task": "【AcWing 294，DP-中等】n 行 m 列山地地图，P 为平原、H 为山地。炮之间同一行至少间隔两格，且连续三行同列不能放炮；山地不能放炮。输入地图，求最多炮数。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:19:10.000254+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151845-acwing-6-dp-n-d4b574",
-      "task": "【AcWing 6，DP-困难】多重背包的大规模版本。输入 n m 及 n 行体积 v、价值 w、数量 s，每种物品最多选 s 件；输出最大价值。请使用单调队列等优化处理大容量。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:18:45.687563+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151845-acwing-10-dp-v-97bceb",
-      "task": "【AcWing 10，DP-困难】物品构成树形依赖：每行体积 v、价值 w、父编号 p，p=-1 为主件，选附件必须先选父件。输入 n m 及物品，求容量内最大价值。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:18:45.673841+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151809-acwing-294-dp-n-da0b10",
-      "task": "【AcWing 294，DP-中等】n 行 m 列山地地图，P 为平原、H 为山地。炮之间同一行至少间隔两格，且连续三行同列不能放炮；山地不能放炮。输入地图，求最多炮数。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:18:09.523451+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151809-acwing-293-dp-1x2-d9a10f",
-      "task": "【AcWing 293，DP-中等】用 1x2 小方块完全覆盖 n 行 m 列棋盘，方块可旋转。多组输入，以 0 0 结束；每组输出铺法数量。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:18:09.466552+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151733-acwing-277-dp-n-5c8e1a",
-      "task": "【AcWing 277，DP-中等】在 n 行 m 列方格中，两个人同时从左上走到右下，只能向右或向下，不能重复领取同一格的数字（起点终点只计一次），求领取总和最大值。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:17:33.388458+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151733-acwing-898-dp-n-36d8ef",
-      "task": "【AcWing 898，DP-中等】给定 n 个整数，求严格递增子序列长度。输入规模很大，要求使用 O(n log n) 的贪心维护 tails 方法。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:17:33.340440+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151657-acwing-12-dp-n-e19b15",
-      "task": "【AcWing 12，DP-中等】n 件 01 物品和容量 m，输出字典序最小的最优方案：按物品编号升序输出被选物品编号，空方案输出空行。输入 n m 及 v_i w_i。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:16:57.251793+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151657-acwing-11-dp-n-cdd621",
-      "task": "【AcWing 11，DP-中等】n 件 01 物品和容量 m，求达到最大价值的不同选取方案数，答案对 1e9+7 取模。输入 n m 及 v_i w_i，输出方案数。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:16:57.180253+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151621-acwing-9-dp-n-04ed4c",
-      "task": "【AcWing 9，DP-中等】物品分成 n 组，每组最多选一件。输入 n m，随后每组先给出组内数量，再给出若干体积价值对；输出容量 m 内最大价值。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:16:21.089211+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151620-acwing-8-dp-v-6720d4",
-      "task": "【AcWing 8，DP-中等】每件物品占用体积 v 和重量 c，价值 w，每件最多一次。输入 n 背包体积上限 m、重量上限 k，随后 n 行 v w c；求最大价值。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:16:20.995260+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151544-acwing-7-dp-v-29a164",
-      "task": "【AcWing 7，DP-中等】每行 v w s：s=-1 表示 01 背包，s=0 表示完全背包，s>0 表示最多 s 件。输入 n m 及物品，输出最大价值。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:15:44.918379+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151544-acwing-5-dp-n-26fa9c",
-      "task": "【AcWing 5，DP-中等】每种物品有数量上限，输入 n m 及 n 行 v_i w_i s_i，求最大价值。数据范围较大，需使用二进制拆分或等价优化。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:15:44.870348+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151508-acwing-902-dp-n-3f5cfe",
-      "task": "【AcWing 902，DP-简单】将正整数 n 拆成若干个正整数之和，忽略顺序，求划分方案数，答案对 1e9+7 取模。输入 n，输出方案数。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:15:08.745890+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151508-acwing-903-dp-n-30b438",
-      "task": "【AcWing 903，DP-简单】给定 n 行 m 列高度矩阵，只能从高处滑向上下左右相邻的更低位置，求最长滑雪路线包含的格子数。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:15:08.738866+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151432-acwing-900-dp-n-8335ec",
-      "task": "【AcWing 900，DP-简单】给出 n 行数字三角形，从顶到底每次走到下一行相邻位置，求路径数字和最大值。输入 n 及三角形，输出最大和。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:14:32.548481+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151432-acwing-901-dp-1-cd863f",
-      "task": "【AcWing 901，DP-简单】允许插入、删除、替换一个字符代价均为 1，求两个字符串的最小编辑距离。输入 n m 及两行字符串，输出距离。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:14:32.548481+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151356-acwing-899-dp-n-3569af",
-      "task": "【AcWing 899，DP-简单】输入两个小写字符串，求最长公共子序列长度。第一行给出长度 n m，随后两行字符串；输出长度。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:13:56.394157+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151356-acwing-897-dp-n-481ad0",
-      "task": "【AcWing 897，DP-简单】给定长度 n 的整数序列，求严格递增子序列的最大长度。输入 n 和序列，输出长度。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:13:56.375032+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151308-acwing-79-dp-n-547fb2",
-      "task": "【AcWing 79，DP-简单】给定 n 天股价，每天最多买卖一次且只能持有一股，最多完成一次买入和一次卖出。输入 n 及 n 个价格，输出最大利润；无法获利输出 0。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:13:08.174299+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-151308-acwing-4-dp-s-26d958",
-      "task": "【AcWing 4，DP-简单】每种物品有数量上限 s_i，其他条件同 01 背包。输入 n m，随后 n 行 v_i w_i s_i；输出最大价值。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-29T07:13:08.171923+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-143223-acwing-4-dp-s-b2a1c1",
-      "task": "【AcWing 4，DP-简单】每种物品有数量上限 s_i，其他条件同 01 背包。输入 n m，随后 n 行 v_i w_i s_i；输出最大价值。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 3,
-      "created_at": "2026-08-29T06:32:23.144500+00:00",
-      "test_case_count": 2,
-      "last_test_output": "",
-      "solution_code": "def solve(input_text: str) -> str:\n    tokens = input_text.split()\n    if not tokens:\n        return \"0\"\n    idx = 0\n    n = int(tokens[idx]); idx += 1\n    m = int(tokens[idx]); idx += 1\n    dp = [0] * (m + 1)\n    for _ in range(n):\n        v = int(tokens[idx]); idx += 1\n        w = int(tokens[idx]); idx += 1\n        s = int(tokens[idx]); idx += 1\n        # binary splitting for bounded knapsack\n        k = 1\n        remaining = s\n        while remaining > 0:\n            take = min(k, remaining)\n            cv = v * take\n            cw = w * take\n            for j in range(m, cv - 1, -1):\n                if dp[j - cv] + cw > dp[j]:\n                    dp[j] = dp[j - cv] + cw\n            remaining -= take\n            k <<= 1\n    return str(dp[m])\n",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.APIError: APIError: OpenAIException - Sorry, your account balance is insufficient"
-    },
-    {
-      "run_id": "20260829-142517-acwing-3-dp-n-6c3275",
-      "task": "【AcWing 3，DP-简单】有 n 种物品和容量为 m 的背包，每种物品可无限次选择。输入 n m，随后每行体积 v 和价值 w；求最大总价值。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "passed",
-      "verified": true,
-      "model_calls": 7,
-      "created_at": "2026-08-29T06:25:17.175913+00:00",
-      "test_case_count": 2,
-      "last_test_output": "..                                                                       [100%]\n2 passed in 0.02s\n",
-      "solution_code": "def solve(input_text: str) -> str:\n    tokens = input_text.split()\n    if not tokens:\n        return \"0\"\n    it = iter(tokens)\n    n = int(next(it))\n    m = int(next(it))\n    dp = [0] * (m + 1)\n    for _ in range(n):\n        v = int(next(it))\n        w = int(next(it))\n        if v <= 0:\n            # zero/negative volume with positive value -> unbounded; skip to avoid infinite gain\n            continue\n        for j in range(v, m + 1):\n            if dp[j - v] + w > dp[j]:\n                dp[j] = dp[j - v] + w\n    return str(dp[m])\n",
-      "review": {
-        "status": "completed",
-        "content": "# 算法代码评审\n\n## 1. 算法思路\n采用的经典的**完全背包问题**一维 DP 解法：\n- `dp[j]` 表示容量不超过 `j` 时能获得的最大价值，初始全为 0（即\"什么也不选\"价值为 0）。\n- 对每件物品，按 `j` 从 `v` 到 `m` **正向遍历**：`dp[j] = max(dp[j], dp[j-v] + w)`。正向遍历正是无限件物品可重复装入的关键——当前物品在同一轮中可被多次使用。\n- 最终答案为 `dp[m]`。\n\n该实现与 AcWing 3 完全背包的标准转移一致。\n\n## 2. 时间与空间复杂度\n- **时间复杂度**：`O(n·m)`，两层循环外层物品数、内层容量。\n- **空间复杂度**：`O(m)`，仅使用长度为 `m+1` 的一维数组。\n\n## 3. 边界情况\n- 空输入：返回 `\"0\"`，防御性处理合理。\n- `v <= 0`：题目一般保证 `v ≥ 1`，但代码额外跳过零/负体积的物品，避免无限价值或越界。这是一个合理的保险措施（注释也写明了原因）。\n- `v > m`：内层 `range(v, m+1)` 为空区间，自然跳过。\n- 负价值 `w < 0`：由于 `dp` 初值为 0 且只在更优时更新，负价值物品不会被选中（除非净收益仍为正，即等价于选或不选的最优决策，逻辑依然正确）。\n- `m = 0`：返回 `dp[0]=0`，正确。\n\n## 4. 测试覆盖\n本地验证通过（2 个用例均通过）。\n\n但现有公开用例较少：\n- 用例 1（`2 4 / 1 2 / 3 4` → `8`）覆盖了多物品重复选择；\n- 用例 2（`1 2 / 3 9` → `0`）覆盖了容量不足的情况。\n\n未覆盖的场景：`m = 0`、单种物品重复填满、价值或体积相同的多物品、`v = 1` 边界、大容量规模下的性能等。不过这些只是覆盖度建议，不影响当前用例的正确性。\n\n## 5. 潜在风险与代码质量\n- **输入解析**：用 `split()` + `iter(tokens)` 可容忍任意空白与换行格式，鲁棒性好。\n- **输出格式**：直接返回 `str(dp[m])`，无多余换行；测试用例 `normalize_output` 也会去掉尾随换行，匹配安全。\n- **数值范围**：使用 Python 任意精度整数，没有溢出风险。\n- **可读性**：代码简洁清晰，注释解释了 `v<=0` 处理的意图，结构良好。\n- **潜在风险**：\n  - 若在线评测存在 `v=0` 且 `w>0` 的数据，理论上答案应是无穷大，当前实现会跳过该物品；但完全背包题目通常不会给这种输入，且题目描述隐含 `v>0`，风险较低。\n  - 没有显式参数校验（如 token 数量是否匹配 `2+2n`），若输入残缺会抛 `StopIteration`/`IndexError`，但评测输入按规范提供，影响有限。\n- **总体评价**：实现正确、简洁、边界处理稳妥，符合题目要求。\n\n> 说明：仅确认本地提供用例通过，不保证在线评测的隐藏测试一定通过。"
-      },
-      "error": null
-    },
-    {
-      "run_id": "20260829-141840-acwing-2-dp-n-ad4dcb",
-      "task": "【AcWing 2，DP-简单】有 n 件物品和容量为 m 的背包。第 i 件物品体积 v_i、价值 w_i，每件最多选一次。求不超过容量时的最大总价值。输入第一行 n m，随后 n 行 v_i w_i；输出最大价值。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "passed",
-      "verified": true,
-      "model_calls": 8,
-      "created_at": "2026-08-29T06:18:40.924578+00:00",
-      "test_case_count": 2,
-      "last_test_output": "..                                                                       [100%]\n2 passed in 0.02s\n",
-      "solution_code": "def solve(input_text: str) -> str:\n    data = input_text.strip().split()\n    if not data:\n        return \"0\"\n    n = int(data[0])\n    m = int(data[1])\n    idx = 2\n    dp = [0] * (m + 1)\n    for _ in range(n):\n        v = int(data[idx])\n        w = int(data[idx + 1])\n        idx += 2\n        for j in range(m, v - 1, -1):\n            if dp[j - v] + w > dp[j]:\n                dp[j] = dp[j - v] + w\n    return str(dp[m])\n",
-      "review": {
-        "status": "completed",
-        "content": "# 代码审查报告\n\n## 1. 算法思路\n采用经典的 **0-1 背包问题一维空间优化 DP** 解法。\n- `dp[j]` 表示容量不超过 `j` 时能获得的最大价值，初始全为 0。\n- 对每件物品，体积为 `v`、价值为 `w`，需保证该物品最多被选一次，因此 **内层循环从 `m` 倒序枚举到 `v`**，这样 `dp[j-v]` 引用的是本物品处理前的值，避免重复选取。\n- 转移：`dp[j] = max(dp[j], dp[j-v] + w)`，最终返回 `dp[m]`。\n\n倒序枚举是该算法正确性的关键，代码实现正确。\n\n## 2. 时间和空间复杂度\n- **时间复杂度**：O(n·m)，每个物品内层至多 m 次迭代。\n- **空间复杂度**：O(m)，仅维护一维 dp 数组，相较二维写法节省为原来的 1/(n+1)。\n\n对于该题数据规模，性能充足。\n\n## 3. 边界情况\n- ✅ 输入为空：`if not data: return \"0\"` 提前返回，避免索引越界。\n- ✅ 容量 `m=0`：`dp = [0]`，内层循环 `range(0, v-1, -1)` 对正体积物品不执行，最终返回 `\"0\"`，与\"空容量\"用例吻合。\n- ✅ 物品体积大于背包容量：`range(m, v-1, -1)` 集合为空，自动跳过该物品。\n- ⚠️ 物品体积为 0：题目未明确禁止。若 `v=0`，倒序循环会把所有 `dp[j]` 同时加 `w`，仍只加一次（因为同一 `j` 仅访问一次），结果正确性尚可，但若 `v=0` 且 `w>0` 会被纳入背包——这一点是否符合题意取决于题面约束，建议留意。\n- ⚠️ 未对 `n` 与后续数据数量做一致性校验，若输入残缺会抛 `IndexError`。\n\n## 4. 测试覆盖\n官方用例仅 2 个：\n- 基础背包：3 件物品容量 4，预期 6（选体积 1+2 的物品，价值 2+4=6），验证主流程。\n- 空容量：m=0，预期 0，验证退化情形。\n\n覆盖不足之处：\n- 缺少\"恰一物品可装入\"\"所有物品体积均超容量\"\"n=0\"\"物品数恰好全部装入\"\"单件物品体积恰好等于 m\"等情形。\n- 缺少较大规模用例以验证性能与无越界。\n- 未覆盖 `v=0` 或 `w=0` 的退化情形。\n\n本地验证已通过（2 passed）。\n\n## 5. 潜在风险与代码质量\n**优点**\n- 写法简洁标准，一维倒序 DP 无逻辑错误。\n- 使用 `strip().split()` 兼容任意外围空白与换行。\n- 提前处理空输入，鲁棒性略加。\n- 返回字符串而非数值，符合 `solve(input_text) -> str` 接口。\n\n**风险与改进建议**\n- 无输入合法性校验：依赖 `data[idx]`、`data[idx+1]` 直接取值，若用例格式异常会直接抛 `IndexError`。生产环境下应校验 `len(data) >= 2 + 2*n`。\n- 未使用 `data` 迭代器或切片，索引管理略显啰嗦，但可读性可接受。\n- 若题面隐含 `v_i ≥ 1`，则一切正常；若可能为 0，建议显式处理（题目通常 v_i ≥ 1）。\n- 测试用例偏少，虽本地方案通过，但 无法保证在线评测隐藏用例全部通过（例如大规模数据、特殊边界），仍需以实际提交结果为准。\n- 输出格式仅是数字，与权威用例一致；无需额外换行处理（评测端通常按空白/行尾容忍）。\n\n总体结论：算法实现正确、空间优化到位，符合 0-1 背包标准模板。本地两例验证通过；但官方用例覆盖面较窄，且未对异常输入与零体积物品做防御，提交后请以在线评测结果为最终判据。"
-      },
-      "error": null
-    },
-    {
-      "run_id": "20260829-141336-acwing-2-dp-n-795c88",
-      "task": "【AcWing 2，DP-简单】有 n 件物品和容量为 m 的背包。第 i 件物品体积 v_i、价值 w_i，每件最多选一次。求不超过容量时的最大总价值。输入第一行 n m，随后 n 行 v_i w_i；输出最大价值。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "passed",
-      "verified": true,
-      "model_calls": 20,
-      "created_at": "2026-08-29T06:13:36.633880+00:00",
-      "test_case_count": 2,
-      "last_test_output": "..                                                                       [100%]\n2 passed in 0.02s\n",
-      "solution_code": "def solve(input_text: str) -> str:\n    parts = input_text.split()\n    idx = 0\n    n = int(parts[idx]); idx += 1\n    m = int(parts[idx]); idx += 1\n    dp = [0] * (m + 1)\n    for _ in range(n):\n        v = int(parts[idx]); idx += 1\n        w = int(parts[idx]); idx += 1\n        for j in range(m, v - 1, -1):\n            val = dp[j - v] + w\n            if val > dp[j]:\n                dp[j] = val\n    return str(dp[m])\n",
-      "review": {
-        "status": "completed",
-        "content": "1. 算法思路\n经典 0/1 背包问题的一维空间优化实现。状态定义 `dp[j]` 表示容量不超过 `j` 时能获得的最大价值，初值为 0。对每件物品，_capacity_ 维度从 `m` 倒序枚举到 `v`，更新 `dp[j] = max(dp[j], dp[j-v] + w)`。倒序确保每件物品在同一轮中只被使用一次（避免 `dp[j-v]` 已被本轮更新而造成\"重复选取\"）。最终答案为 `dp[m]`，由于 DP 初值为 0 且转移时显式比较取最大值，`dp[m]` 自然表示\"不超过容量 m\"的最大价值。思路正确。\n\n2. 时间与空间复杂度\n- 时间复杂度：O(n·m)，外层 n 件物品，内层至多 m 次循环。\n- 空间复杂度：O(m)，仅维护一维长度为 m+1 的数组。\n对于本题规模属于最优实现。\n\n3. 边界情况\n- `m = 0`：`dp = [0]`，每件物品内层 `range(0, v-1, -1)` 在 `v >= 1` 时为空区间，不会越界，返回 0，与\"空容量\"用例一致。\n- `v_i > m`：`range(m, v-1, -1)` 为空，物品自动跳过，正确。\n- `v_i = 0`：`range(m, -1, -1)` 会覆盖 j=0；由于每个物品只在外层循环处理一次，0 体积物品也只会被加入一次，逻辑仍正确（但极端情况下若同时存在多个 0 体积正价值物品，会被全量加进所有容量，符合 0/1 语义）。\n- 输入解析采用 `split()` 而非按行切分，对多余空白、行尾换行、不同行分布均鲁棒。\n\n4. 测试覆盖\n本地用例只有 2 个：基础背包（3 件物品容量 4，期望 6）与空容量（容量 0，期望 0），均通过。覆盖维度偏少，未涉及：单件物品、物品体积恰好等于容量、所有物品体积之和等于容量、物品体积大于容量被排除、`w_i = 0` 或 `v_i = 0`、多件物品中需精确取舍的组合等。建议补充这些场景以增强信心，但目前两例均符合预期。\n\n5. 潜在风险与代码质量\n- 输入未做校验：若 `parts` 长度不足或含非数字字符会抛 `IndexError`/`ValueError`，但题目约定输入格式，可接受。\n- 未限制 `n`、`m` 的范围；若 `m` 极大可能内存超限，但本题未给出上限，无明确问题。\n- `if val > dp[j]: dp[j] = val` 与 `dp[j] = max(dp[j], val)` 等价，可读性略可改为 `max` 写法，但当前写法在部分解释器上略快，属风格选择。\n- 变量名 `m` 既是\"容量\"又是DP语义中的上限，命名尚可；`v`、`w` 与题面一致，清晰。\n- 没有副作用，纯函数，便于测试。\n\n本地验证已通过（2 个用例全部通过）；不保证隐含在线评测用例一定通过。"
-      },
-      "error": null
-    },
-    {
-      "run_id": "20260829-141100-acwing-2-dp-n-9ede74",
-      "task": "【AcWing 2，DP-简单】有 n 件物品和容量为 m 的背包。第 i 件物品体积 v_i、价值 w_i，每件最多选一次。求不超过容量时的最大总价值。输入第一行 n m，随后 n 行 v_i w_i；输出最大价值。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 12,
-      "created_at": "2026-08-29T06:11:00.650136+00:00",
-      "test_case_count": 2,
-      "last_test_output": "..                                                                       [100%]\n2 passed in 0.02s\n",
-      "solution_code": "def solve(input_text: str) -> str:\n    lines = input_text.strip().splitlines()\n    if not lines:\n        return \"0\"\n    first = lines[0].split()\n    n = int(first[0])\n    m = int(first[1])\n    dp = [0] * (m + 1)\n    for i in range(1, n + 1):\n        parts = lines[i].split()\n        v = int(parts[0])\n        w = int(parts[1])\n        for j in range(m, v - 1, -1):\n            cand = dp[j - v] + w\n            if cand > dp[j]:\n                dp[j] = cand\n    return str(dp[m])\n",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": null
-    },
-    {
-      "run_id": "20260829-100600-100-ab4f35gr-a6-abfgr-b68aa4",
-      "task": "输入一个字符串，将其中的数字字符移动到非数字字符之后，并保持数字字符和非数字字符输入时的顺序。\n\n输入：一行字符串，长度小于 100。\n输出：移动后的字符串。\n\n例如：输入 ab4f35gr#a6，输出 abfgr#a4356。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "passed",
-      "verified": true,
-      "model_calls": 16,
-      "created_at": "2026-08-29T02:10:00.409849+00:00",
-      "test_case_count": 0,
-      "last_test_output": "..                                                                       [100%]\n2 passed in 0.02s\n",
-      "solution_code": "def solve(input_text: str) -> str:\n    s = input_text.replace(\"\\r\", \"\").rstrip(\"\\n\")\n    non_digits = [c for c in s if c not in \"0123456789\"]\n    digits = [c for c in s if c in \"0123456789\"]\n    return \"\".join(non_digits + digits)\n\n\nif __name__ == \"__main__\":\n    import sys\n    print(solve(sys.stdin.read()))\n",
-      "review": {
-        "status": "completed",
-        "content": "1. 算法思路\n解法采用“稳定划分”思路：遍历字符串一次收集所有非数字字符，再遍历一次收集所有数字字符，最后将两部分拼接。由于两次遍历均按原顺序进行，因此非数字字符之间、数字字符之间的相对顺序都能保持不变，满足题目“保持输入顺序”的要求。与 `ab4f35gr#a6 → abfgr#a4356` 的示例一致。\n\n2. 时间与空间复杂度\n- 时间复杂度：O(n)，两次列表推导各遍历一次字符串，最后拼接也是 O(n)。\n- 空间复杂度：O(n)，需要额外存储 `non_digits` 和 `digits` 两个列表，最坏情况共 n 个字符。\n\n3. 边界情况\n- 空字符串：返回空串，正确。\n- 全为数字：非数字部分为空，返回原数字串，正确。\n- 全为非数字：数字部分为空，返回原串，正确。\n- 含特殊字符如 `#`：按非数字处理，正确。\n- 末尾换行/回车：通过 `replace(\"\\r\", \"\")` 和 `rstrip(\"\\n\")` 去除行尾换行，避免把换行也算入字符。\n- 字符串内不含换行时（如测试用例直接传入 `\"ab4f35gr#a6\"`），处理不会影响结果。\n\n4. 测试覆盖\n本地提供的 `test_cases.json` 包含 2 个用例：\n- `ab4f35gr#a6 → abfgr#a4356`\n- `a1b2 → ab12`\n本地测试输出为 `2 passed`，验证通过。但这两条用例覆盖较为基础，建议补充：空串、全数字、全字母、含多个连续数字、含中文或其他 Unicode 字符、末尾带换行等场景，以增强信心。注意：仅说明本地验证通过，不保证隐藏在线评测用例一定通过。\n\n5. 潜在风险与代码质量\n- 代码简洁清晰，逻辑正确，符合 `solve(input_text: str) -> str` 接口要求。\n- `\"0123456789\"` 写法虽然包含全部数字，但顺序略不直观，建议改为 `\"0123456789\"` 或使用 `str.isdigit`（需注意 `isdigit` 会对部分 Unicode 数字、上下标等返回 True，可能与题意“数字字符”不完全一致，因此保持 ASCII 显式判断更安全）。\n- `rstrip(\"\\n\")` 会去除所有末尾换行，对单行输入足够；若输入可能包含多个换行或尾部空格，需根据权威测试格式确认处理策略。\n- 未修改 `test_cases.json` 与 `test_solution.py`，符合约束。"
-      },
-      "error": null
-    },
-    {
-      "run_id": "20260829-093549-time-limit-1000-ms-4521e8",
-      "task": "避开不安全节点的最短路径\n 查看题解 查看答案\n题目描述\nTime Limit: 1000 ms\nMemory Limit: 256 mb\n给定一个带权无向图，图中包含若干个节点和边，每条边都有一个正整数权值表示通过该边的代价。同时给定一个不安全节点的列表，要求你找到从起点到终点的最短路径，路径中不能经过任何不安全节点。\n\n特别注意：如果起点或终点本身是不安全节点，这是允许的，不受上述限制。也就是说，限制仅针对路径中除起点和终点之外的中间节点。\n\n如果不存在满足条件的路径，请输出 -1。\n\n输入输出格式\n输入描述:\n第一行包含四个整数 n, m, s, t，分别表示：\nn：图中节点的总数（节点编号从 1 到 n）\nm：图中边的总数\ns：起点的编号\nt：终点的编号\n第二行包含一个整数 k，表示不安全节点的数量。\n第三行包含 k 个整数，表示所有不安全节点的编号。\n接下来 m 行，每行包含三个整数 u, v, w，表示节点 u 和节点 v 之间有一条无向边，边权为 w。\n数据范围：\n1 ≤ n ≤ 10^5\n1 ≤ m ≤ 2×10^5\n1 ≤ s, t ≤ n\n0 ≤ k ≤ n\n1 ≤ w ≤ 10^9\n保证没有自环和重边\n输出描述:\n输出一个整数，表示从起点 s 到终点 t 且不经过任何不安全中间节点的最短路径长度。如果不存在这样的路径，输出 -1。\n输入输出样例\n输入样例#:\n复制\n5 6 1 5\n2\n2 4\n1 2 1\n1 3 5\n2 3 2\n2 4 3\n3 5 4\n4 5 1\n输出样例#:\n复制\n9",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "passed",
-      "verified": true,
-      "model_calls": 5,
-      "created_at": "2026-08-29T01:39:14.599007+00:00",
-      "test_case_count": 0,
-      "last_test_output": "......                                                                   [100%]\n6 passed in 0.04s\n",
-      "solution_code": "import heapq\n\n\ndef solve(input_text: str) -> str:\n    data = input_text.split()\n    idx = 0\n    n = int(data[idx]); idx += 1\n    m = int(data[idx]); idx += 1\n    s = int(data[idx]); idx += 1\n    t = int(data[idx]); idx += 1\n    k = int(data[idx]); idx += 1\n\n    unsafe = set()\n    for _ in range(k):\n        unsafe.add(int(data[idx])); idx += 1\n\n    adj = [[] for _ in range(n + 1)]\n    for _ in range(m):\n        u = int(data[idx]); idx += 1\n        v = int(data[idx]); idx += 1\n        w = int(data[idx]); idx += 1\n        adj[u].append((v, w))\n        adj[v].append((u, w))\n\n    if s == t:\n        return \"0\\n\"\n\n    INF = float(\"inf\")\n    dist = [INF] * (n + 1)\n    dist[s] = 0\n    pq = [(0, s)]\n    while pq:\n        d, u = heapq.heappop(pq)\n        if d > dist[u]:\n            continue\n        if u == t:\n            break\n        for v, w in adj[u]:\n            # Forbid entering unsafe nodes unless it is the target t.\n            # The start node s is allowed to be unsafe (already in queue).\n            if v != t and v in unsafe:\n                continue\n            nd = d + w\n            if nd < dist[v]:\n                dist[v] = nd\n                heapq.heappush(pq, (nd, v))\n\n    if dist[t] == INF:\n        return \"-1\\n\"\n    return f\"{dist[t]}\\n\"\n",
-      "review": {
-        "status": "completed",
-        "content": "# 算法解法独立审查\n\n## 1. 算法思路\n\n采用标准 Dijkstra 最短路算法，配合优先队列实现。关键点在于：\n\n- **起点处理**：将源点 `s` 直接入队，不检查 `s` 是否为不安全节点（题目允许起点不安全）。\n- **松弛阶段过滤**：当从 `u` 松弛到邻居 `v` 时，仅当 `v != t` 且 `v ∈ unsafe` 时跳过。这样：\n  - 不安全中间节点永不被入队，因此不可能在路径中作为中转。\n  - 终点 `t` 即便不安全也可被进入（作为终点而非中转）。\n- **提前终止**：从堆中弹出 `t` 时即获得最短路，可立即 `break`（Dijkstra 的标准优化）。\n- **同点处理**：若 `s == t`，直接返回 0，绕过任何不安全检查。\n\n逻辑严密，与题意\"仅限制除起点终点外的中间节点\"完全吻合。\n\n## 2. 时间与空间复杂度\n\n- **时间复杂度**：$O((n + m) \\log n)$。每条边至多松弛一次，堆操作单次 $O(\\log n)$。在 $n \\le 10^5, m \\le 2 \\times 10^5$ 下完全可承受 1000ms 时限。\n- **空间复杂度**：$O(n + m)$。邻接表存 $2m$ 条有向边，`dist` 数组 $O(n)$，`unsafe` 集合 $O(k)$。\n\n## 3. 边界情况\n\n| 情况 | 处理方式 | 是否正确 |\n|------|----------|----------|\n| `s == t`（含不安全） | 提前返回 0 | ✅ |\n| `s` 不安全 | `s` 直接入队不经过 unsafe 过滤 | ✅ |\n| `t` 不安全 | 松弛时 `v == t` 跳过 unsafe 检查 | ✅ |\n| `k = 0` | `unsafe` 为空集 | ✅ |\n| 无可行路径 | `dist[t] == INF` 返回 -1 | ✅ |\n| `n = 1, m = 0` | `s == t` 短路返回 0 | ✅ |\n| `s` 不安全但其邻居均不安全（非 t） | 无法松弛，返回 -1 | ✅ |\n| 边权最大 $10^9$，路径和可能 $\\approx 2 \\times 10^{14}$ | Python 原生大整数，无溢出 | ✅ |\n\n## 4. 测试覆盖\n\n本地 6 个用例覆盖维度较为完整：\n- 题目样例（多路径选择，避开不安全节点）\n- 起点终点均不安全但仍可达\n- 中间必经节点不安全导致无路径\n- 不安全节点强制走次短路径\n- 不安全节点偏置不影响原最短路\n- 起点终点相同且不安全\n\n覆盖了主要语义分支。本地验证通过。\n\n## 5. 潜在风险与代码质量\n\n**优点**：\n- 输入解析使用 `split()`，兼容跨行空白，鲁棒性好。\n- 使用 `if d > dist[u]: continue` 标准惰性删除，避免堆中失效条目影响正确性。\n- 提前 `break` 优化合理。\n- 输出末尾带 `\\n`，与样例一致；测试做了 `rstrip` 归一化，匹配安全。\n\n**潜在风险/可关注点**：\n1. **`v in unsafe` 的集合查询**：在松弛内层循环中频繁执行，最坏 $O(m)$ 次查询，每次 $O(1)$ 平均，总体可接受。但仍可改为布尔数组 `is_unsafe = [False] * (n + 1)`，常数更小且避免哈希开销，对 $n = 10^5$ 规模更友好。\n2. **`INF = float(\"inf\")`**：与整数相加仍为 `inf`，比较正常，不会出错；但若要输出严格整数型可改用大整数常量。当前实现无问题。\n3. **`s == t` 短路返回 `\"0\\n\"`**：注意返回值带换行符，而题目样例输出也带换行，一致。但若有判题器对尾换行敏感需留意（本测试已归一化）。\n4. **未校验输入合法性**：如节点编号越界、`k` 与实际给出数量不符等。题面保证输入合法，故可接受。\n5. **大图递归/栈深**：本解法无递归，无栈溢出风险。\n6. **早停正确性**：`break` 仅在弹出 `t` 时触发，Dijkstra 弹出即定型，正确。但若误把 `break` 放在 `dist[t]` 更新时则会出错——当前位置无误。\n\n**总体评价**：解法简洁、正确、高效，复杂度与边界处理均到位，无需修改即可提交。"
-      },
-      "error": null
-    },
-    {
-      "run_id": "20260828-220018-100-ab4f35gr-a6-abfgr-5d4155",
-      "task": "输入一个字符串，将其中的数字字符移动到非数字字符之后，并保持数字字符和非数字字符输入时的顺序。\n\n输入：一行字符串，长度小于 100。\n输出：移动后的字符串。\n\n例如：输入 ab4f35gr#a6，输出 abfgr#a4356。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "passed",
-      "verified": true,
-      "model_calls": 6,
-      "created_at": "2026-08-28T14:03:19.478605+00:00",
-      "test_case_count": 0,
-      "last_test_output": "..                                                                       [100%]\n2 passed in 0.01s\n",
-      "solution_code": "def solve(input_text: str) -> str:\n    s = input_text.strip('\\n')\n    non_digits = [c for c in s if not c.isdigit()]\n    digits = [c for c in s if c.isdigit()]\n    return ''.join(non_digits + digits)\n",
-      "review": {
-        "status": "completed",
-        "content": "## 1. 算法思路\n\n采用\"两次遍历 + 拼接\"的稳定划分方法：\n\n1. 去除输入末尾（及首部）可能存在的换行符，得到有效字符串。\n2. 第一次遍历收集所有非数字字符，按原序保存到 `non_digits`。\n3. 第二次遍历收集所有数字字符，按原序保存到 `digits`。\n4. 将 `non_digits + digits` 拼接返回。\n\n由于列表推导式按原顺序遍历，数字之间、非数字之间的相对顺序均被保持，满足题目\"稳定\"的要求。相比单次遍历分别追加到两个列表，写法更简洁，本质上等价。\n\n## 2. 时间和空间复杂度\n\n- 时间复杂度：O(n)。两次遍历字符串，拼接为 O(n)，整体线性。\n- 空间复杂度：O(n)。额外使用两个列表存储切分结果，最终字符串长度也为 n。对 n < 100 的规模完全可接受。\n\n## 3. 边界情况\n\n- 空输入 / 仅包含换行：`strip('\\n')` 后为空，`non_digits` 与 `digits` 均为空，返回空字符串，符合预期。\n- 全为数字：`non_digits` 为空，返回原数字串。\n- 全为非数字：`digits` 为空，返回原串。\n- 含空格、标点（如 `#`）：空格是非数字，会被保留到非数字段，行为正确。\n- 输入首部的换行符：`strip('\\n')` 会一并去除。题意为\"一行字符串\"，换行不是有效内容，处理合理；若严格只处理行尾换行，可改用 `rstrip('\\n')` 更精确，但当前实现不影响权威用例。\n\n## 4. 测试覆盖\n\n权威用例共 2 条：\n\n- `ab4f35gr#a6 -> abfgr#a4356`：覆盖字母、数字、特殊符号 `#` 混合场景。\n- `a1b2 -> ab12`：覆盖简单交替场景。\n\n本地测试输出为 `2 passed`，本地验证通过。\n\n但现有用例未覆盖：空串、全数字、全非数字、单字符、含空格/多类符号、首尾换行等边界。若隐藏用例包含这些场景，方案逻辑上仍能正确处理，但缺乏显式回归保护。\n\n## 5. 潜在风险与代码质量\n\n代码质量：\n\n- 函数签名 `solve(input_text: str) -> str` 符合要求。\n- 实现简洁、可读性好，无明显冗余。\n- 列表推导式风格地道。\n\n潜在风险：\n\n- **`str.isdigit()` 的语义范围**：Python 中 `isdigit()` 对部分 Unicode 字符（如上标 `'²'`、某些全角/罗马数字字符）也会返回 `True`。题目\"数字字符\"通常指 `0-9`，若隐藏用例含此类 Unicode 字符，可能被误判为数字。更稳妥的写法是 `c in '0123456789'` 或 `c.isascii() and c.isdigit()`。当前权威用例均为 ASCII，故未暴露该问题。\n- **`strip('\\n')` 的双向去除**：会去除首部换行。若极端情况下首部换行被视为有效内容（题意不支持），会出错；建议改 `rstrip('\\n')` 更贴合\"读取一行\"的语义。\n- 未对长度做校验，但题目保证 n < 100，无需额外处理。\n\n总体而言，逻辑正确、风格良好，主要改进点是用 `c in '0123456789'` 替代 `c.isdigit()` 以收紧\"数字字符\"定义，并用 `rstrip('\\n')` 替代 `strip('\\n')` 减少副作用。本地验证通过，但不保证隐藏在线评测测试一定通过。"
-      },
-      "error": null
-    },
-    {
-      "run_id": "20260828-215643-100-ab4f35gr-a6-abfgr-a63653",
-      "task": "输入一个字符串，将其中的数字字符移动到非数字字符之后，并保持数字字符和非数字字符输入时的顺序。\n\n输入：一行字符串，长度小于 100。\n输出：移动后的字符串。\n\n例如：输入 ab4f35gr#a6，输出 abfgr#a4356。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-28T13:56:54.302046+00:00",
-      "test_case_count": 0,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Missing credentials. Please pass an `api_key`, `workload_identity`, `admin_api_key`, or set the `OPENAI_API_KEY` or `OPENAI_ADMIN_KEY` environment variable."
-    },
-    {
-      "run_id": "20260828-174226-100-ab4f35gr-a6-abfgr-64c36f",
-      "task": "输入一个字符串，将其中的数字字符移动到非数字字符之后，并保持数字字符和非数字字符输入时的顺序。\n\n输入：一行字符串，长度小于 100。\n输出：移动后的字符串。\n\n例如：输入 ab4f35gr#a6，输出 abfgr#a4356。",
-      "model": "openai/zai-org/GLM-5.2",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 20,
-      "created_at": "2026-08-28T09:43:46.409964+00:00",
-      "test_case_count": 0,
-      "last_test_output": "..                                                                       [100%]\n2 passed in 0.01s\n",
-      "solution_code": "def solve(input_text: str) -> str:\n    s = input_text.rstrip(\"\n\")\n    digits = [c for c in s if c.isdigit()]\n    nondigits = [c for c in s if not c.isdigit()]\n    return \"\".join(nondigits) + \"\".join(digits)\n",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": null
-    },
-    {
-      "run_id": "20260828-140359-100-ab4f35gr-a6-abfgr-eb1641",
-      "task": "输入一个字符串，将其中的数字字符移动到非数字字符之后，并保持数字字符和非数字字符输入时的顺序。\n\n输入：一行字符串，长度小于 100。\n输出：移动后的字符串。\n\n例如：输入 ab4f35gr#a6，输出 abfgr#a4356。\n\n测试输入输出已经保存在工作目录中的 test_cases.json，共有 6 个用例。该文件是输入格式和输出格式的权威说明。开始编码前必须先读取它；solution.py 必须提供 solve(input_text: str) -> str。禁止修改 test_cases.json 和 test_solution.py。",
-      "model": "openai/Pro/zai-org/GLM-5.1",
-      "status": "passed",
-      "verified": true,
-      "model_calls": 7,
-      "created_at": "2026-08-28T06:04:35.208562+00:00",
-      "test_case_count": 0,
-      "last_test_output": "......                                                                   [100%]\n6 passed in 0.02s\n",
-      "solution_code": "def solve(input_text: str) -> str:\n    line = input_text.rstrip('\\n')\n    non_digits = [c for c in line if not c.isdigit()]\n    digits = [c for c in line if c.isdigit()]\n    return ''.join(non_digits + digits)\n\nif __name__ == \"__main__\":\n    import sys\n    input_text = sys.stdin.read()\n    result = solve(input_text)\n    print(result)\n",
-      "review": {
-        "status": "completed",
-        "content": "1. **算法思路**\n\n该解法采用两次遍历的分区策略：第一次遍历收集所有非数字字符，第二次遍历收集所有数字字符，然后将两个列表拼接。由于 Python 列表推导式按原字符串顺序遍历，天然保证了数字字符和非数字字符内部的相对顺序不变，符合题目\"保持输入时的顺序\"的要求。\n\n2. **时空复杂度**\n\n- **时间复杂度**：O(n)，两次遍历字符串，每次 O(n)，拼接和 join 也是 O(n)，总体 O(n)。\n- **空间复杂度**：O(n)，额外存储 `non_digits` 和 `digits` 两个列表，总长度为 n。\n\n3. **边界情况**\n\n- 空字符串：两个列表均为空，`''.join([])` 返回 `\"\"`，正确。\n- 全数字字符：`non_digits` 为空，结果等于原字符串，正确。\n- 全非数字字符：`digits` 为空，结果等于原字符串，正确。\n- 数字开头和结尾（如 `1a2`）：非数字 `['a']`，数字 `['1','2']`，输出 `a12`，正确。\n- 交替排列（如 `a1b2c3`）：非数字 `['a','b','c']`，数字 `['1','2','3']`，输出 `abc123`，正确。\n\n4. **测试覆盖**\n\n6 个测试用例全部通过，覆盖了：题目样例、全数字、全非数字、空字符串、交替排列、数字在首尾的情况。这些用例对题目的核心逻辑和边界条件覆盖较为充分。\n\n5. **潜在风险与代码质量**\n\n- **潜在风险**：该解法逻辑简单直接，与题目要求高度吻合，无明显逻辑风险。唯一可能的风险是输入含换行符的处理：代码用 `rstrip('\\n')` 去除尾部换行，若输入本身包含中间换行符（题目说\"一行字符串\"，一般不会），中间换行符会被当作非数字字符保留，行为合理。\n- **代码质量**：代码简洁清晰，可读性强，使用了 Python 惯用的列表推导式和 `str.isdigit()`，结构一目了然。`if __name__ == \"__main__\"` 部分用 `sys.stdin.read()` 读取全部输入，处理方式得当。\n\n本地验证已通过。"
-      },
-      "error": null
-    },
-    {
-      "run_id": "20260828-135525-time-limit-1000-ms-2ac6d5",
-      "task": "继续畅通工程\n 查看题解 查看答案\n题目描述\nTime Limit: 1000 ms\nMemory Limit: 256 mb\n省政府“畅通工程”的目标是使全省任何两个村庄间都可以实现公路交通（但不一定有直接的公路相连，只要能间接通过公路可达即可）。现得到城镇道路统计表，表中列出了任意两城镇间修建道路的费用，以及该道路是否已经修通的状态。现请你编写程序，计算出全省畅通需要的最低成本。\n\n输入输出格式\n输入描述:\n测试输入包含若干测试用例。每个测试用例的第1行给出村庄数目N ( 1< N < 100 )；随后的 N(N-1)/2 行对应村庄间道路的成本及修建状态，每行给4个正整数，分别是两个村庄的编号（从1编号到N），此两村庄间道路的成本，以及修建状态：1表示已建，0表示未建。\n\n当N为0时输入结束。\n输出描述:\n每个测试用例的输出占一行，输出全省畅通需要的最低成本。\n输入输出样例\n输入样例#:\n3\n1 2 1 0\n1 3 2 0\n2 3 4 0\n3\n1 2 1 0\n1 3 2 0\n2 3 4 1\n3\n1 2 1 0\n1 3 2 1\n2 3 4 1\n0\n输出样例#:\n3\n1\n0\n\n测试输入输出已经保存在工作目录中的 test_cases.json，共有 2 个用例。该文件是输入格式和输出格式的权威说明。开始编码前必须先读取它；solution.py 必须提供 solve(input_text: str) -> str。禁止修改 test_cases.json 和 test_solution.py。",
-      "model": "openai/Pro/zai-org/GLM-5.1",
-      "status": "passed",
-      "verified": true,
-      "model_calls": 9,
-      "created_at": "2026-08-28T05:56:43.083952+00:00",
-      "test_case_count": 0,
-      "last_test_output": "..                                                                       [100%]\n2 passed in 0.02s\n",
-      "solution_code": "def solve(input_text: str) -> str:\n    if not input_text.strip():\n        return \"\"\n    lines = input_text.strip().split('\\n')\n    idx = 0\n    results = []\n    \n    while idx < len(lines):\n        n = int(lines[idx].strip())\n        idx += 1\n        if n == 0:\n            break\n        \n        # Read N*(N-1)/2 edges\n        parent = list(range(n + 1))\n        rank = [0] * (n + 1)\n        \n        def find(x):\n            while parent[x] != x:\n                parent[x] = parent[parent[x]]\n                x = parent[x]\n            return x\n        \n        def union(x, y):\n            rx, ry = find(x), find(y)\n            if rx == ry:\n                return False\n            if rank[rx] < rank[ry]:\n                rx, ry = ry, rx\n            parent[ry] = rx\n            if rank[rx] == rank[ry]:\n                rank[rx] += 1\n            return True\n        \n        unbuilt = []\n        \n        for _ in range(n * (n - 1) // 2):\n            parts = lines[idx].strip().split()\n            idx += 1\n            a, b, cost, status = int(parts[0]), int(parts[1]), int(parts[2]), int(parts[3])\n            if status == 1:\n                union(a, b)\n            else:\n                unbuilt.append((cost, a, b))\n        \n        # Kruskal on unbuilt edges\n        unbuilt.sort()\n        total = 0\n        for cost, a, b in unbuilt:\n            if union(a, b):\n                total += cost\n        \n        results.append(str(total))\n    \n    return '\\n'.join(results)\n\nif __name__ == '__main__':\n    import sys\n    input_text = sys.stdin.read()\n    print(solve(input_text))\n",
-      "review": {
-        "status": "completed",
-        "content": "## 算法代码审查\n\n### 1. 算法思路\n\n该解决方案采用 **Kruskal 最小生成树算法**，结合 **并查集（Union-Find）** 数据结构：\n\n- **已建道路（status=1）**：直接合并两端村庄，成本为0，相当于\"免费\"边。\n- **未建道路（status=0）**：收集后按成本升序排序，再用 Kruskal 贪心策略依次选取能够连通不同分量的边，累加成本。\n\n核心思想：将已建道路视为零成本边优先处理，再对未建道路求最小生成树补全连通性。\n\n### 2. 时间和空间复杂度\n\n- **时间复杂度**：每个测试用例为 O(E log E)，其中 E = N(N-1)/2。排序未建边耗时 O(E log E)，并查集操作（路径压缩+按秩合并）近似 O(E α(N))。总体 O(N² log N)。\n- **空间复杂度**：O(N + E) = O(N²)，用于存储并查集数组和未建边列表。\n\n### 3. 边界情况\n\n| 边界情况 | 处理方式 | 是否正确 |\n|---------|---------|---------|\n| 空输入 | `if not input_text.strip(): return \"\"` | ✅ |\n| N=0 终止 | `if n == 0: break` | ✅ |\n| 所有道路已建 | 无未建边需加入，total=0 | ✅ |\n| 所有道路未建 | 退化为标准 MST | ✅ |\n\n### 4. 测试覆盖\n\n- 提供的2个测试用例均通过：样例用例覆盖了全未建、部分已建、全部已建三种场景；空输入用例也已覆盖。\n- 本地验证已通过（2 passed in 0.02s）。\n\n### 5. 潜在风险与代码质量\n\n**代码质量良好：**\n- 并查集实现了路径压缩（迭代方式）和按秩合并，效率高。\n- 输入解析逻辑清晰，逐行处理，正确处理多测试用例。\n\n**潜在风险：**\n- **已建道路的冗余处理**：已建道路 union 时返回值被忽略，这意味着如果两条已建道路连接了同一分量（形成环），union 不会报错，但也不会造成错误结果——这符合题意，因为已建道路无需成本。\n- **整数解析鲁棒性**：`int(parts[...])` 在行内含多余空格时可能出错，但题目保证格式规范，实际风险低。\n- **大规模输入性能**：N<100 时 E 最多 4950，排序和并查集操作都在可接受范围内，不存在性能问题。\n\n**总结**：算法思路正确，实现规范，边界处理完善，代码质量较高。仅声明本地验证通过，不保证隐藏在线评测测试必定通过。"
-      },
-      "error": null
-    },
-    {
-      "run_id": "20260828-132203-100-ab4f35gr-a6-abfgr-44c33b",
-      "task": "输入一个字符串，将其中的数字字符移动到非数字字符之后，并保持数字字符和非数字字符输入时的顺序。\n\n输入：一行字符串，长度小于 100。\n输出：移动后的字符串。\n\n例如：输入 ab4f35gr#a6，输出 abfgr#a4356。\n\n测试输入输出已经保存在工作目录中的 test_cases.json，共有 2 个用例。该文件是输入格式和输出格式的权威说明。开始编码前必须先读取它；solution.py 必须提供 solve(input_text: str) -> str。禁止修改 test_cases.json 和 test_solution.py。",
-      "model": "openai/Pro/zai-org/GLM-5.1",
-      "status": "passed",
-      "verified": true,
-      "model_calls": 6,
-      "created_at": "2026-08-28T05:23:02.631052+00:00",
-      "test_case_count": 0,
-      "last_test_output": "..                                                                       [100%]\n2 passed in 0.02s\n",
-      "solution_code": "def solve(input_text: str) -> str:\n    s = input_text.strip()\n    non_digits = []\n    digits = []\n    for ch in s:\n        if ch.isdigit():\n            digits.append(ch)\n        else:\n            non_digits.append(ch)\n    return ''.join(non_digits + digits)\n",
-      "review": {
-        "status": "completed",
-        "content": "1. **算法思路**\n该算法采用稳定划分的思想。通过一次遍历输入字符串，将字符分为两类：数字字符和非数字字符，分别存入 `digits` 和 `non_digits` 两个列表中。遍历结束后，将非数字字符列表与数字字符列表拼接，并转换为字符串返回。由于列表的追加操作保持了元素的原有相对顺序，因此完美满足了题目“保持输入时的顺序”的要求。\n\n2. **时空复杂度**\n- **时间复杂度**：$O(n)$，其中 $n$ 为输入字符串的长度。算法对字符串进行了一次遍历，最后 `''.join()` 操作同样需要 $O(n)$ 的时间，总体时间复杂度为线性。\n- **空间复杂度**：$O(n)$，创建了两个列表存储字符，以及最终生成的新字符串，空间占用与输入规模成正比。\n\n3. **边界情况**\n- 输入全为数字字符（如 \"123\"），预期输出 \"123\"。\n- 输入全为非数字字符（如 \"abc\"），预期输出 \"abc\"。\n- 输入空字符串，预期输出空字符串。\n- 输入包含空格的字符串（如 \"a 1b 2\"），空格属于非数字字符，预期输出 \"a b 12\"。\n\n4. **测试覆盖**\n提供的测试用例涵盖了：\n- 数字、字母、特殊符号混合（case_1）。\n- 数字与字母交替出现（case_2）。\n缺失的测试覆盖：\n- 纯数字字符串、纯非数字字符串。\n- 空字符串或仅包含空格的字符串。\n- 包含前导/后置空格的字符串。\n\n5. **潜在风险与代码质量**\n代码逻辑清晰、变量命名直观、实现非常简洁。主要潜在风险在于 `input_text.strip()` 的使用：`strip()` 会同时移除字符串首尾的所有空白字符（包括空格、制表符、换行符等）。如果题目的输入中首尾空格被视为有效的非数字字符需要保留，那么 `strip()` 会导致这些空格丢失，从而产生错误输出。在通常的算法题中，`strip()` 常用于去除行末换行符，若要严谨保留首尾空格，应改用 `rstrip('\\n')`。不过对于本题常见的测试数据特点，`strip()` 大概率是安全的。\n\n本地验证已通过。"
-      },
-      "error": null
-    },
-    {
-      "run_id": "20260828-130928-100-ab4f35gr-a6-abfgr-34826e",
-      "task": "输入一个字符串，将其中的数字字符移动到非数字字符之后，并保持数字字符和非数字字符输入时的顺序。\n\n输入：一行字符串，长度小于 100。\n输出：移动后的字符串。\n\n例如：输入 ab4f35gr#a6，输出 abfgr#a4356。\n\n测试输入输出已经保存在工作目录中的 test_cases.json，共有 2 个用例。该文件是输入格式和输出格式的权威说明。开始编码前必须先读取它；solution.py 必须提供 solve(input_text: str) -> str。禁止修改 test_cases.json 和 test_solution.py。",
-      "model": "openai/Pro/zai-org/GLM-5.1",
-      "status": "failed",
-      "verified": false,
-      "model_calls": 1,
-      "created_at": "2026-08-28T05:09:39.152971+00:00",
-      "test_case_count": 0,
-      "last_test_output": "",
-      "solution_code": "",
-      "review": {
-        "status": null,
-        "content": ""
-      },
-      "error": "Model request failed after 3 attempts: litellm.InternalServerError: InternalServerError: OpenAIException - Missing credentials. Please pass an `api_key`, `workload_identity`, `admin_api_key`, or set the `OPENAI_API_KEY` or `OPENAI_ADMIN_KEY` environment variable."
     }
   ]
 }

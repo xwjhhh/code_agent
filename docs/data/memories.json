@@ -1,8 +1,296 @@
 {
-  "generated_at": "2026-09-01T07:29:14.603310+00:00",
-  "count": 113,
+  "generated_at": "2026-09-02T09:25:12.611674+00:00",
+  "count": 120,
   "embedding_model": "Qwen/Qwen3-Embedding-8B",
   "nodes": [
+    {
+      "id": "05f333724747412f9eae9b6ce372504e",
+      "category": "strategy",
+      "experience_type": "success",
+      "trigger": "实现带复杂优化（决策单调性、滚动状态等）的算法时，尤其是优化前后需要多次改动时",
+      "content": "先用朴素多项式算法做小规模暴力解，作为唯一正确性参照；再实现或改写优化算法，并生成随机小数据逐一比对输出。优化后再次跑同一套对拍，确认加速没有改变结果。这样把“正确性”与“性能”分开验证，避免优化过程中的隐性错误被漏掉。",
+      "purpose": "保证复杂优化不引入正确性回归，并让后续压测结果可信。",
+      "steps": [
+        "先实现平方复杂度的朴素 DP 或枚举切分，得到小规模正确答案",
+        "生成多组随机输入，比较朴素解与优化解的输出",
+        "进行性能优化后重跑相同对拍，确认输出完全一致",
+        "通过后再做大规模压测和最终测试"
+      ],
+      "negative_example": "跳过暴力对拍，只依赖少量手工用例；性能优化后只测速度不测结果。",
+      "problem_family": [
+        "算法正确性验证",
+        "DP 优化流程"
+      ],
+      "algorithm_tags": [
+        "暴力对拍",
+        "随机测试"
+      ],
+      "constraints": [
+        "小规模数据可承受朴素复杂度",
+        "随机输入应覆盖不同订单数、批次数、类别数"
+      ],
+      "priority": 3,
+      "quality_score": 0.85,
+      "source_run_id": "20260902-150014-n-sku-k-sku-dba816",
+      "source_verified": true,
+      "source_task": "仓库按到达顺序收到 n 个订单，每个订单属于一个 SKU 类别。现在需要将这些订单划分为恰好 k 个连续且非空的批次。\n如果同一个批次中有多个相同 SKU 的订单，则这些订单之间会产生冲突。SKU 类别 v 的每一对冲突产生 w[v] 分风险。\n如果某个批次中 SKU v 出现了 cnt[v] 次，则该批次的风险为：\nsum(w[v] * cnt[v] * (cnt[v] - 1) / 2)\n请将所有订单划分为 k 个连续批次，使总风险最小。\n输入格式：\n第一行：n k m\n分别表示订单数量、批次数和 SKU 类别数量。\n第二行：n 个整数 a[i]\n表示每个订单的 SKU 类别编号。\n第三行：m 个整数 w[v]\n表示 SKU 类别 v 的冲突权重。",
+      "evidence": [
+        "优化前后各做了随机对拍，输出均一致",
+        "最终本地测试全部通过"
+      ],
+      "failure": "",
+      "fix": "",
+      "verification": "",
+      "created_at": "2026-09-02T07:09:30.385825+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "e4b74a72ba544b9e8c597c58df57e81f",
+      "category": "strategy",
+      "experience_type": "success",
+      "trigger": "输入文本中数组的表示可能是方括号列表风格，也可能是裸逗号分隔风格。",
+      "content": "解析首行之前不要假设只有一种列表写法。先把文本按行切分并剔除空行和首尾空白；若数组行以方括号开头和结尾，剥掉方括号；再按逗号拆分各个元素，逐一去除多余空格后转整数。这样同一套解析逻辑能覆盖两种常见格式，降低外部输入格式变化导致解析失败的风险。",
+      "purpose": "提高输入解析的容错性，避免因数组行带方括号或多余空白而解析失败。",
+      "steps": [
+        "将输入文本按行切分，逐行去除首尾空白并跳过空行。",
+        "若数组行以方括号开头和结尾，则去掉首尾方括号字符。",
+        "对剩余字符串按逗号切分，每个片段去除空白后转整数；第二行去除空白后转整数作为目标值。"
+      ],
+      "negative_example": "不要只按裸逗号字符串解析而完全忽略方括号，否则遇到方括号风格输入时会解析出错。",
+      "problem_family": [
+        "文本输入解析",
+        "简单输入格式"
+      ],
+      "algorithm_tags": [
+        "字符串处理",
+        "容错解析"
+      ],
+      "constraints": [
+        "输入为纯文本两行",
+        "数组元素以逗号分隔",
+        "可能存在方括号和多余空白"
+      ],
+      "priority": 2,
+      "quality_score": 0.85,
+      "source_run_id": "20260902-110830-nums-target-target-nums-521e73",
+      "source_verified": true,
+      "source_task": "给定一个整数数组 nums 和一个整数 target，请在数组中找出和为 target 的两个不同元素，并返回它们的下标。\n\n每个输入只保证存在一个有效答案。同一个元素不能重复使用。\n\n输入格式：\n第一行是整数数组 nums。\n第二行是整数 target。\n\n输出格式：\n返回两个下标组成的数组，要求下标从小到大排列，例如 [0, 1]。",
+      "evidence": [
+        "本次运行中，最终解析逻辑同时容忍了方括号列表与裸逗号列表两种写法，本地三个用例全部通过"
+      ],
+      "failure": "",
+      "fix": "",
+      "verification": "",
+      "created_at": "2026-09-02T03:11:44.018654+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "cb5d96bb5a454c9698d2b02b8e6b2533",
+      "category": "optimization",
+      "experience_type": "success",
+      "trigger": "本地测试中需要比较程序输出字符串与期望输出字符串，而程序输出可能带末尾换行。",
+      "content": "在做字符串相等比较前，先对两侧输出做归一化：移除全部回车与换行，再去掉首尾空白，然后比较。这样可以保证测试只验证内容正确性，不被无关的换行或空格差异干扰。",
+      "purpose": "避免因程序输出尾部多一个换行导致本地测试误报失败，让测试结果聚焦于实质输出。",
+      "steps": [
+        "取实际输出和期望输出。",
+        "对两侧都移除回车符与换行符。",
+        "再去掉字符串首尾空白，比较处理后的两个字符串。"
+      ],
+      "negative_example": "不要直接拿原始字符串做严格相等比较，否则尾部换行这种格式差异会掩盖正确结果。",
+      "problem_family": [
+        "本地测试验证",
+        "输出比较"
+      ],
+      "algorithm_tags": [
+        "输出规范化",
+        "测试断言"
+      ],
+      "constraints": [
+        "比较目标为文本输出",
+        "输出可能有尾部换行"
+      ],
+      "priority": 3,
+      "quality_score": 0.85,
+      "source_run_id": "20260902-110830-nums-target-target-nums-521e73",
+      "source_verified": true,
+      "source_task": "给定一个整数数组 nums 和一个整数 target，请在数组中找出和为 target 的两个不同元素，并返回它们的下标。\n\n每个输入只保证存在一个有效答案。同一个元素不能重复使用。\n\n输入格式：\n第一行是整数数组 nums。\n第二行是整数 target。\n\n输出格式：\n返回两个下标组成的数组，要求下标从小到大排列，例如 [0, 1]。",
+      "evidence": [
+        "本次运行中本地测试在比较前对输出做换行和末尾空白归一化，带换行的输出仍以全部用例通过验证"
+      ],
+      "failure": "",
+      "fix": "",
+      "verification": "",
+      "created_at": "2026-09-02T03:11:44.018654+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "05a9b152180b4325af7c7ed661c2766f",
+      "category": "strategy",
+      "experience_type": "success",
+      "trigger": "Codeforces 868F Yet Another Minimization Problem: partition a sequence into k groups and minimize equal-value pairs",
+      "content": "Use dp[g][i] for the first i values in g groups. The transition is dp[g][i] = min over j<i of dp[g-1][j] + cost(j+1,i), where cost is equal-value pairs inside the interval. The optimal split index is monotone, so compute each DP layer with divide-and-conquer optimization. Maintain one global inclusive window and a frequency array while evaluating costs.",
+      "purpose": "Prevent an O(k*n^2) transition and make the interval-cost invariant explicit.",
+      "steps": [
+        "Prove or use monotone opt indices for the quadrangle/partition DP",
+        "For every midpoint evaluate only the allowed monotone split range",
+        "Move the shared [L,R] window before each candidate",
+        "When adding x add current frequency[x] to pairs then increment",
+        "When removing x decrement frequency[x] then subtract the remaining frequency[x]",
+        "Use 64-bit integers and verify small cases against brute force"
+      ],
+      "negative_example": "Do not use a fresh frequency map for every interval or an O(k*n^2) nested transition; do not subtract before decrementing when removing an element.",
+      "problem_family": [
+        "sequence partition DP"
+      ],
+      "algorithm_tags": [
+        "divide-and-conquer optimization",
+        "monotone opt",
+        "sliding window cost"
+      ],
+      "constraints": [
+        "n up to 100000",
+        "k up to n",
+        "answer requires 64-bit"
+      ],
+      "priority": 5,
+      "quality_score": 1.0,
+      "source_run_id": "manual-codeforces-two-benchmark",
+      "source_verified": true,
+      "source_task": "Codeforces 868F - Yet Another Minimization Problem (rating 2500).\n\nGiven an integer sequence a[1..n] and an integer k, split the sequence into\nexactly k non-empty contiguous groups.  The cost of a group [l,r] is the\nnumber of pairs (i,j) with l <= i < j <= r and a[i] = a[j].  Minimize the sum\nof group costs.\n\nInput: the first line contains n and k (1 <= k <= n <= 100000).  The second\nline contains n integers a[i] (1 <= a[i] <= n).  Output one integer, the\nminimum possible cost.  The answer can exceed 32-bit signed integer range.\n\nThis is the standard Codeforces problem; implement solve(input_text: str) ->\nstr and read the complete input from input_text.",
+      "evidence": [
+        "Verified strategy card prepared from the Codeforces 868F editorial technique."
+      ],
+      "failure": "",
+      "fix": "",
+      "verification": "Check all n<=10 sequences against brute-force DP, then run a large repeated/random case.",
+      "created_at": "2026-09-01T14:06:09.952969+00:00",
+      "retrieval_count": 11
+    },
+    {
+      "id": "a8cbd96afd6d47cebca291785a98ad3e",
+      "category": "strategy",
+      "experience_type": "success",
+      "trigger": "Codeforces 342E Xenia and Tree: online paint-red and nearest-red distance queries on a tree",
+      "content": "Build a centroid decomposition tree. For every original vertex store each centroid ancestor and its distance. Maintain best[c], the minimum distance from centroid c to any red vertex. Initially update(1); on update(v), minimize best[c] with dist(v,c) for every centroid ancestor c. On query(v), return the minimum best[c]+dist(v,c) over the same ancestor list. This is O(log n) per operation after O(n log n) preprocessing.",
+      "purpose": "Avoid rebuilding BFS for online queries and preserve the distance invariant through centroid levels.",
+      "steps": [
+        "Decompose each unblocked component and choose its centroid",
+        "Record centroid ancestors and exact tree distances for every vertex",
+        "Initialize all best values to INF and call update(1)",
+        "For type 1 v walk v's centroid ancestors and lower best",
+        "For type 2 v minimize best plus stored distance over those ancestors",
+        "Use iterative or recursion-safe decomposition for n=100000"
+      ],
+      "negative_example": "Do not run BFS/DFS from every query, and do not store only the nearest centroid without the distance for each level.",
+      "problem_family": [
+        "dynamic tree queries"
+      ],
+      "algorithm_tags": [
+        "centroid decomposition",
+        "online nearest marked node",
+        "distance aggregation"
+      ],
+      "constraints": [
+        "n,m up to 100000",
+        "tree is unweighted",
+        "vertex 1 is initially red"
+      ],
+      "priority": 5,
+      "quality_score": 1.0,
+      "source_run_id": "manual-codeforces-two-benchmark",
+      "source_verified": true,
+      "source_task": "Codeforces 342E - Xenia and Tree (rating 2400).\n\nThere is an undirected tree with n vertices and n-1 edges.  Initially only\nvertex 1 is red.  Process m online operations:\n1 v: paint vertex v red (it remains red forever).\n2 v: print the minimum tree-edge distance from v to any red vertex.\n\nInput: n and m (1 <= n,m <= 100000), followed by n-1 edges, followed by m\noperations.  Output one line for every operation of type 2.  The input is a\nsingle test case.  Implement solve(input_text: str) -> str and read the\ncomplete input from input_text.",
+      "evidence": [
+        "Verified strategy card prepared from the Codeforces 342E editorial technique."
+      ],
+      "failure": "",
+      "fix": "",
+      "verification": "Check a path and a star by brute force, then run a long path with many online operations.",
+      "created_at": "2026-09-01T14:06:09.952969+00:00",
+      "retrieval_count": 1
+    },
+    {
+      "id": "774590a4980c40e9ba66186d98a83389",
+      "category": "strategy",
+      "experience_type": "success",
+      "trigger": "解题函数需要通过自定义文本解析来接收输入，而不是直接接收结构化参数时",
+      "content": "在实现前先阅读测试脚本，确认被测函数的输入输出格式：它接收一段文本，并返回字符串形式的答案。基于此，实现中先按行清理文本，用安全解析器解析数组字面量，再用标准整数转换解析目标值，最后将求解结果转为字符串返回。这样可以保证与测试框架的数据格式契约完全一致。",
+      "purpose": "使实现与现成测试的调用约定匹配，避免因输入输出类型不匹配而导致测试失败。",
+      "steps": [
+        "查看测试脚本如何调用待测函数，确认其接收参数字符串并返回字符串",
+        "按空行和首尾空白清理输入文本，分离出数组部分和目标值部分",
+        "使用安全的字面量解析方法提取数组，用整数转换提取目标值",
+        "将求解结果转换为字符串输出，并运行完整测试验证"
+      ],
+      "negative_example": "不检查测试调用方式，直接假设函数接收列表和整数，从而未做文本解析，导致测试报错或结果格式不符。",
+      "problem_family": [
+        "测试驱动实现",
+        "输入输出适配",
+        "编码任务执行"
+      ],
+      "algorithm_tags": [
+        "文本解析",
+        "安全求值"
+      ],
+      "constraints": [
+        "被测函数以单段文本作为输入",
+        "输出需要转为字符串形式"
+      ],
+      "priority": 1,
+      "quality_score": 0.85,
+      "source_run_id": "20260901-164335-1-two-sum-you-d5324e",
+      "source_verified": true,
+      "source_task": "1. Two Sum\n\nYou are given an array of integers nums and an integer target , return indices of the two numbers such that they add up to target . You may assume that each input would have exactly one solution , and you may not use the same element twice. You can return the answer in any order. Example 1: Input: nums = [2,7,11,15], target = 9 Output: [0,1] Explanation: Because nums[0] + nums[1] == 9, we return [0, 1]. Example 2: Input: nums = [3,2,4], target = 6 Output: [1,2] Example 3: Input: nums = [3,3], target = 6 Output: [0,1] Constraints: 2 <= nums.length <= 10 4 -10 9 <= nums[i] <= 10 9 -10 9 <= target <= 10 9 Only one valid answer exists. Follow-up: Can you come up with an algorithm that is less than O(n 2 ) time complexity?",
+      "evidence": [
+        "执行过程中先查看了测试脚本的调用约定，确认需要文本解析，随后实现解析逻辑并最终通过全部测试（2 passed in 0.05s）"
+      ],
+      "failure": "",
+      "fix": "",
+      "verification": "",
+      "created_at": "2026-09-01T08:53:08.736789+00:00",
+      "retrieval_count": 0
+    },
+    {
+      "id": "ddd2b894537b49868a81ba2c2c628853",
+      "category": "strategy",
+      "experience_type": "success",
+      "trigger": "配对求和时，如果元素值恰好为目标值的一半，必须保证返回两个不同下标",
+      "content": "在单次遍历中，先检查补数是否已存在于哈希表，再把当前元素插入哈希表。这样当前元素不会在第一次出现时被立即当作自己的补数，从而避免返回同一个下标两次。",
+      "purpose": "满足“不能使用同一个元素两次”的限制，正确处理重复值和半值场景。",
+      "steps": [
+        "对每个元素先做补数查找，命中时立即返回对应下标与当前下标。",
+        "只有补数不存在时，才将当前元素及其下标记录到哈希表中。",
+        "继续遍历，直到找到配对。"
+      ],
+      "negative_example": "先把所有元素放入哈希表再统一查找，或先插入当前元素再检查补数，都会在目标值等于二倍当前元素时返回同一个下标。",
+      "problem_family": [
+        "两数配对求和",
+        "重复值处理",
+        "索引唯一性"
+      ],
+      "algorithm_tags": [
+        "哈希表",
+        "检查顺序"
+      ],
+      "constraints": [
+        "不能重复使用同一元素",
+        "只有一个有效答案"
+      ],
+      "priority": 2,
+      "quality_score": 0.85,
+      "source_run_id": "20260901-163243-1-two-sum-you-20e3d7",
+      "source_verified": true,
+      "source_task": "1. Two Sum\n\nYou are given an array of integers nums and an integer target , return indices of the two numbers such that they add up to target . You may assume that each input would have exactly one solution , and you may not use the same element twice. You can return the answer in any order. Example 1: Input: nums = [2,7,11,15], target = 9 Output: [0,1] Explanation: Because nums[0] + nums[1] == 9, we return [0, 1]. Example 2: Input: nums = [3,2,4], target = 6 Output: [1,2] Example 3: Input: nums = [3,3], target = 6 Output: [0,1] Constraints: 2 <= nums.length <= 10 4 -10 9 <= nums[i] <= 10 9 -10 9 <= target <= 10 9 Only one valid answer exists. Follow-up: Can you come up with an algorithm that is less than O(n 2 ) time complexity?",
+      "evidence": [
+        "最终测试输出显示 2 个测试全部通过",
+        "最终解法中查找先于插入完成"
+      ],
+      "failure": "",
+      "fix": "",
+      "verification": "",
+      "created_at": "2026-09-01T08:42:58.504122+00:00",
+      "retrieval_count": 0
+    },
     {
       "id": "f78c4417eb961eadee2fb9be7f17095c",
       "category": "recovery",
@@ -243,7 +531,7 @@
       "fix": "使用哨兵节点，修改 next 前保存后继，并在每次操作后检查链表长度和终点。",
       "verification": "重新运行原失败用例及空链表、单节点、双节点用例；pytest 应全部通过。",
       "created_at": "2026-09-01T05:22:20.724154+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "5139bdb11f5210879908ec0afdea6db0",
@@ -363,7 +651,7 @@
       "fix": "根据题意决定先查询后写入还是先写入后查询，并用重复值和首元素用例验证。",
       "verification": "增加重复、负数、零和单元素输入后重新执行 pytest。",
       "created_at": "2026-09-01T05:22:20.723085+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 3
     },
     {
       "id": "d621324cc0d111b0cdf60861e9a50dd4",
@@ -774,7 +1062,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.722082+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "cc7555cb25a7a8cb913bbdbf5569ae34",
@@ -857,7 +1145,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.722082+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "0df18f44173f6cac3d3667a240277058",
@@ -1061,7 +1349,7 @@
       "fix": "先按空输入、单元素、重复值、极值和多行空白建立边界清单，再修正解析或核心逻辑。",
       "verification": "保留失败用例，修改 solution.py 后重新运行同一 pytest 命令并确认通过。",
       "created_at": "2026-09-01T05:22:20.722082+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "a5d0eeb2eaf3e923af6f8710e96c4f83",
@@ -1145,7 +1433,7 @@
       "fix": "重新写出状态含义、转移依赖和初始化，按依赖方向遍历并单独验证最小状态。",
       "verification": "补充最小、最大、全相等和无解输入，原失败 pytest 用例应通过。",
       "created_at": "2026-09-01T05:22:20.722082+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "72c843c5931c7d233ac487b4e029ee5a",
@@ -1268,7 +1556,7 @@
       "fix": "根据题意决定先查询后写入还是先写入后查询，并用重复值和首元素用例验证。",
       "verification": "增加重复、负数、零和单元素输入后重新执行 pytest。",
       "created_at": "2026-09-01T05:22:20.722082+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "d71e6d7753fd946d1579d887a8dce42d",
@@ -1840,7 +2128,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.721110+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "e2bc18163129e712a2cc1c6db9602db3",
@@ -1921,7 +2209,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.721110+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "419fe0ad0681919599fc0d5d748bb555",
@@ -2924,7 +3212,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.720078+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "1a028aa7e2d72e6bfa30a4c0cc0ab58a",
@@ -3371,7 +3659,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.719200+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "0fbf0a1ad2fe48981ac814f3705eedcd",
@@ -3787,7 +4075,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.718197+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "ef102ad10ad414d8dfec281b10504a3e",
@@ -3828,7 +4116,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.718197+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "f0035665fdd86b4ab80711bf7f27738b",
@@ -3869,7 +4157,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.718197+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 2
     },
     {
       "id": "eb313e4ee7e44825ec51d2af2191d2d5",
@@ -3912,7 +4200,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.718197+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "b1f2bd5a536330139558dd51d7b9e975",
@@ -4035,7 +4323,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.718197+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "2a8e7759ee36c8207fcad3fda8eda69f",
@@ -4160,7 +4448,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.718197+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "42b388fad32f2ab737aca92992f71630",
@@ -4321,7 +4609,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.718197+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 2
     },
     {
       "id": "a3801296de63decaf476b7bb35d93be2",
@@ -4362,7 +4650,7 @@
       "fix": "",
       "verification": "",
       "created_at": "2026-09-01T05:22:20.718197+00:00",
-      "retrieval_count": 0
+      "retrieval_count": 1
     },
     {
       "id": "3faf19b195eab9ceb0cf46923a70bba9",
@@ -4654,6 +4942,16 @@
     }
   ],
   "edges": [
+    {
+      "source": "e4b74a72ba544b9e8c597c58df57e81f",
+      "target": "cb5d96bb5a454c9698d2b02b8e6b2533",
+      "kind": "solid"
+    },
+    {
+      "source": "05a9b152180b4325af7c7ed661c2766f",
+      "target": "a8cbd96afd6d47cebca291785a98ad3e",
+      "kind": "solid"
+    },
     {
       "source": "f78c4417eb961eadee2fb9be7f17095c",
       "target": "d7ba3000fdb3f0dfe8e2a8ee37049fcd",
@@ -5021,6 +5319,12 @@
       "similarity": 0.7911
     },
     {
+      "source": "ddd2b894537b49868a81ba2c2c628853",
+      "target": "2fd5ad1a19e2f2758c579b957cb60c06",
+      "kind": "dotted",
+      "similarity": 0.7909
+    },
+    {
       "source": "b1f2bd5a536330139558dd51d7b9e975",
       "target": "394540f27731268dac97061886882136",
       "kind": "dotted",
@@ -5253,6 +5557,12 @@
       "target": "63939451a597ac1e71f20f86764db173",
       "kind": "dotted",
       "similarity": 0.7434
+    },
+    {
+      "source": "e4b74a72ba544b9e8c597c58df57e81f",
+      "target": "774590a4980c40e9ba66186d98a83389",
+      "kind": "dotted",
+      "similarity": 0.7423
     },
     {
       "source": "21c790f43c8990b6acf1cebf41140319",
@@ -5531,12 +5841,6 @@
       "similarity": 0.6383
     },
     {
-      "source": "a3801296de63decaf476b7bb35d93be2",
-      "target": "2fd5ad1a19e2f2758c579b957cb60c06",
-      "kind": "dotted",
-      "similarity": 0.6371
-    },
-    {
       "source": "cc7555cb25a7a8cb913bbdbf5569ae34",
       "target": "ef102ad10ad414d8dfec281b10504a3e",
       "kind": "dotted",
@@ -5565,6 +5869,12 @@
       "target": "097ab65fa338aebedb1d9d0ea590850d",
       "kind": "dotted",
       "similarity": 0.6241
+    },
+    {
+      "source": "7ec1536e281f97f99b28a2548bd17734",
+      "target": "a3801296de63decaf476b7bb35d93be2",
+      "kind": "dotted",
+      "similarity": 0.6185
     },
     {
       "source": "f75dbf8269026a919ca41a20565651e5",
@@ -5627,22 +5937,52 @@
       "similarity": 0.5659
     },
     {
-      "source": "7ec1536e281f97f99b28a2548bd17734",
-      "target": "ffe8a1153793495648abe47100f62655",
-      "kind": "dotted",
-      "similarity": 0.5617
-    },
-    {
       "source": "e2bc18163129e712a2cc1c6db9602db3",
       "target": "5d499f256b463d500fe477eed1e51f95",
       "kind": "dotted",
       "similarity": 0.557
     },
     {
-      "source": "cc7555cb25a7a8cb913bbdbf5569ae34",
+      "source": "cb5d96bb5a454c9698d2b02b8e6b2533",
+      "target": "774590a4980c40e9ba66186d98a83389",
+      "kind": "dotted",
+      "similarity": 0.551
+    },
+    {
+      "source": "05f333724747412f9eae9b6ce372504e",
+      "target": "05a9b152180b4325af7c7ed661c2766f",
+      "kind": "dotted",
+      "similarity": 0.5223
+    },
+    {
+      "source": "05a9b152180b4325af7c7ed661c2766f",
+      "target": "cc7555cb25a7a8cb913bbdbf5569ae34",
+      "kind": "dotted",
+      "similarity": 0.5189
+    },
+    {
+      "source": "774590a4980c40e9ba66186d98a83389",
+      "target": "d481a3bfa6dd712518b6459b90ca23ba",
+      "kind": "dotted",
+      "similarity": 0.4975
+    },
+    {
+      "source": "0838d6089a9df46a9831a4cdda1c1462",
       "target": "1d69f39204d24017999636f76f73f878",
       "kind": "dotted",
-      "similarity": 0.5099
+      "similarity": 0.4721
+    },
+    {
+      "source": "e4b74a72ba544b9e8c597c58df57e81f",
+      "target": "9388da7a6b19cadf8f5103107ed7251d",
+      "kind": "dotted",
+      "similarity": 0.4696
+    },
+    {
+      "source": "05f333724747412f9eae9b6ce372504e",
+      "target": "0838d6089a9df46a9831a4cdda1c1462",
+      "kind": "dotted",
+      "similarity": 0.4617
     },
     {
       "source": "ffe8a1153793495648abe47100f62655",
@@ -5651,16 +5991,28 @@
       "similarity": 0.4573
     },
     {
-      "source": "d481a3bfa6dd712518b6459b90ca23ba",
-      "target": "0838d6089a9df46a9831a4cdda1c1462",
+      "source": "05f333724747412f9eae9b6ce372504e",
+      "target": "cb5d96bb5a454c9698d2b02b8e6b2533",
       "kind": "dotted",
-      "similarity": 0.3758
+      "similarity": 0.4314
     },
     {
-      "source": "0838d6089a9df46a9831a4cdda1c1462",
-      "target": "458f3107e56daec73d00825ebf0586be",
+      "source": "05a9b152180b4325af7c7ed661c2766f",
+      "target": "db591ac45cbf785ec31d1d45e941f13c",
       "kind": "dotted",
-      "similarity": 0.3574
+      "similarity": 0.4302
+    },
+    {
+      "source": "ddd2b894537b49868a81ba2c2c628853",
+      "target": "a90f0a946abab730b258dcda3fa2db18",
+      "kind": "dotted",
+      "similarity": 0.4222
+    },
+    {
+      "source": "ddd2b894537b49868a81ba2c2c628853",
+      "target": "ffe8a1153793495648abe47100f62655",
+      "kind": "dotted",
+      "similarity": 0.3579
     }
   ]
 }
