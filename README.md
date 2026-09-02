@@ -10,13 +10,7 @@
 
 项目同时提供 **Reviewer、持久化经验记忆、Web 实时运行轨迹以及 CLI**。
 
-GitHub：
-
-`https://github.com/xwjhhh/code_agent`
-
-在线静态展示：
-
-`https://xwjhhh.github.io/code_agent/`
+源码仓库：[https://github.com/xwjhhh/code_agent](https://github.com/xwjhhh/code_agent)
 
 ---
 
@@ -394,87 +388,6 @@ trajectories/<run_id>/review.json
 ```
 
 这种设计可以让每次 Agent 执行彼此隔离，同时保留完整运行轨迹用于 Debug、Reviewer 和 Memory 分析。
-
----
-
-# GitHub Pages Showcase
-
-仓库中的：
-
-```text
-docs/index.html
-```
-
-提供一个静态项目展示页面。
-
-它用于展示：
-
-* 历史运行快照；
-* Agent 执行结果；
-* Reviewer 信息；
-* 中文经验知识图谱。
-
-GitHub Pages **不会直接连接本地 FastAPI，也不会调用模型或执行代码**。
-
-展示数据由本地数据库和运行轨迹导出。
-
-更新本机运行记录或 Memory 后，在项目根目录执行：
-
-```powershell
-python scripts/export_showcase_data.py
-```
-
-脚本会读取：
-
-```text
-trajectories/
-memory_store/memory.sqlite3
-```
-
-并生成：
-
-```text
-docs/data/runs.json
-docs/data/memories.json
-```
-
-导出过程会排除：
-
-* Embedding 向量；
-* 模型原始消息；
-* 本地工作区路径；
-* API Key 等敏感信息。
-
-确认数据后提交：
-
-```text
-docs/data/runs.json
-docs/data/memories.json
-```
-
-推送到 `main` 后：
-
-```text
-.github/workflows/pages.yml
-```
-
-会自动部署 `docs/` 到 GitHub Pages。
-
-展示地址：
-
-```text
-https://xwjhhh.github.io/code_agent/
-```
-
-如果 Pages 尚未启用：
-
-```text
-GitHub Repository
-→ Settings
-→ Pages
-→ Source
-→ GitHub Actions
-```
 
 ---
 
